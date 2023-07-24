@@ -1,0 +1,193 @@
+package treestore
+
+import (
+	"bytes"
+	"testing"
+)
+
+func TestTokenEscape(t *testing.T) {
+	escaped := EscapeTokenString("")
+	if escaped != "" {
+		t.Error("empty string")
+	}
+
+	escaped = EscapeTokenString("cat")
+	if escaped != "cat" {
+		t.Error("simple string")
+	}
+
+	escaped = EscapeTokenString("cat/dog")
+	if escaped != `cat\sdog` {
+		t.Error("forward slash string")
+	}
+
+	escaped = EscapeTokenString(`cat\dog`)
+	if escaped != `cat\Sdog` {
+		t.Error("backward slash string")
+	}
+
+	escaped = EscapeTokenString(`cat\Sdog`)
+	if escaped != `cat\SSdog` {
+		t.Error("backward slash string")
+	}
+}
+
+func TestTokenUnescape(t *testing.T) {
+	unescaped := UnescapeTokenString("")
+	if unescaped != "" {
+		t.Error("empty string")
+	}
+
+	unescaped = UnescapeTokenString("cat")
+	if unescaped != "cat" {
+		t.Error("simple string")
+	}
+
+	unescaped = UnescapeTokenString(`cat\sdog`)
+	if unescaped != `cat/dog` {
+		t.Error("forward slash string")
+	}
+
+	unescaped = UnescapeTokenString(`cat\Sdog`)
+	if unescaped != `cat\dog` {
+		t.Error("backward slash string")
+	}
+
+	unescaped = UnescapeTokenString(`cat\dog`)
+	if unescaped != `cat\dog` {
+		t.Error("malformed string")
+	}
+}
+
+func TestTokenSegmentToString(t *testing.T) {
+	str := TokenSegmentToString(nil)
+	if str != "" {
+		t.Error("nil segment")
+	}
+
+	str = TokenSegmentToString(TokenSegment{})
+	if str != "" {
+		t.Error("empty segment")
+	}
+
+	str = TokenSegmentToString([]byte("cat"))
+	if str != "cat" {
+		t.Error("non-empty segment")
+	}
+
+	str = TokenSegmentToString([]byte(`cat/dog`))
+	if str != `cat\sdog` {
+		t.Error("slash escaped segment")
+	}
+}
+
+func TestTokenPath(t *testing.T) {
+	tokenPath := MakeTokenPath()
+	if tokenPath != "" {
+		t.Error("empty path")
+	}
+
+	parts := SplitTokenPath(tokenPath)
+	if parts == nil || len(parts) != 0 {
+		t.Error("empty path split")
+	}
+
+	tokenPath = MakeTokenPath("")
+	if tokenPath != "/" {
+		t.Error("empty segment path")
+	}
+
+	parts = SplitTokenPath(tokenPath)
+	if parts == nil || len(parts) != 1 || parts[0] != "" {
+		t.Error("empty segment path split")
+	}
+
+	tokenPath = MakeTokenPath("cat")
+	if tokenPath != "/cat" {
+		t.Error("simple path")
+	}
+
+	parts = SplitTokenPath(tokenPath)
+	if parts == nil || len(parts) != 1 || parts[0] != "cat" {
+		t.Error("simple path split")
+	}
+
+	tokenPath = MakeTokenPath("cat/dog")
+	if tokenPath != `/cat\sdog` {
+		t.Error("single escape path")
+	}
+
+	parts = SplitTokenPath(tokenPath)
+	if parts == nil || len(parts) != 1 || parts[0] != `cat/dog` {
+		t.Error("single escape split")
+	}
+
+	tokenPath = MakeTokenPath("cat/dog", "fox")
+	if tokenPath != `/cat\sdog/fox` {
+		t.Error("two token path")
+	}
+
+	parts = SplitTokenPath(tokenPath)
+	if parts == nil || len(parts) != 2 || parts[0] != `cat/dog` || parts[1] != `fox` {
+		t.Error("two token split")
+	}
+}
+
+func TestTokenSet(t *testing.T) {
+	tokens := TokenPathToTokenSet("")
+	if tokens == nil || len(tokens) != 0 {
+		t.Error("nil token path")
+	}
+
+	tokenPath := TokenSetToTokenPath(tokens)
+	if tokenPath != "" {
+		t.Error("nil token set")
+	}
+
+	tokens = TokenPathToTokenSet("/")
+	if tokens == nil || len(tokens) != 1 || !bytes.Equal(tokens[0], []byte("")) {
+		t.Error("empty token path")
+	}
+
+	tokenPath = TokenSetToTokenPath(tokens)
+	if tokenPath != "/" {
+		t.Error("empty token set")
+	}
+
+	tokens = TokenPathToTokenSet("//")
+	if tokens == nil || len(tokens) != 2 || !bytes.Equal(tokens[0], []byte("")) || !bytes.Equal(tokens[1], []byte("")) {
+		t.Error("two empty token path segments")
+	}
+
+	tokenPath = TokenSetToTokenPath(tokens)
+	if tokenPath != "//" {
+		t.Error("two empty token set segments")
+	}
+
+	tokens = TokenPathToTokenSet(`/cat\Sdog`)
+	if tokens == nil || len(tokens) != 1 || !bytes.Equal(tokens[0], []byte(`cat\dog`)) {
+		t.Error("one segment path")
+	}
+
+	tokenPath = TokenSetToTokenPath(tokens)
+	if tokenPath != `/cat\Sdog` {
+		t.Error("one segment set")
+	}
+}
+
+func TestTokenSetWrappers(t *testing.T) {
+	sk := MakeStoreKey("cow", "mouse", "pig")
+	if sk.path != "/cow/mouse/pig" {
+		t.Error("convenience make token path")
+	}
+
+	ts := sk.tokens
+	if ts == nil || len(ts) != 3 || !bytes.Equal(ts[0], []byte("cow")) || !bytes.Equal(ts[1], []byte("mouse")) || !bytes.Equal(ts[2], []byte("pig")) {
+		t.Error("convenience make token set")
+	}
+
+	parts := SplitStoreKey(sk)
+	if parts == nil || len(parts) != 3 || parts[0] != "cow" || parts[1] != "mouse" || parts[2] != "pig" {
+		t.Error("convenience split token set")
+	}
+}
