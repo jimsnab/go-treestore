@@ -50,6 +50,12 @@ type (
 		kn    *keyNode
 	}
 
+	keyLockPath struct {
+		levels    []*keyTree
+		lastLevel *keyTree
+		kn        *keyNode
+	}
+
 	SetExFlags int
 
 	testHookLockPromotion func()
@@ -68,8 +74,6 @@ const (
 	SetExMustNotExist
 	SetExNoValueUpdate
 )
-
-func errObsolete() error { return ErrObsolete }
 
 func NewTreeStore() *TreeStore {
 	return &TreeStore{
@@ -106,6 +110,7 @@ func (ts *TreeStore) getKeyNodeForValueRead(sk *StoreKey) (kn *keyNode, lockedLe
 			kn = ts.addresses[address]
 			if kn.expiration > 0 && kn.expiration < time.Now().UTC().UnixNano() {
 				// not found because it is expired
+				kn = nil
 				ts.keyMu.RUnlock()
 				return
 			}
@@ -189,13 +194,14 @@ func (ts *TreeStore) locateKeyNodeForRead(sk *StoreKey) (loc keyLocation) {
 				if nextLevel == nil {
 					break
 				}
-			
+
 				level.lock.RUnlock()
 				level = nextLevel
 				level.lock.RLock()
 
 				avlNode = level.tree.Find(tokens[tokenIndex])
 				if avlNode == nil {
+					kn = nil
 					break
 				}
 				kn = avlNode.value.(*keyNode)
@@ -227,14 +233,14 @@ func (ts *TreeStore) locateKeyNodeForWrite(sk *StoreKey) (loc keyLocation) {
 		//
 		// note that upon a delete of the level's last token, level becomes an orphan
 		if lockPromotion != nil {
-			lockPromotion()	// testing hook
+			lockPromotion() // testing hook
 		}
 
 		level.lock.Lock()
 
 		// index-1 is the deepest level that has an existing token segment match
 		if index > 0 {
-			existingNode := (level.tree.Find(sk.tokens[index - 1]) != nil)
+			existingNode := (level.tree.Find(sk.tokens[index-1]) != nil)
 			if existingNode != (kn != nil) {
 				level.lock.Unlock()
 				continue // retry
@@ -245,8 +251,51 @@ func (ts *TreeStore) locateKeyNodeForWrite(sk *StoreKey) (loc keyLocation) {
 	}
 }
 
+// Locates the store key by walking each level, locking each node along the way.
+func (ts *TreeStore) locateKeyNodeForDelete(sk *StoreKey) (lockPath *keyLockPath) {
+	lockedLevels := make([]*keyTree, 0, len(sk.tokens))
+	level := ts.root
+
+	tokens := sk.tokens
+	end := len(tokens)
+	index := 0
+	var kn *keyNode
+
+	for level != nil && index < end {
+		level.lock.Lock()
+		lockedLevels = append(lockedLevels, level)
+
+		avlNode := level.tree.Find(tokens[index])
+		if avlNode == nil {
+			break
+		}
+
+		kn = avlNode.value.(*keyNode)
+		level = kn.nextLevel
+
+		index++
+	}
+
+	lockPath = &keyLockPath{
+		levels: lockedLevels,
+		kn:     kn,
+	}
+
+	if index >= end && index > 0 {
+		lockPath.lastLevel = lockedLevels[index-1]
+	}
+	return
+}
+
+// Unlocks the store path locked by lockKeyNodeForDelete
+func (ts *TreeStore) unlockKeyPath(lockPath *keyLockPath) {
+	for _, level := range lockPath.levels {
+		level.lock.Unlock()
+	}
+}
+
 func (ts *TreeStore) createRestOfKey(sk *StoreKey, loc keyLocation) (kn *keyNode, lockedLevel *keyTree) {
-	// currently holding the write lock on a parent key node, and caller
+	// currently holding the write lock on the level to append, and caller
 	// ensures at least one more key token needs to be added to the store
 
 	p := &ts.nextAddress
@@ -257,7 +306,7 @@ func (ts *TreeStore) createRestOfKey(sk *StoreKey, loc keyLocation) (kn *keyNode
 
 	// append the rest of the token key nodes
 	for {
-		if index > 0 {
+		if kn != nil {
 			level = newKeyTree(kn)
 			kn.nextLevel = level
 		}
@@ -268,7 +317,11 @@ func (ts *TreeStore) createRestOfKey(sk *StoreKey, loc keyLocation) (kn *keyNode
 		}
 
 		level.tree.Set(sk.tokens[index], nextKeyNode)
+
 		kn = nextKeyNode
+		ts.keyMu.Lock()
+		ts.addresses[kn.address] = kn
+		ts.keyMu.Unlock()
 
 		index++
 		if index >= end {
@@ -288,7 +341,6 @@ func (ts *TreeStore) createRestOfKey(sk *StoreKey, loc keyLocation) (kn *keyNode
 func (ts *TreeStore) addKeyToIndex(sk *StoreKey, kn *keyNode) {
 	ts.keyMu.Lock()
 	ts.keys[sk.path] = kn.address
-	ts.addresses[kn.address] = kn
 	ts.keyMu.Unlock()
 }
 
@@ -398,9 +450,9 @@ func (ts *TreeStore) SetKeyValue(sk *StoreKey, value any) (address StoreAddress,
 //
 // Flags:
 //
-//	SetExNoValueUpdate - do not alter the key's value (ignore `value` argument, do not alter key index)
-//	SetExMustExist - perform only if the key exists
-//  SetExMustNotExist - perform only if the key does not exist
+//		SetExNoValueUpdate - do not alter the key's value (ignore `value` argument, do not alter key index)
+//		SetExMustExist - perform only if the key exists
+//	 SetExMustNotExist - perform only if the key does not exist
 //
 // For `expireNs`, specify the Unix nanosecond tick of when the key will expire. Specify zero to
 // remove expiration. Specify -1 to retain the current key expiration.
@@ -417,13 +469,16 @@ func (ts *TreeStore) SetKeyValueEx(sk *StoreKey, value any, flags SetExFlags, ex
 			loc.level.lock.Unlock()
 			return
 		}
+		if loc.kn.current != nil {
+			originalValue = loc.kn.current.value
+		}
 	} else if (flags & SetExMustNotExist) != 0 {
 		if loc.index >= len(sk.tokens) {
 			if loc.kn.current != nil {
 				originalValue = loc.kn.current.value
 			}
 			loc.level.lock.Unlock()
-			address = loc.kn.address
+			exists = true
 			return
 		}
 	}
@@ -473,6 +528,7 @@ func (ts *TreeStore) SetKeyValueEx(sk *StoreKey, value any, flags SetExFlags, ex
 		kn.expiration = expireNs
 	}
 
+	address = kn.address
 	return
 }
 
@@ -493,10 +549,40 @@ func (ts *TreeStore) IsKeyIndexed(sk *StoreKey) (address StoreAddress, exists bo
 func (ts *TreeStore) LocateKey(sk *StoreKey) (address StoreAddress, exists bool) {
 	loc := ts.locateKeyNodeForRead(sk)
 	loc.level.lock.RUnlock()
-	exists = (loc.kn != nil)
+	exists = (loc.index >= len(sk.tokens))
 	if exists {
-		address = loc.kn.address
+		if loc.kn.isExpired() {
+			exists = false
+		} else {
+			address = loc.kn.address
+		}
 	}
+	return
+}
+
+// Navigates to the leaf key node and returns the expiration time in Unix nanoseconds, or
+// -1 if the key path does not exist.
+func (ts *TreeStore) GetKeyTtl(sk *StoreKey) (ttl int64) {
+	loc := ts.locateKeyNodeForRead(sk)
+	loc.level.lock.RUnlock()
+
+	if loc.index >= len(sk.tokens) {
+		ttl = loc.kn.expiration
+	} else {
+		ttl = -1
+	}
+	return
+}
+
+// Navigates to the leaf key node and sets the expiration time in Unix nanoseconds.
+// Specify 0 for no expiration.
+func (ts *TreeStore) SetKeyTtl(sk *StoreKey, expiration int64) (exists bool) {
+	loc := ts.locateKeyNodeForWrite(sk)
+	if loc.kn != nil {
+		loc.kn.expiration = expiration
+		exists = true
+	}
+	loc.level.lock.Unlock()
 	return
 }
 
@@ -516,14 +602,26 @@ func (ts *TreeStore) GetKeyValue(sk *StoreKey) (value any, keyExists, valueExist
 }
 
 // Looks up the key and returns the expiration time in Unix nanoseconds, or
-// -1 if the key does not exist.
-func (ts *TreeStore) GetKeyTtl(sk *StoreKey) (ttl int64) {
+// -1 if the key value does not exist.
+func (ts *TreeStore) GetKeyValueTtl(sk *StoreKey) (ttl int64) {
 	kn, ll := ts.getKeyNodeForValueRead(sk)
-	defer ll.lock.Unlock()
 	if kn != nil {
 		ttl = kn.expiration
+		ll.lock.RUnlock()
 	} else {
 		ttl = -1
+	}
+	return
+}
+
+// Looks up the key and sets the expiration time in Unix nanoseconds. Specify
+// 0 to clear the expiration.
+func (ts *TreeStore) SetKeyValueTtl(sk *StoreKey, expiration int64) (exists bool) {
+	kn, ll := ts.getKeyNodeForWrite(sk)
+	if kn != nil {
+		kn.expiration = expiration
+		ll.lock.Unlock()
+		exists = true
 	}
 	return
 }
@@ -532,7 +630,7 @@ func (ts *TreeStore) GetKeyTtl(sk *StoreKey) (ttl int64) {
 // returning the value at that moment in time, if one exists.
 func (ts *TreeStore) GetKeyValueAtTime(sk *StoreKey, tickNs int64) (value any, exists bool) {
 	kn, ll := ts.getKeyNodeForValueRead(sk)
-	defer ll.lock.Unlock()
+	defer ll.lock.RUnlock()
 	if kn != nil && kn.history != nil {
 		item := kn.history.FindLeft(sk.tokens[len(sk.tokens)-1])
 		if item != nil {
@@ -552,15 +650,21 @@ func (ts *TreeStore) DeleteKeyWithValue(sk *StoreKey, clean bool) (removed bool,
 		return
 	}
 
-	loc := ts.locateKeyNodeForWrite(sk)	
-	level := loc.level
-	kn := loc.kn
+	klp := ts.locateKeyNodeForDelete(sk)
+	defer ts.unlockKeyPath(klp)
+
+	level := klp.lastLevel
+	if level == nil {
+		return
+	}
+
 	tokenIndex := len(sk.tokens) - 1
+	kn := klp.kn
 
 	if kn != nil {
 		if ts.removeKeyFromIndex(sk) {
 			if kn.current != nil {
-				originalValue = loc.kn.current.value
+				originalValue = kn.current.value
 				kn.current = nil
 			}
 			kn.history = nil
@@ -574,7 +678,7 @@ func (ts *TreeStore) DeleteKeyWithValue(sk *StoreKey, clean bool) (removed bool,
 					kn.ownerTree = nil
 
 					// stop if this level contains siblings
-					if level.tree.nodes > 0  {
+					if level.tree.nodes > 0 {
 						break
 					}
 
@@ -589,6 +693,8 @@ func (ts *TreeStore) DeleteKeyWithValue(sk *StoreKey, clean bool) (removed bool,
 					if kn == nil {
 						break
 					}
+
+					level.parent = nil
 					kn.nextLevel = nil
 
 					// stop if not cleaning
@@ -601,39 +707,43 @@ func (ts *TreeStore) DeleteKeyWithValue(sk *StoreKey, clean bool) (removed bool,
 						break
 					}
 
-					// lock the parent level
-					parentLevel := kn.ownerTree
-					parentLevel.lock.Lock()
-					level.lock.Unlock()
-					level = parentLevel
+					// continue with the parent level
+					level = kn.ownerTree
 				}
 			}
-			
+
 			removed = true
 		}
 	}
 
-	level.lock.Unlock()
 	return
 }
 
 // Deletes a key that has a value, including its value history, and its metadata.
 // The parent key is not altered. `removed` will be returned `true` only when the
-// leaf key node is deleted.
+// leaf key node is deleted. All key nodes along the store key path will be locked
+// during the operation, so delete effectively takes a lock on the whole database.
 func (ts *TreeStore) DeleteKey(sk *StoreKey) (removed bool, originalValue any) {
 	if sk == nil || len(sk.tokens) == 0 {
 		return
 	}
 
-	loc := ts.locateKeyNodeForWrite(sk)	
-	level := loc.level
-	kn := loc.kn
+	klp := ts.locateKeyNodeForDelete(sk)
+	defer ts.unlockKeyPath(klp)
+
+	level := klp.lastLevel
+	if level == nil {
+		return
+	}
+
 	tokenIndex := len(sk.tokens) - 1
+	kn := klp.kn
 
 	if kn != nil {
 		if ts.removeKeyFromIndex(sk) {
 			if kn.current != nil {
-				originalValue = loc.kn.current.value
+				originalValue = kn.current.value
+				kn.current = nil
 			}
 		}
 		kn.history = nil
@@ -645,24 +755,18 @@ func (ts *TreeStore) DeleteKey(sk *StoreKey) (removed bool, originalValue any) {
 			level.tree.Delete(sk.tokens[tokenIndex])
 			kn.ownerTree = nil
 
-			// if the level is empty, unlink the parent
+			// if the level is empty now, unlink the parent
 			if level.tree.nodes == 0 {
 				parent := level.parent
 				if parent != nil {
-					parentLevel := parent.ownerTree
-					parentLevel.lock.Lock()
-					level.lock.Unlock()
-					level = parentLevel
-
 					parent.nextLevel = nil
+					level.parent = nil
 				}
 			}
-			
+
 			removed = true
 		}
 	}
 
-	level.lock.Unlock()
 	return
 }
-

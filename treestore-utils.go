@@ -8,8 +8,8 @@ import (
 
 type (
 	TokenSegment []byte
-	TokenSet  []TokenSegment
-	TokenPath string
+	TokenSet     []TokenSegment
+	TokenPath    string
 
 	StoreKey struct {
 		path   TokenPath
@@ -18,7 +18,6 @@ type (
 )
 
 const nsPerSec = (1 /*sec*/ * 1000 /*ms*/ * 1000 /*us*/ * 1000 /*ns*/)
-
 
 // escapes the forward slash to \s and the backslash to \S
 func EscapeTokenString(plainText string) string {
@@ -143,7 +142,7 @@ func unixNsFromBytes(tick []byte) int64 {
 
 // Returns a date/time struct from a Unix ns timestamp
 func timestampFromUnixNs(tick int64) time.Time {
-	return time.Unix(tick / nsPerSec, tick % nsPerSec)
+	return time.Unix(tick/nsPerSec, tick%nsPerSec)
 }
 
 // Constrains the length of a string
@@ -157,7 +156,7 @@ func stringTruncate(str string, maxChars int) string {
 }
 
 // Constrains the length of a string and cuts at a linebreak
-func cleanString(str string, maxChars int) string {	
+func cleanString(str string, maxChars int) string {
 	clean := strings.ReplaceAll(str, "\r", "")
 
 	cutPoint := strings.Index(clean, "\n")

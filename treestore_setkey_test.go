@@ -218,3 +218,89 @@ func TestSetKeyTwoTwoLevelsFlip(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSetNotExist(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey("test")
+
+	address, exists, orgVal := ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, nil)
+	if address == 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	address, exists, orgVal = ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, nil)
+	if address != 0 || !exists || orgVal != nil {
+		t.Error("first set again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSetNotExistValue(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey("test")
+
+	address, exists, orgVal := ts.SetKeyValueEx(sk, 400, SetExMustNotExist, 0, nil)
+	if address == 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	address, exists, orgVal = ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, nil)
+	if address != 0 || !exists || orgVal != 400 {
+		t.Error("first set again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSetMustExist(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey("test")
+
+	address, exists, orgVal := ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate|SetExMustExist, 0, nil)
+	if address != 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	address, exists, orgVal = ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate, 0, nil)
+	if address == 0 || exists || orgVal != nil {
+		t.Error("first set again")
+	}
+
+	address2, exists, orgVal := ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate|SetExMustExist, 0, nil)
+	if address2 != address || !exists || orgVal != nil {
+		t.Error("set exists")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSetMustExistValue(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey("test")
+
+	address, exists, orgVal := ts.SetKeyValueEx(sk, 400, SetExMustExist, 0, nil)
+	if address != 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	address, exists, orgVal = ts.SetKeyValueEx(sk, 401, 0, 0, nil)
+	if address == 0 || exists || orgVal != nil {
+		t.Error("first set again")
+	}
+
+	address2, exists, orgVal := ts.SetKeyValueEx(sk, 402, SetExMustExist, 0, nil)
+	if address2 != address || !exists || orgVal != 401 {
+		t.Error("set exists")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
