@@ -17,7 +17,7 @@ type (
 //
 // Memory is allocated up front to hold `limit` keys, so be careful to pass
 // a reasonable limit.
-func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey) {
+func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, count int) {
 	var loc keyLocation
 	if len(sk.tokens) == 0 {
 		loc.kn = ts.dbNode
@@ -50,26 +50,30 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 	lockedLevel.lock.RUnlock()
 	lockedLevel = nextLockedLevel
 
-	n := 0
-	patternRunes := []rune(pattern)
-	lockedLevel.tree.Iterate(func(node *AvlNode) bool {
-		if isPatternRunes(patternRunes, bytes.Runes(node.key)) {
-			if n >= startAt {
-				kn := node.value.(*keyNode)
-				lk := LevelKey{
-					segment: node.key,
-					hasValue: kn.current != nil,
-					hasChildren: kn.nextLevel != nil,
+	count = lockedLevel.tree.nodes
+
+	if limit > 0 {
+		n := 0
+		patternRunes := []rune(pattern)
+		lockedLevel.tree.Iterate(func(node *AvlNode) bool {
+			if isPatternRunes(patternRunes, bytes.Runes(node.key)) {
+				if n >= startAt {
+					kn := node.value.(*keyNode)
+					lk := LevelKey{
+						segment: node.key,
+						hasValue: kn.current != nil,
+						hasChildren: kn.nextLevel != nil,
+					}
+					keys = append(keys, lk)
+					if len(keys) >= limit {
+						return false
+					}
 				}
-				keys = append(keys, lk)
-				if len(keys) >= limit {
-					return false
-				}
+				n++
 			}
-			n++
-		}
-		return true
-	})
+			return true
+		})
+	}
 
 	lockedLevel.lock.RUnlock()
 	return
