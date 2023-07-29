@@ -110,18 +110,18 @@ func TokenSetToTokenPath(tokens TokenSet) TokenPath {
 }
 
 // Makes the structure needed to interact with the TreeStore
-func MakeStoreKey(parts ...string) *StoreKey {
+func MakeStoreKey(parts ...string) StoreKey {
 	tokenPath := MakeTokenPath(parts...)
 	tokenSet := TokenPathToTokenSet(tokenPath)
 
-	return &StoreKey{
+	return StoreKey{
 		path:   tokenPath,
 		tokens: tokenSet,
 	}
 }
 
 // Decomposes the TreeStore key structure
-func SplitStoreKey(sk *StoreKey) []string {
+func SplitStoreKey(sk StoreKey) []string {
 	return SplitTokenPath(sk.path)
 }
 
@@ -174,4 +174,56 @@ func cleanString(str string, maxChars int) string {
 	}
 
 	return clean
+}
+
+func isPattern(pattern, candidate string) bool {
+	return isPatternRunes([]rune(pattern), []rune(candidate))
+}
+
+func isPatternRunes(pattern, candidate []rune) bool {
+	cpos := 0
+	ppos := 0
+
+	for {
+		if ppos+2 <= len(pattern) && pattern[ppos] == '*' && pattern[ppos+1] == '*' {
+			ppos++
+		} else {
+			break
+		}
+	}
+
+	for {
+		if ppos >= len(pattern) {
+			break
+		}
+		if cpos >= len(candidate) {
+			break
+		}
+
+		if pattern[ppos] == '*' {
+			if ppos+1 >= len(pattern) {
+				return true
+			}
+			for {
+				if isPatternRunes(pattern[ppos+1:], candidate[cpos:]) {
+					return true
+				}
+				cpos++
+				if cpos >= len(candidate) {
+					return false
+				}
+			}
+		} else if pattern[ppos] != candidate[cpos] {
+			return false
+		}
+
+		ppos++
+		cpos++
+	}
+
+	if ppos == len(pattern)-1 && pattern[ppos] == '*' {
+		return true
+	}
+
+	return (ppos == len(pattern) && cpos == len(candidate))
 }

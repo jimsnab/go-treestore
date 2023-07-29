@@ -29,7 +29,7 @@ func (ts *TreeStore) DiagDump() bool {
 	}
 
 	fmt.Printf("values: %d\n", len(ts.keys))
-	treeStoreDump.dumpLevel(ts.root, "", nil, &rootSk)
+	treeStoreDump.dumpLevel(ts.dbNode.ownerTree, "", nil, &rootSk)
 
 	if len(treeStoreDump.used) != len(ts.keys) {
 		treeStoreDump.errors = append(treeStoreDump.errors, fmt.Sprintf("mismatch in %d iterated keys with values versus the key index length %d", len(treeStoreDump.used), len(ts.keys)))
@@ -74,12 +74,14 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		if kn == nil {
 			tsd.errors = append(tsd.errors, "unexpected key node type")
 			return true
-		}
+		}		
 
 		sk := &StoreKey{
 			tokens: baseSk.tokens,
 		}
-		sk.tokens = append(sk.tokens, node.key)
+		if node.value != tsd.ts.dbNode {
+			sk.tokens = append(sk.tokens, node.key)
+		}
 		sk.path = TokenSetToTokenPath(sk.tokens)
 
 		indexAddr, isIndexed := tsd.ts.keys[sk.path]

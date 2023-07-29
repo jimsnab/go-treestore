@@ -304,3 +304,37 @@ func TestSetMustExistValue(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSetDbValue(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey()
+
+	address, exists := ts.SetKey(sk)
+	if address != 1 || !exists {
+		t.Error("first db set")
+	}
+
+	address, exists = ts.SetKeyValue(sk, 25)
+	if address != 1 || !exists {
+		t.Error("first db value set")
+	}
+
+	address, exists, orgVal := ts.SetKeyValueEx(sk, 26, SetExMustExist, 0, nil)
+	if address != 1 || !exists || orgVal != 25 {
+		t.Error("first setex")
+	}
+
+	address, exists, orgVal = ts.SetKeyValueEx(sk, 27, 0, 0, nil)
+	if address != 1 || !exists || orgVal != 26 {
+		t.Error("first setex again")
+	}
+
+	address, exists, orgVal = ts.SetKeyValueEx(sk, 28, SetExMustNotExist, 0, nil)
+	if address != 0 || !exists || orgVal != 27 {
+		t.Error("must not exist")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}

@@ -346,17 +346,7 @@ func TestDeleteNull(t *testing.T) {
 	ts := NewTreeStore()
 	sk1 := MakeStoreKey("")
 
-	removed, val := ts.DeleteKeyWithValue(nil, false)
-	if removed || val != nil {
-		t.Error("delete nil")
-	}
-
-	removed, val = ts.DeleteKeyWithValue(nil, true)
-	if removed || val != nil {
-		t.Error("delete nil clean")
-	}
-
-	removed, val = ts.DeleteKeyWithValue(sk1, false)
+	removed, val := ts.DeleteKeyWithValue(sk1, false)
 	if removed || val != nil {
 		t.Error("delete empty")
 	}
@@ -383,17 +373,7 @@ func TestDeleteNullPopulated(t *testing.T) {
 	ts.SetKeyValue(b, 100)
 	ts.SetKey(c)
 
-	removed, val := ts.DeleteKeyWithValue(nil, false)
-	if removed || val != nil {
-		t.Error("delete nil")
-	}
-
-	removed, val = ts.DeleteKeyWithValue(nil, true)
-	if removed || val != nil {
-		t.Error("delete nil clean")
-	}
-
-	removed, val = ts.DeleteKeyWithValue(sk1, false)
+	removed, val := ts.DeleteKeyWithValue(sk1, false)
 	if removed || val != nil {
 		t.Error("delete empty")
 	}
@@ -773,6 +753,64 @@ func TestDeleteSecondLevelWithChildrenWithValueClean(t *testing.T) {
 	removed, val = ts.DeleteKeyWithValue(c, true)
 	if removed || val != nil {
 		t.Error("delete c")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestDeleteDbValue(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey()
+
+	address, exists := ts.SetKeyValue(sk, 25)
+	if address != 1 || !exists {
+		t.Error("first db value set")
+	}
+
+	removed, originalValue := ts.DeleteKeyWithValue(sk, true)
+	if !removed || originalValue != 25 {
+		t.Error("delete first db value")
+	}
+
+	verifyValue, keyExists, valueExists := ts.GetKeyValue(sk)
+	if !keyExists || valueExists || verifyValue != nil {
+		t.Error("get after first delete")
+	}
+
+	address, exists = ts.SetKeyValue(sk, 26)
+	if address != 1 || !exists {
+		t.Error("second db value set")
+	}
+
+	verifyValue, keyExists, valueExists = ts.GetKeyValue(sk)
+	if !keyExists || !valueExists || verifyValue != 26 {
+		t.Error("get after second delete")
+	}
+
+	removed, originalValue = ts.DeleteKeyWithValue(sk, true)
+	if !removed || originalValue != 26 {
+		t.Error("delete second db value")
+	}
+
+	verifyValue, keyExists, valueExists = ts.GetKeyValue(sk)
+	if !keyExists || valueExists || verifyValue != nil {
+		t.Error("get after second delete")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestDeleteDbValueEmpty(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey()
+
+	removed, originalValue := ts.DeleteKeyWithValue(sk, true)
+	if removed || originalValue != nil {
+		t.Error("delete db value")
 	}
 
 	if !ts.DiagDump() {

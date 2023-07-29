@@ -36,6 +36,10 @@ func TestExpireKeyLong(t *testing.T) {
 	if ttl != -1 {
 		t.Error("ttl value")
 	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
 }
 
 func TestExpireKeyValueLong(t *testing.T) {
@@ -58,6 +62,10 @@ func TestExpireKeyValueLong(t *testing.T) {
 	ttl = ts.GetKeyValueTtl(sk)
 	if ttl != expireNs {
 		t.Error("ttl value")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
 	}
 }
 
@@ -98,6 +106,10 @@ func TestSetKeyExpireLong(t *testing.T) {
 	ttl = ts.GetKeyValueTtl(sk)
 	if ttl != -1 {
 		t.Error("ttl value")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
 	}
 }
 
@@ -149,6 +161,10 @@ func TestSetKeyValueExpireLong(t *testing.T) {
 	if ttl != expireNs {
 		t.Error("ttl value")
 	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
 }
 
 func TestExpireKeyShort(t *testing.T) {
@@ -186,6 +202,10 @@ func TestExpireKeyShort(t *testing.T) {
 	addr, exists = ts.LocateKey(sk)
 	if addr != 0 || exists {
 		t.Error("locate expired")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
 	}
 }
 
@@ -229,5 +249,9 @@ func TestExpireKeyValueShort(t *testing.T) {
 	addr, exists = ts.IsKeyIndexed(sk)
 	if addr != 0 || exists {
 		t.Error("index expired")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
 	}
 }
