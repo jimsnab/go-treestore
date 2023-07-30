@@ -28,6 +28,11 @@ func (ts *TreeStore) DiagDump() bool {
 		errors:    []string{},
 	}
 
+	al := ts.activeLocks
+	if al != 0 {
+		treeStoreDump.errors = append(treeStoreDump.errors, fmt.Sprintf("%d active locks != 0", al))
+	}
+
 	fmt.Printf("values: %d\n", len(ts.keys))
 	treeStoreDump.dumpLevel(ts.dbNode.ownerTree, "", nil, &rootSk)
 

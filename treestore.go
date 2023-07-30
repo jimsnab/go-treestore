@@ -1,7 +1,6 @@
 package treestore
 
 import (
-	"errors"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -15,7 +14,7 @@ type (
 		keys        map[TokenPath]StoreAddress
 		keyMu       sync.RWMutex
 		cas         map[StoreAddress]uint64
-		activeRequests int32
+		activeLocks int32
 	}
 
 	StoreAddress uint64
@@ -60,10 +59,6 @@ type (
 	SetExFlags int
 
 	testHookLockPromotion func()
-)
-
-var (
-	ErrObsolete = errors.New("computation is based on outdated data")
 )
 
 var (
@@ -113,6 +108,7 @@ func (ts *TreeStore) getKeyNodeForValueRead(sk StoreKey) (kn *keyNode, lockedLev
 		kn = ts.dbNode
 		lockedLevel = kn.ownerTree
 		lockedLevel.lock.RLock()
+		atomic.AddInt32(&ts.activeLocks, 1)
 		return
 	}
 
@@ -136,11 +132,16 @@ func (ts *TreeStore) getKeyNodeForValueRead(sk StoreKey) (kn *keyNode, lockedLev
 				return
 			}
 
+			if lockPromotion != nil {
+				lockPromotion()		// test hook
+			}
+
 			lockedLevel = kn.ownerTree
 			obtained := lockedLevel.lock.TryRLock()
 			ts.keyMu.RUnlock()
 
 			if obtained {
+				atomic.AddInt32(&ts.activeLocks, 1)
 				return
 			}
 
@@ -179,6 +180,7 @@ func (ts *TreeStore) getKeyNodeForWrite(sk StoreKey) (kn *keyNode, lockedLevel *
 			kn = ts.addresses[address]
 			if kn.expiration > 0 && kn.expiration < time.Now().UTC().UnixNano() {
 				// not found because it is expired
+				kn = nil
 				ts.keyMu.RUnlock()
 				return
 			}
@@ -188,6 +190,7 @@ func (ts *TreeStore) getKeyNodeForWrite(sk StoreKey) (kn *keyNode, lockedLevel *
 			ts.keyMu.RUnlock()
 
 			if obtained {
+				atomic.AddInt32(&ts.activeLocks, 1)
 				return
 			}
 
@@ -217,6 +220,7 @@ func (ts *TreeStore) locateKeyNodeForRead(sk StoreKey) (loc keyLocation) {
 	kn := ts.dbNode
 	lockedLevel := kn.ownerTree
 	lockedLevel.lock.RLock()
+	atomic.AddInt32(&ts.activeLocks, 1)
 	nextLevel := kn.nextLevel
 
 	tokens := sk.tokens
@@ -285,6 +289,7 @@ func (ts *TreeStore) locateKeyNodeForWrite(sk StoreKey) (loc keyLocation) {
 			existingNode := (level.tree.Find(sk.tokens[index-1]) != nil)
 			if existingNode != (kn != nil) {
 				level.lock.Unlock()
+				atomic.AddInt32(&ts.activeLocks, -1)
 				continue // retry
 			}
 		}
@@ -302,6 +307,7 @@ func (ts *TreeStore) locateKeyNodeForDelete(sk StoreKey) (lockPath *keyLockPath)
 	kn := ts.dbNode
 	lockedLevel := kn.ownerTree
 	lockedLevel.lock.Lock()
+	atomic.AddInt32(&ts.activeLocks, 1)
 	lockedLevels = append(lockedLevels, lockedLevel)
 	nextLevel := kn.nextLevel
 
@@ -342,6 +348,19 @@ func (ts *TreeStore) unlockKeyPath(lockPath *keyLockPath) {
 	for _, level := range lockPath.levels {
 		level.lock.Unlock()
 	}
+	atomic.AddInt32(&ts.activeLocks, -1)
+}
+
+// Unlocks a leaf key node accessed for read
+func (ts *TreeStore) completeKeyNodeRead(level *keyTree) {
+	level.lock.RUnlock()
+	atomic.AddInt32(&ts.activeLocks, -1)
+}
+
+// Unlocks a leaf key node accessed for write
+func (ts *TreeStore) completeKeyNodeWrite(level *keyTree) {
+	level.lock.Unlock()
+	atomic.AddInt32(&ts.activeLocks, -1)
 }
 
 func (ts *TreeStore) appendKeyNode(lockedLevel *keyTree, token TokenSegment) (kn *keyNode) {
@@ -369,9 +388,6 @@ func (ts *TreeStore) createRestOfKey(sk StoreKey, loc keyLocation) (kn *keyNode,
 	// add middle levels if necessary
 	for end := len(sk.tokens) ; index < end ; index++ {
 		if kn != nil {
-			if kn.nextLevel != nil {
-				panic("BUGBUG kn is becoming a new parent and should not have a child level yet")
-			}
 			kn.nextLevel = newKeyTree(kn)
 			kn.nextLevel.lock.Lock()
 			lockedLevel.lock.Unlock()	
@@ -459,11 +475,8 @@ func (ts *TreeStore) ensureKeyWithValue(sk StoreKey) (kn *keyNode, lockedLevel *
 // Set a key without a value and without an expiration, doing nothing if the
 // key already exists. The key index is not altered.
 func (ts *TreeStore) SetKey(sk StoreKey) (address StoreAddress, exists bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-	
 	kn, ll, created := ts.ensureKey(sk)
-	ll.lock.Unlock()
+	defer ts.completeKeyNodeWrite(ll)
 
 	address = kn.address
 	exists = !created
@@ -473,9 +486,6 @@ func (ts *TreeStore) SetKey(sk StoreKey) (address StoreAddress, exists bool) {
 // Set a key with a value, without an expiration, adding to value history if the
 // key already exists.
 func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, firstValue bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	newLeaf := &leaf{
 		value: value,
 	}
@@ -483,7 +493,7 @@ func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 	now := currentTickBytes()
 
 	kn, ll, created := ts.ensureKeyWithValue(sk)
-	defer ll.lock.Unlock()
+	defer ts.completeKeyNodeWrite(ll)
 
 	if kn.history == nil {
 		kn.history = NewAvlTree()
@@ -514,9 +524,6 @@ func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 // A non-nil `relationships` will replace the relationships of the key node. An empty array
 // removes all relationships. Specify nil to retain the current key relationships.
 func (ts *TreeStore) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, expireNs int64, relationships []StoreAddress) (address StoreAddress, exists bool, originalValue any) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	loc := ts.locateKeyNodeForWrite(sk)
 
 	var kn *keyNode
@@ -531,19 +538,19 @@ func (ts *TreeStore) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 		kn = loc.kn
 		ll = loc.level
 		if (flags & SetExMustNotExist) != 0 {
-			ll.lock.Unlock()
+			ts.completeKeyNodeWrite(ll)
 			return
 		}
 	} else {
 		if (flags & SetExMustExist) != 0 {
-			loc.level.lock.Unlock()
+			ts.completeKeyNodeWrite(loc.level)
 			return
 		}	
 
 		kn, ll = ts.createRestOfKey(sk, loc)
 	}
 
-	defer ll.lock.Unlock()
+	defer ts.completeKeyNodeWrite(ll)
 
 	if (flags&SetExNoValueUpdate) == 0 || relationships != nil {
 		newLeaf := &leaf{
@@ -585,14 +592,11 @@ func (ts *TreeStore) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 
 // Looks up the key in the index and returns true if it exists and has value history.
 func (ts *TreeStore) IsKeyIndexed(sk StoreKey) (address StoreAddress, exists bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	kn, ll := ts.getKeyNodeForValueRead(sk)
 	exists = (kn != nil)
 	if exists {
 		address = kn.address
-		ll.lock.RUnlock()
+		ts.completeKeyNodeRead(ll)
 	}
 	return
 }
@@ -601,11 +605,8 @@ func (ts *TreeStore) IsKeyIndexed(sk StoreKey) (address StoreAddress, exists boo
 // the key path is indexed. This avoids putting a lock on the index, but will lock
 // tree levels while walking the tree.
 func (ts *TreeStore) LocateKey(sk StoreKey) (address StoreAddress, exists bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	loc := ts.locateKeyNodeForRead(sk)
-	loc.level.lock.RUnlock()
+	defer ts.completeKeyNodeRead(loc.level)
 	exists = (loc.index >= len(sk.tokens))
 	if exists {
 		if loc.kn.isExpired() {
@@ -620,12 +621,12 @@ func (ts *TreeStore) LocateKey(sk StoreKey) (address StoreAddress, exists bool) 
 // Navigates to the leaf key node and returns the expiration time in Unix nanoseconds, or
 // -1 if the key path does not exist.
 func (ts *TreeStore) GetKeyTtl(sk StoreKey) (ttl int64) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
+	if len(sk.tokens) == 0 {
+		return
+	}
 
 	loc := ts.locateKeyNodeForRead(sk)
-	loc.level.lock.RUnlock()
-
+	defer ts.completeKeyNodeRead(loc.level)
 	if loc.index >= len(sk.tokens) {
 		ttl = loc.kn.expiration
 	} else {
@@ -637,24 +638,27 @@ func (ts *TreeStore) GetKeyTtl(sk StoreKey) (ttl int64) {
 // Navigates to the leaf key node and sets the expiration time in Unix nanoseconds.
 // Specify 0 for no expiration.
 func (ts *TreeStore) SetKeyTtl(sk StoreKey, expiration int64) (exists bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
+
+	if len(sk.tokens) == 0 {
+		exists = true
+		return
+	}
 
 	loc := ts.locateKeyNodeForWrite(sk)
+	defer ts.completeKeyNodeWrite(loc.level)
+
 	if loc.index >= len(sk.tokens) {
-		loc.kn.expiration = expiration
+		if expiration >= 0 {
+			loc.kn.expiration = expiration
+		}
 		exists = true
 	}
-	loc.level.lock.Unlock()
 	return
 }
 
 // Looks up the key in the index and returns the current value and flags
 // that indicate if the key was set, and if so, if it has a value.
 func (ts *TreeStore) GetKeyValue(sk StoreKey) (value any, keyExists, valueExists bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	kn, ll := ts.getKeyNodeForValueRead(sk)
 	if kn != nil {
 		keyExists = true
@@ -662,7 +666,7 @@ func (ts *TreeStore) GetKeyValue(sk StoreKey) (value any, keyExists, valueExists
 			valueExists = true
 			value = kn.current.value
 		}
-		ll.lock.RUnlock()
+		ts.completeKeyNodeRead(ll)
 	}
 	return
 }
@@ -670,13 +674,10 @@ func (ts *TreeStore) GetKeyValue(sk StoreKey) (value any, keyExists, valueExists
 // Looks up the key and returns the expiration time in Unix nanoseconds, or
 // -1 if the key value does not exist.
 func (ts *TreeStore) GetKeyValueTtl(sk StoreKey) (ttl int64) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	kn, ll := ts.getKeyNodeForValueRead(sk)
 	if kn != nil {
 		ttl = kn.expiration
-		ll.lock.RUnlock()
+		ts.completeKeyNodeRead(ll)
 	} else {
 		ttl = -1
 	}
@@ -686,36 +687,37 @@ func (ts *TreeStore) GetKeyValueTtl(sk StoreKey) (ttl int64) {
 // Looks up the key and sets the expiration time in Unix nanoseconds. Specify
 // 0 to clear the expiration.
 func (ts *TreeStore) SetKeyValueTtl(sk StoreKey, expiration int64) (exists bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	kn, ll := ts.getKeyNodeForWrite(sk)
 	if kn != nil {
-		kn.expiration = expiration
-		ll.lock.Unlock()
+		if expiration >= 0 {
+			kn.expiration = expiration
+		}
+		ts.completeKeyNodeWrite(ll)
 		exists = true
-	} else if ll != nil {
-		ll.lock.Unlock()
 	}
 	return
 }
 
 // Looks up the key in the index and scans history for the specified Unix ns tick,
 // returning the value at that moment in time, if one exists.
+//
+// To specify a relative time, specify `tickNs` as the negative ns from the current
+// time, e.g., -1000000000 is one second ago.
 func (ts *TreeStore) GetKeyValueAtTime(sk StoreKey, tickNs int64) (value any, exists bool) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	kn, ll := ts.getKeyNodeForValueRead(sk)
 	if kn != nil {
-		if kn.history != nil {
-			item := kn.history.FindLeft(sk.tokens[len(sk.tokens)-1])
+		if tickNs < 0 {
+			tickNs = time.Now().UTC().UnixNano() + tickNs
+		}
+		if kn.history != nil && tickNs >= 0 {
+			item := kn.history.FindLeft(tickBytes(tickNs))
 			if item != nil {
-				value = item.value
+				l := item.value.(*leaf)
+				value = l.value
 				exists = true
 			}
 		}
-		ll.lock.RUnlock()
+		ts.completeKeyNodeRead(ll)
 	}
 
 	return
@@ -724,12 +726,14 @@ func (ts *TreeStore) GetKeyValueAtTime(sk StoreKey, tickNs int64) (value any, ex
 // Deletes an indexed key that has a value, including its value history, and its metadata.
 // Specify `clean` as `true` to delete parent key nodes that become empty, or `false` to only
 // remove the leaf key node.
+//
+// Returns `removed` == true if the value was deleted.
+//
+// The leaf key will still exist if it has children or if it is the sentinel key node.
 func (ts *TreeStore) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, originalValue any) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
 	if len(sk.tokens) == 0 {
 		ts.dbNode.ownerTree.lock.Lock()
+		atomic.AddInt32(&ts.activeLocks, 1)
 		if ts.dbNode.current != nil {
 			originalValue = ts.dbNode.current.value
 			removed = true
@@ -739,6 +743,7 @@ func (ts *TreeStore) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 		ts.dbNode.metadata = nil
 		ts.removeKeyFromIndex(sk)
 		ts.dbNode.ownerTree.lock.Unlock()
+		atomic.AddInt32(&ts.activeLocks, -1)
 		return
 	}
 
@@ -811,15 +816,21 @@ func (ts *TreeStore) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 	return
 }
 
-// Deletes a key that has a value, including its value history, and its metadata.
-// The parent key is not altered. `removed` will be returned `true` only when the
-// leaf key node is deleted. All key nodes along the store key path will be locked
-// during the operation, so delete effectively takes a lock on the whole database.
-func (ts *TreeStore) DeleteKey(sk StoreKey) (removed bool, originalValue any) {
-	atomic.AddInt32(&ts.activeRequests, 1)
-	defer atomic.AddInt32(&ts.activeRequests, -1)
-
+// Deletes a key value, including its value history, and its metadata - and the
+// leaf key node also if it does not have children.
+//
+// The parent key node is not altered.
+//
+// `keyRemoved` == `true` when the leaf key node is deleted.
+// `valueRemoved` == true if the key value is cleared.
+//
+// All key nodes along the store key path will be locked during the operation, so
+// this operation blocks subsequent operations until it completes.
+//
+// The sentinal (root) key node cannot be deleted; only its value can be cleared.
+func (ts *TreeStore) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any) {
 	if len(sk.tokens) == 0 {
+		valueRemoved, originalValue = ts.DeleteKeyWithValue(sk, true)
 		return
 	}
 
@@ -836,6 +847,7 @@ func (ts *TreeStore) DeleteKey(sk StoreKey) (removed bool, originalValue any) {
 
 	if kn != nil {
 		if ts.removeKeyFromIndex(sk) {
+			valueRemoved = true
 			if kn.current != nil {
 				originalValue = kn.current.value
 				kn.current = nil
@@ -859,7 +871,7 @@ func (ts *TreeStore) DeleteKey(sk StoreKey) (removed bool, originalValue any) {
 				}
 			}
 
-			removed = true
+			keyRemoved = true
 		}
 	}
 

@@ -191,3 +191,47 @@ func TestTokenSetWrappers(t *testing.T) {
 		t.Error("convenience split token set")
 	}
 }
+
+func TestIsPattern(t *testing.T) {
+	sample := "cat dog fox mouse cow"
+
+	if isPattern("", sample) {
+		t.Error("empty string matches nothing")
+	}
+
+	if isPattern("cat", sample) {
+		t.Error("partial match is not a match")
+	}
+
+	if !isPattern("*", sample) {
+		t.Error("wildcard matches all")
+	}
+
+	if !isPattern("**", sample) {
+		t.Error("extra wildcards match")
+	}
+
+	if !isPattern("cat*", sample) {
+		t.Error("wildcard prefix matches")
+	}
+
+	if !isPattern("*cat*", sample) {
+		t.Error("wildcard can match nothing")
+	}
+
+	if !isPattern("*cat dog fox mouse cow*", sample) {
+		t.Error("wildcard can match nothing 2")
+	}
+
+	if !isPattern("cat*cow", sample) {
+		t.Error("mid match")
+	}
+
+	if !isPattern("cat*ox*cow", sample) {
+		t.Error("mid match recursive with multiple matches")
+	}
+
+	if isPattern("cat*o*z*cow", sample) {
+		t.Error("mid match recursive with multiple mismatches")
+	}
+}

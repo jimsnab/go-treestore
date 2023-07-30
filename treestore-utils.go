@@ -135,6 +135,13 @@ func currentTickBytes() []byte {
 	return b
 }
 
+// Makes the byte array equivalent of the Unix ns tick
+func tickBytes(tick int64) []byte {
+	b := make([]byte, 8)
+	binary.BigEndian.PutUint64(b, uint64(tick))
+	return b
+}
+
 // Recovers Unix ns from a tick byte array
 func unixNsFromBytes(tick []byte) int64 {
 	return int64(binary.BigEndian.Uint64(tick))

@@ -338,3 +338,85 @@ func TestSetDbValue(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSetExNoValue(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey("test")
+
+	address, exists, orgVal := ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate, 0, nil)
+	if address == 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	verifyAddr, exists := ts.LocateKey(sk)
+	if address != verifyAddr || !exists {
+		t.Error("locate first set")
+	}
+
+	verifyAddr, exists = ts.IsKeyIndexed(sk)
+	if verifyAddr != 0 || exists {
+		t.Error("first set indexed")
+	}
+
+	address, exists, orgVal = ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate, 0, nil)
+	if address == 0 || !exists || orgVal != nil {
+		t.Error("set again")
+	}
+
+	verifyAddr, exists = ts.LocateKey(sk)
+	if address != verifyAddr || !exists {
+		t.Error("locate second set")
+	}
+
+	verifyAddr, exists = ts.IsKeyIndexed(sk)
+	if verifyAddr != 0 || exists {
+		t.Error("second set indexed")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSetRelationship(t *testing.T) {
+	ts := NewTreeStore()
+	sk1 := MakeStoreKey("pet", "cat")
+	sk2 := MakeStoreKey("sound", "meow")
+	sk3 := MakeStoreKey("color", "multi")
+
+	address2, exists := ts.SetKey(sk2)
+	if address2 == 0 || exists {
+		t.Error("first set")
+	}
+
+	address1, exists, orgVal := ts.SetKeyValueEx(sk1, nil, SetExNoValueUpdate, 0, []StoreAddress{address2})
+	if address1 == 0 || exists || orgVal != nil {
+		t.Error("second set")
+	}
+
+	// setting a relationship gives the key a value, even if nil
+	verifyVal, keyExists, valueExists := ts.GetKeyValue(sk1)
+	if verifyVal != nil || !keyExists || !valueExists {
+		t.Error("value verify")
+	}
+
+	address3, exists, orgVal := ts.SetKeyValueEx(sk3, "calico", 0, 0, []StoreAddress{address1})
+	if address3 == 0 || exists || orgVal != nil {
+		t.Error("third set")
+	}
+
+	sk4 := MakeStoreKey("sound", "roar")
+	address4, exists := ts.SetKey(sk4)
+	if address4 == 0 || exists {
+		t.Error("fourth set")
+	}
+
+	verifyAddr, exists, orgVal := ts.SetKeyValueEx(sk1, nil, SetExNoValueUpdate, 0, []StoreAddress{address4})
+	if verifyAddr != address1 || !exists || orgVal != nil {
+		t.Error("change relationship")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}

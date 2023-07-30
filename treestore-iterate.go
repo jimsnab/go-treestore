@@ -1,6 +1,9 @@
 package treestore
 
-import "bytes"
+import (
+	"bytes"
+	"sync/atomic"
+)
 
 type (
 	LevelKey struct {
@@ -23,6 +26,7 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 		loc.kn = ts.dbNode
 		loc.level = ts.dbNode.ownerTree
 		loc.level.lock.RLock()
+		atomic.AddInt32(&ts.activeLocks, 1)
 	} else {
 		loc = ts.locateKeyNodeForRead(sk)
 		if loc.level == nil {
@@ -30,10 +34,10 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 		}
 	}
 
-	lockedLevel := loc.level
+	lockedLevel := loc.level	
 
 	if loc.index < len(sk.tokens) {
-		lockedLevel.lock.RUnlock()
+		ts.completeKeyNodeRead(lockedLevel)
 		return
 	}
 
@@ -42,7 +46,7 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 	nextLockedLevel := loc.kn.nextLevel
 	if nextLockedLevel == nil {
 		// no children
-		lockedLevel.lock.RUnlock()
+		ts.completeKeyNodeRead(lockedLevel)
 		return
 	}
 
@@ -75,6 +79,6 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 		})
 	}
 
-	lockedLevel.lock.RUnlock()
+	ts.completeKeyNodeRead(lockedLevel)
 	return
 }

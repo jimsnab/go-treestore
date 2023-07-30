@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math/rand"
 	"sort"
+	"strings"
 	"testing"
 )
 
@@ -58,6 +59,19 @@ func TestIterateLevelRoot(t *testing.T) {
 	keys, count = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
 	if len(keys) != 3 || string(keys[0].segment) != "a" || string(keys[1].segment) != "b" || string(keys[2].segment) != "d" || count != 3 {
 		t.Error("three nodes")
+	}
+}
+
+func TestIterateLevelNoBase(t *testing.T) {
+	ts := NewTreeStore()
+
+	sk := MakeStoreKey("a", "b", "c")
+
+	ts.SetKey(sk)
+
+	keys, count := ts.GetLevelKeys(MakeStoreKey("d"), "*", 0, 100)
+	if keys != nil || count != 0 {
+		t.Error("no base match")
 	}
 }
 
@@ -300,5 +314,51 @@ func TestIterateLevelPages(t *testing.T) {
 				t.Errorf("page value %d", i + j)
 			}
 		}
+	}
+}
+
+func TestIterateLevelPattern(t *testing.T) {
+	ts := NewTreeStore()
+
+	taken := map[int]struct{}{}
+	values := make([]string, 0, 250)
+	for i := 0 ; i < 250 ; i++ {
+		for {
+			n := rand.Intn(10000)
+			_, exists := taken[n]
+			if !exists {
+				taken[n] = struct{}{}
+				text := fmt.Sprintf("%d", n)
+				sk := MakeStoreKey(text)
+				values = append(values, text)
+				ts.SetKey(sk)
+				break
+			}
+		}
+	}
+
+	sort.Strings(values)
+
+	root := MakeStoreKey()
+	keys, count := ts.GetLevelKeys(root, "", 0, 100)
+	if keys == nil || len(keys) != 0 || count != 250 {
+		t.Error("empty page")
+	}
+
+	keys, count = ts.GetLevelKeys(root, values[0], 0, 100)
+	if len(keys) != 1 || count != 250 {
+		t.Error("exact match")
+	}
+
+	ones := 0
+	for _,val := range values {
+		if strings.HasPrefix(val, "1") {
+			ones++
+		}
+	}
+
+	keys, count = ts.GetLevelKeys(root, "1*", 0, 250)	
+	if len(keys) != ones || count != 250 {
+		t.Error("match ones")
 	}
 }

@@ -361,6 +361,25 @@ func TestDeleteNull(t *testing.T) {
 	}
 }
 
+func TestDeleteDbSentinel(t *testing.T) {
+	ts := NewTreeStore()
+	sk1 := MakeStoreKey()
+
+	removed, val := ts.DeleteKeyWithValue(sk1, false)
+	if removed || val != nil {
+		t.Error("delete sentinel")
+	}
+
+	removed, val = ts.DeleteKeyWithValue(sk1, true)
+	if removed || val != nil {
+		t.Error("delete sentinel clean")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
 func TestDeleteNullPopulated(t *testing.T) {
 	ts := NewTreeStore()
 	sk1 := MakeStoreKey("")
@@ -399,33 +418,33 @@ func TestDeleteRoot(t *testing.T) {
 	ts.SetKeyValue(b, 100)
 	ts.SetKey(c)
 
-	removed, val := ts.DeleteKey(a)
-	if !removed || val != nil {
+	keyRemoved, valueRemoved, val := ts.DeleteKey(a)
+	if !keyRemoved || valueRemoved || val != nil {
 		t.Error("delete a")
 	}
 
-	removed, val = ts.DeleteKey(a)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(a)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete a twice")
 	}
 
-	removed, val = ts.DeleteKey(b)
-	if !removed || val != 100 {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(b)
+	if !keyRemoved || !valueRemoved || val != 100 {
 		t.Error("delete b")
 	}
 
-	removed, val = ts.DeleteKey(b)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(b)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete b twice")
 	}
 
-	removed, val = ts.DeleteKey(c)
-	if !removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(c)
+	if !keyRemoved || valueRemoved || val != nil {
 		t.Error("delete c")
 	}
 
-	removed, val = ts.DeleteKey(c)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(c)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete c twice")
 	}
 
@@ -445,33 +464,33 @@ func TestDeleteSecondLevel(t *testing.T) {
 	ts.SetKeyValue(b, 100)
 	ts.SetKey(c)
 
-	removed, val := ts.DeleteKey(a)
-	if !removed || val != nil {
+	keyRemoved, valueRemoved, val := ts.DeleteKey(a)
+	if !keyRemoved || valueRemoved || val != nil {
 		t.Error("delete a")
 	}
 
-	removed, val = ts.DeleteKey(a)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(a)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete a twice")
 	}
 
-	removed, val = ts.DeleteKey(b)
-	if !removed || val != 100 {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(b)
+	if !keyRemoved || !valueRemoved || val != 100 {
 		t.Error("delete b")
 	}
 
-	removed, val = ts.DeleteKey(b)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(b)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete b twice")
 	}
 
-	removed, val = ts.DeleteKey(c)
-	if !removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(c)
+	if !keyRemoved || valueRemoved || val != nil {
 		t.Error("delete c")
 	}
 
-	removed, val = ts.DeleteKey(c)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(c)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete c twice")
 	}
 
@@ -497,33 +516,33 @@ func TestDeleteSecondLevelWithChildren(t *testing.T) {
 	ts.SetKey(childB)
 	ts.SetKey(childC)
 
-	removed, val := ts.DeleteKey(a)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val := ts.DeleteKey(a)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete a")
 	}
 
-	removed, val = ts.DeleteKey(a)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(a)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete a twice")
 	}
 
-	removed, val = ts.DeleteKey(b)
-	if removed || val != 100 {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(b)
+	if keyRemoved || !valueRemoved || val != 100 {
 		t.Error("delete b")
 	}
 
-	removed, val = ts.DeleteKey(b)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(b)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete b twice")
 	}
 
-	removed, val = ts.DeleteKey(c)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(c)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete c")
 	}
 
-	removed, val = ts.DeleteKey(c)
-	if removed || val != nil {
+	keyRemoved, valueRemoved, val = ts.DeleteKey(c)
+	if keyRemoved || valueRemoved || val != nil {
 		t.Error("delete c twice")
 	}
 
@@ -549,7 +568,7 @@ func TestDeleteRootWithValue(t *testing.T) {
 	}
 
 	removed, val = ts.DeleteKeyWithValue(b, false)
-	if !removed || val != 100 {
+	if !removed|| val != 100 {
 		t.Error("delete b")
 	}
 
@@ -817,3 +836,103 @@ func TestDeleteDbValueEmpty(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestDeleteKeyCleanToGrandparent(t *testing.T) {
+	ts := NewTreeStore()
+	sk1 := MakeStoreKey("test", "data")
+	sk2 := MakeStoreKey("test", "data", "cat", "dog")
+
+	address, isFirst := ts.SetKeyValue(sk1, 100)
+	if address == 0 || !isFirst {
+		t.Error("first set")
+	}
+
+	address2, isFirst := ts.SetKeyValue(sk2, 200)
+	if address2 == 0 || !isFirst {
+		t.Error("second set")
+	}
+
+	removed, val := ts.DeleteKeyWithValue(sk2, true)
+	if !removed || val != 200 {
+		t.Error("delete")
+	}
+
+	verifyAddr, exists := ts.LocateKey(sk1)
+	if verifyAddr != address || !exists {
+		t.Error("must exist")
+	}
+
+	sk3 := MakeStoreKey("test", "data", "cat")
+	_, exists = ts.LocateKey(sk3)
+	if exists {
+		t.Error("must be cleaned")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestDeleteSentinel(t *testing.T) {
+	ts := NewTreeStore()
+	sk := MakeStoreKey()
+
+	keyRemoved, valueRemoved, orgVal := ts.DeleteKey(sk)
+	if keyRemoved || valueRemoved || orgVal != nil {
+		t.Error("empty sentinel")
+	}
+
+	verifyAddr, exists := ts.LocateKey(sk)
+	if verifyAddr != 1 || !exists {
+		t.Error("sentinel must exist")
+	}
+
+	removed, val := ts.DeleteKeyWithValue(sk, true)
+	if removed || val != nil {
+		t.Error("delete sentinel value")
+	}
+
+	verifyAddr, exists = ts.LocateKey(sk)
+	if verifyAddr != 1 || !exists {
+		t.Error("sentinel must still exist")
+	}
+
+	ts.SetKeyValue(sk, 123)
+
+	keyRemoved, valueRemoved, orgVal = ts.DeleteKey(sk)
+	if keyRemoved || !valueRemoved || orgVal != 123 {
+		t.Error("sentinel key delete with value")
+	}
+
+	verifyAddr, exists = ts.LocateKey(sk)
+	if verifyAddr != 1 || !exists {
+		t.Error("sentinel key must exist")
+	}
+
+	verifyVal, keyExists, valExists := ts.GetKeyValue(sk)
+	if verifyVal != nil || !keyExists || valExists {
+		t.Error("sentinel key must not have value")
+	}
+
+	ts.SetKeyValue(sk, 456)
+
+	removed, orgVal = ts.DeleteKeyWithValue(sk, true)
+	if !removed || orgVal != 456 {
+		t.Error("delete sentinel value 456")
+	}
+
+	verifyAddr, exists = ts.LocateKey(sk)
+	if verifyAddr != 1 || !exists {
+		t.Error("sentinel must still exist after 456 delete")
+	}
+
+	verifyVal, keyExists, valExists = ts.GetKeyValue(sk)
+	if verifyVal != nil || !keyExists || valExists {
+		t.Error("sentinel key must not have value after 456 delete")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+

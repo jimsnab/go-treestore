@@ -233,12 +233,12 @@ func TestExpireKeyValueShort(t *testing.T) {
 
 	ttl = ts.GetKeyTtl(sk)
 	if ttl != expireNs {
-		t.Error("ttl")
+		t.Error("get ttl")
 	}
 
 	ttl = ts.GetKeyValueTtl(sk)
 	if ttl != -1 {
-		t.Error("ttl value")
+		t.Error("get ttl value")
 	}
 
 	addr, exists = ts.LocateKey(sk)
@@ -251,7 +251,45 @@ func TestExpireKeyValueShort(t *testing.T) {
 		t.Error("index expired")
 	}
 
+	value, keyExists, valueExists := ts.GetKeyValue(sk)
+	if value != nil || keyExists || valueExists {
+		t.Error("get value expired")
+	}
+
+	exists = ts.SetKeyValueTtl(sk, 1)
+	if exists {
+		t.Error("set ttl")
+	}
+
 	if !ts.DiagDump() {
 		t.Error("final diag dump")
+	}
+}
+
+func TestExpireSetTtlNoOp(t *testing.T) {
+	ts := NewTreeStore()
+
+	sk := MakeStoreKey("test")
+	
+	ts.SetKey(sk)
+
+	exists := ts.SetKeyTtl(sk, -1)
+	if !exists {
+		t.Error("set negative ttl")
+	}
+
+	ttl := ts.GetKeyTtl(sk)
+	if ttl != 0 {
+		t.Error("verify no ttl change")
+	}
+
+	exists = ts.SetKeyTtl(MakeStoreKey(), 10)
+	if !exists {
+		t.Error("set sentinel ttl ignored")
+	}
+
+	ttl = ts.GetKeyTtl(MakeStoreKey())
+	if ttl != 0 {
+		t.Error("verify no sentinel ttl")
 	}
 }
