@@ -4,10 +4,13 @@ import (
 	"sync"
 	"sync/atomic"
 	"time"
+
+	"github.com/jimsnab/go-lane"
 )
 
 type (
 	TreeStore struct {
+		l           lane.Lane
 		dbNode      *keyNode
 		nextAddress StoreAddress
 		addresses   map[StoreAddress]*keyNode
@@ -71,7 +74,7 @@ const (
 	SetExNoValueUpdate
 )
 
-func NewTreeStore() *TreeStore {
+func NewTreeStore(l lane.Lane) *TreeStore {
 	kn := &keyNode{
 		address:   1,
 		ownerTree: newKeyTree(nil),
@@ -79,6 +82,7 @@ func NewTreeStore() *TreeStore {
 	kn.ownerTree.tree.Set([]byte{}, kn)
 
 	return &TreeStore{
+		l: l,
 		dbNode:      kn,
 		nextAddress: 1,
 		addresses:   map[StoreAddress]*keyNode{1: kn},

@@ -1,12 +1,15 @@
 package treestore
 
 import (
+	"context"
 	"testing"
 	"time"
+
+	"github.com/jimsnab/go-lane"
 )
 
 func TestGetHistory(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
@@ -47,7 +50,7 @@ func TestGetHistory(t *testing.T) {
 }
 
 func TestGetHistorySentinel(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey()
 

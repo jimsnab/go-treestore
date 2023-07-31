@@ -1,9 +1,14 @@
 package treestore
 
-import "testing"
+import (
+	"context"
+	"testing"
+
+	"github.com/jimsnab/go-lane"
+)
 
 func TestSetKeyValueOne(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	sk := MakeStoreKey("test")
 
 	address, isFirst := ts.SetKeyValue(sk, 10)
@@ -42,7 +47,7 @@ func TestSetKeyValueOne(t *testing.T) {
 }
 
 func TestSetKeyValueOneTwoLevels(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	sk := MakeStoreKey("test", "abc")
 
 	address, isFirst := ts.SetKeyValue(sk, 10)
@@ -81,7 +86,7 @@ func TestSetKeyValueOneTwoLevels(t *testing.T) {
 }
 
 func TestSetKeyValueOneThreeLevels(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	sk := MakeStoreKey("test", "abc", "def")
 
 	address, isFirst := ts.SetKeyValue(sk, 10)
@@ -120,7 +125,7 @@ func TestSetKeyValueOneThreeLevels(t *testing.T) {
 }
 
 func TestSetKeyValueTwoTwoLevels(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	sk1 := MakeStoreKey("test")
 	sk2 := MakeStoreKey("test", "abc")
 
@@ -170,7 +175,7 @@ func TestSetKeyValueTwoTwoLevels(t *testing.T) {
 }
 
 func TestSetKeyValueTwoTwoLevelsFlip(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	sk1 := MakeStoreKey("test", "abc")
 	sk2 := MakeStoreKey("test")
 

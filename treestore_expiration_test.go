@@ -1,12 +1,15 @@
 package treestore
 
 import (
+	"context"
 	"testing"
 	"time"
+
+	"github.com/jimsnab/go-lane"
 )
 
 func TestExpireKeyLong(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
@@ -43,7 +46,7 @@ func TestExpireKeyLong(t *testing.T) {
 }
 
 func TestExpireKeyValueLong(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
@@ -70,7 +73,7 @@ func TestExpireKeyValueLong(t *testing.T) {
 }
 
 func TestSetKeyExpireLong(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
@@ -114,7 +117,7 @@ func TestSetKeyExpireLong(t *testing.T) {
 }
 
 func TestSetKeyValueExpireLong(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
@@ -168,7 +171,7 @@ func TestSetKeyValueExpireLong(t *testing.T) {
 }
 
 func TestExpireKeyShort(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
@@ -210,7 +213,7 @@ func TestExpireKeyShort(t *testing.T) {
 }
 
 func TestExpireKeyValueShort(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
@@ -267,7 +270,7 @@ func TestExpireKeyValueShort(t *testing.T) {
 }
 
 func TestExpireSetTtlNoOp(t *testing.T) {
-	ts := NewTreeStore()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
 	sk := MakeStoreKey("test")
 
