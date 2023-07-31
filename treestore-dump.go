@@ -79,7 +79,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		if kn == nil {
 			tsd.errors = append(tsd.errors, "unexpected key node type")
 			return true
-		}		
+		}
 
 		sk := &StoreKey{
 			tokens: baseSk.tokens,

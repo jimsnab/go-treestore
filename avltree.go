@@ -600,8 +600,8 @@ func (tree *AvlTree) isValid() bool {
 }
 
 // iterates the AVL tree in sorted order
-func (tree *AvlTree) Iterate(iter AvlIterator) {
-	tree.root.iterateNext(iter)
+func (tree *AvlTree) Iterate(iter AvlIterator) bool {
+	return tree.root.iterateNext(iter)
 }
 
 func (node *AvlNode) iterateNext(iter AvlIterator) bool {

@@ -568,7 +568,7 @@ func TestDeleteRootWithValue(t *testing.T) {
 	}
 
 	removed, val = ts.DeleteKeyWithValue(b, false)
-	if !removed|| val != 100 {
+	if !removed || val != 100 {
 		t.Error("delete b")
 	}
 
@@ -935,4 +935,3 @@ func TestDeleteSentinel(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
-

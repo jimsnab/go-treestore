@@ -2,16 +2,35 @@ package treestore
 
 import (
 	"bytes"
+	"strings"
 	"sync/atomic"
 )
 
 type (
 	LevelKey struct {
-		segment TokenSegment
-		hasValue bool
+		segment     TokenSegment
+		hasValue    bool
 		hasChildren bool
-
 	}
+
+	KeyMatch struct {
+		sk            StoreKey
+		metadata      map[string]string
+		hasValue      bool
+		hasChildren   bool
+		currentValue  any
+		relationships []StoreAddress
+	}
+
+	KeyValueMatch struct {
+		sk            StoreKey
+		metadata      map[string]string
+		hasChildren   bool
+		currentValue  any
+		relationships []StoreAddress
+	}
+
+	iterateFullCallback func(km *KeyMatch) bool
 )
 
 // Navigates to the specified store key and returns all of the key segments
@@ -29,12 +48,9 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 		atomic.AddInt32(&ts.activeLocks, 1)
 	} else {
 		loc = ts.locateKeyNodeForRead(sk)
-		if loc.level == nil {
-			return
-		}
 	}
 
-	lockedLevel := loc.level	
+	lockedLevel := loc.level
 
 	if loc.index < len(sk.tokens) {
 		ts.completeKeyNodeRead(lockedLevel)
@@ -64,8 +80,8 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 				if n >= startAt {
 					kn := node.value.(*keyNode)
 					lk := LevelKey{
-						segment: node.key,
-						hasValue: kn.current != nil,
+						segment:     node.key,
+						hasValue:    kn.current != nil,
 						hasChildren: kn.nextLevel != nil,
 					}
 					keys = append(keys, lk)
@@ -80,5 +96,280 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 	}
 
 	ts.completeKeyNodeRead(lockedLevel)
+	return
+}
+
+// worker that calls the full iterator callback
+func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyNode, callback iterateFullCallback) (stopped bool) {
+	km := KeyMatch{
+		sk:          MakeStoreKeyFromTokenSegments(segments...),
+		hasValue:    kn.current != nil,
+		hasChildren: kn.nextLevel != nil,
+	}
+	if kn.metadata != nil {
+		km.metadata = kn.metadata.metadata
+	}
+	if kn.current != nil {
+		km.currentValue = kn.current.value
+		km.relationships = kn.current.relationships
+	}
+
+	stopped = !callback(&km)
+	return
+}
+
+// worker that tests for a multi-level pattern match
+func (ts *TreeStore) iterateFullWorkerIsMatch(patternSegs []TokenSegment, candidate []TokenSegment) bool {
+	cpos := 0
+	ppos := 0
+
+	patStr := string(patternSegs[ppos])
+
+	for {
+		if ppos+2 <= len(patternSegs) && patStr == "**" && string(patternSegs[ppos+1]) == "**" {
+			ppos++
+			patStr = string(patternSegs[ppos])
+		} else {
+			break
+		}
+	}
+
+	for {
+		if ppos >= len(patternSegs) {
+			break
+		}
+		if cpos >= len(candidate) {
+			break
+		}
+
+		patStr = string(patternSegs[ppos])
+		if patStr == "**" {
+			if ppos+1 >= len(patternSegs) {
+				return true
+			}
+			for {
+				if ts.iterateFullWorkerIsMatch(patternSegs[ppos+1:], candidate[cpos:]) {
+					return true
+				}
+				cpos++
+				if cpos >= len(candidate) {
+					return false
+				}
+			}
+		} else if !isPattern(string(patternSegs[ppos]), string(candidate[cpos])) {
+			return false
+		}
+
+		ppos++
+		cpos++
+	}
+
+	if ppos == len(patternSegs)-1 && patStr == "**" {
+		return true
+	}
+
+	return (ppos == len(patternSegs) && cpos == len(candidate))
+}
+
+// worker that iterates through the tree store, calling the callback for each key
+// that matches the pattern segment(s)
+func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex int, segments []TokenSegment, nextLevel *keyTree, callback iterateFullCallback) (stopped bool) {
+
+	var lockedLevel *keyTree
+	if nextLevel == nil {
+		return
+	}
+
+	lockedLevel = nextLevel
+	lockedLevel.lock.RLock()
+	atomic.AddInt32(&ts.activeLocks, 1)
+
+	for {
+		seg := patternSegs[patternIndex]
+		segstr := string(seg)
+		if !strings.Contains(segstr, "*") {
+			// no wildcard
+			avlNode := lockedLevel.tree.Find(seg)
+			if avlNode == nil {
+				break
+			}
+
+			segments = append(segments, seg)
+			kn := avlNode.value.(*keyNode)
+
+			patternIndex++
+			if patternIndex >= len(patternSegs) {
+				// leaf match
+				stopped = ts.iterateFullInvokeCallback(segments, kn, callback)
+				break
+			}
+
+			// test next level
+			nextLevel = kn.nextLevel
+			if nextLevel == nil {
+				break
+			}
+			nextLevel.lock.RLock()
+			lockedLevel.lock.RUnlock()
+			lockedLevel = nextLevel
+		} else if segstr == "**" {
+			// multi-level pattern iteration
+			all := lockedLevel.tree.Iterate(func(node *AvlNode) bool {
+				subSegments := append(segments, node.key)
+				kn := node.value.(*keyNode)
+
+				if ts.iterateFullWorkerIsMatch(patternSegs, subSegments) {
+					if ts.iterateFullInvokeCallback(subSegments, kn, callback) {
+						return false
+					}
+				}
+
+				// N.B., the patternIndex is not advanced - which causes the entire subtree to be examined.
+				// This could be optimized.
+				if ts.iterateFullWorker(patternSegs, patternIndex, subSegments, kn.nextLevel, callback) {
+					return false
+				}
+
+				return true
+			})
+			stopped = !all
+			break
+		} else {
+			// single-level pattern iteration
+			nextPatternIndex := patternIndex + 1
+			end := nextPatternIndex >= len(patternSegs)
+
+			all := lockedLevel.tree.Iterate(func(node *AvlNode) bool {
+				subSegments := append(segments, node.key)
+				kn := node.value.(*keyNode)
+
+				if ts.iterateFullWorkerIsMatch(patternSegs, subSegments) {
+					if ts.iterateFullInvokeCallback(subSegments, kn, callback) {
+						return false
+					}
+				}
+
+				if !end {
+					if ts.iterateFullWorker(patternSegs, nextPatternIndex, subSegments, kn.nextLevel, callback) {
+						return false
+					}
+				}
+				return true
+			})
+
+			stopped = !all
+			break
+		}
+	}
+
+	lockedLevel.lock.RUnlock()
+	atomic.AddInt32(&ts.activeLocks, -1)
+	return
+}
+
+func (ts *TreeStore) iterateFull(skPattern StoreKey, callback iterateFullCallback) {
+	segments := make([]TokenSegment, 0, len(skPattern.tokens))
+	nextLevel := ts.dbNode.nextLevel
+
+	ts.iterateFullWorker(skPattern.tokens, 0, segments, nextLevel, callback)
+}
+
+// Full iteration function walks each tree store level according to skPattern and returns every
+// detail of matching keys.
+func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (keys []*KeyMatch) {
+	keys = []*KeyMatch{}
+
+	if limit == 0 {
+		return
+	}
+
+	if len(skPattern.tokens) == 0 {
+		// sentinel special case
+		ts.dbNode.ownerTree.lock.RLock()
+		atomic.AddInt32(&ts.activeLocks, 1)
+		defer func() {
+			ts.dbNode.ownerTree.lock.RUnlock()
+			atomic.AddInt32(&ts.activeLocks, -1)
+		}()
+
+		ts.iterateFullInvokeCallback(skPattern.tokens, ts.dbNode, func(km *KeyMatch) bool {
+			keys = append(keys, km)
+			return true
+		})
+
+		return
+	}
+
+	n := 0
+	ts.iterateFull(skPattern, func(km *KeyMatch) bool {
+		if n >= startAt {
+			keys = append(keys, km)
+			if len(keys) >= limit {
+				return false
+			}
+		}
+		n++
+		return true
+	})
+
+	return
+}
+
+// Full iteration function walks each tree store level according to skPattern and returns every
+// detail of matching keys that have values.
+func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int) (values []*KeyValueMatch) {
+	values = []*KeyValueMatch{}
+
+	if limit == 0 {
+		return
+	}
+
+	if len(skPattern.tokens) == 0 {
+		// sentinel special case
+		ts.dbNode.ownerTree.lock.RLock()
+		atomic.AddInt32(&ts.activeLocks, 1)
+		defer func() {
+			ts.dbNode.ownerTree.lock.RUnlock()
+			atomic.AddInt32(&ts.activeLocks, -1)
+		}()
+
+		ts.iterateFullInvokeCallback(skPattern.tokens, ts.dbNode, func(km *KeyMatch) bool {
+			if km.hasValue {
+				kvm := &KeyValueMatch{
+					sk:            km.sk,
+					metadata:      km.metadata,
+					hasChildren:   km.hasChildren,
+					currentValue:  km.currentValue,
+					relationships: km.relationships,
+				}
+				values = append(values, kvm)
+			}
+			return true
+		})
+
+		return
+	}
+
+	n := 0
+	ts.iterateFull(skPattern, func(km *KeyMatch) bool {
+		if km.hasValue {
+			if n >= startAt {
+				kvm := &KeyValueMatch{
+					sk:            km.sk,
+					metadata:      km.metadata,
+					hasChildren:   km.hasChildren,
+					currentValue:  km.currentValue,
+					relationships: km.relationships,
+				}
+				values = append(values, kvm)
+				if len(values) >= limit {
+					return false
+				}
+			}
+			n++
+		}
+		return true
+	})
+
 	return
 }

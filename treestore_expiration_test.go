@@ -270,7 +270,7 @@ func TestExpireSetTtlNoOp(t *testing.T) {
 	ts := NewTreeStore()
 
 	sk := MakeStoreKey("test")
-	
+
 	ts.SetKey(sk)
 
 	exists := ts.SetKeyTtl(sk, -1)

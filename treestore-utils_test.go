@@ -234,4 +234,12 @@ func TestIsPattern(t *testing.T) {
 	if isPattern("cat*o*z*cow", sample) {
 		t.Error("mid match recursive with multiple mismatches")
 	}
+
+	if !isPattern("cat dog fox mouse cow", sample) {
+		t.Error("exact match")
+	}
+
+	if isPattern("cat dog fox mouse cows", sample) {
+		t.Error("exact match plus extra is mismatch")
+	}
 }

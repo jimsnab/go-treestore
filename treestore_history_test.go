@@ -15,7 +15,7 @@ func TestGetHistory(t *testing.T) {
 	after1 := time.Now().UTC().UnixNano()
 	ts.SetKeyValue(sk, 2)
 	ts.SetKeyValue(sk, 3)
-	
+
 	val, exists := ts.GetKeyValueAtTime(sk, before)
 	if val != nil || exists {
 		t.Error("value before set")
@@ -56,7 +56,7 @@ func TestGetHistorySentinel(t *testing.T) {
 	ts.SetKeyValue(sk, 2)
 	after2 := time.Now().UTC().UnixNano()
 	ts.SetKeyValue(sk, 3)
-	
+
 	val, exists := ts.GetKeyValueAtTime(sk, before)
 	if val != nil || exists {
 		t.Error("value before set")
