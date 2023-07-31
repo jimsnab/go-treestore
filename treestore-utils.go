@@ -121,6 +121,17 @@ func MakeStoreKey(parts ...string) StoreKey {
 }
 
 // Makes the structure needed to interact with the TreeStore from token segments
+func MakeStoreKeyFromPath(tokenPath TokenPath) StoreKey {
+	tokenSet := TokenPathToTokenSet(tokenPath)
+	sk := StoreKey{
+		tokens: tokenSet,
+		path: TokenSetToTokenPath(tokenSet),
+	}
+
+	return sk
+}
+
+// Makes the structure needed to interact with the TreeStore from token segments
 func MakeStoreKeyFromTokenSegments(segments ...TokenSegment) StoreKey {
 	sk := StoreKey{}
 	sk.tokens = make(TokenSet, 0, len(segments))

@@ -190,6 +190,24 @@ func TestTokenSetWrappers(t *testing.T) {
 	if parts == nil || len(parts) != 3 || parts[0] != "cow" || parts[1] != "mouse" || parts[2] != "pig" {
 		t.Error("convenience split token set")
 	}
+
+	sk2 := MakeStoreKeyFromPath("/cow/mouse/pig")
+	if sk2.path != "/cow/mouse/pig" {
+		t.Error("convenience make sk from path")
+	}
+	ts = sk2.tokens
+	if ts == nil || len(ts) != 3 || !bytes.Equal(ts[0], []byte("cow")) || !bytes.Equal(ts[1], []byte("mouse")) || !bytes.Equal(ts[2], []byte("pig")) {
+		t.Error("convenience make token set from path")
+	}
+
+	sk3 := MakeStoreKeyFromTokenSegments(ts...)
+	if sk3.path != "/cow/mouse/pig" {
+		t.Error("convenience make sk from token segments")
+	}
+	ts = sk3.tokens
+	if ts == nil || len(ts) != 3 || !bytes.Equal(ts[0], []byte("cow")) || !bytes.Equal(ts[1], []byte("mouse")) || !bytes.Equal(ts[2], []byte("pig")) {
+		t.Error("convenience make token set from segments")
+	}
 }
 
 func TestIsPattern(t *testing.T) {
