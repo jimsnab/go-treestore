@@ -28,7 +28,7 @@ func (ts *TreeStore) DiagDump() bool {
 		errors:    []string{},
 	}
 
-	al := ts.activeLocks
+	al := ts.activeLocks.Load()
 	if al != 0 {
 		treeStoreDump.errors = append(treeStoreDump.errors, fmt.Sprintf("%d active locks != 0", al))
 	}
@@ -74,17 +74,13 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		tsd.errors = append(tsd.errors, "parent linkage error")
 	}
 
-	level.tree.Iterate(func(node *AvlNode) bool {
-		kn, _ := node.value.(*keyNode)
-		if kn == nil {
-			tsd.errors = append(tsd.errors, "unexpected key node type")
-			return true
-		}
+	level.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
+		kn := node.value
 
 		sk := &StoreKey{
 			tokens: baseSk.tokens,
 		}
-		if node.value != tsd.ts.dbNode {
+		if node.value != &tsd.ts.dbNode {
 			sk.tokens = append(sk.tokens, node.key)
 		}
 		sk.path = TokenSetToTokenPath(sk.tokens)
@@ -105,7 +101,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		tsd.addresses[kn.address] = kn
 
 		if kn.metadata != nil {
-			fmt.Printf("%s  %v\n", indent, kn.metadata.metadata)
+			fmt.Printf("%s  %v\n", indent, kn.metadata)
 		}
 
 		if kn.expiration > 0 {
@@ -116,25 +112,24 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 			fmt.Printf("%s  Expiration: %s\n", indent, expirationText)
 		}
 
-		var lastValue *leaf
+		var lastValue *valueInstance
 
 		if kn.history != nil {
-			kn.history.Iterate(func(node *AvlNode) bool {
+			kn.history.Iterate(func(node *AvlNode[*valueInstance]) bool {
+				vi := node.value
 				timestamp := timestampFromUnixNs(unixNsFromBytes(node.key))
 
-				l := node.value.(*leaf)
-
-				valText := fmt.Sprintf("%v", l.value)
+				valText := fmt.Sprintf("%v", vi.value)
 				fmt.Printf("%s %s := %s\n", indent, timestamp.Format(time.RFC3339), cleanString(valText, 80))
-				if len(l.relationships) > 0 {
+				if len(vi.relationships) > 0 {
 					fmt.Printf("%s ->", indent)
-					for _, addr := range l.relationships {
+					for _, addr := range vi.relationships {
 						fmt.Printf(" %04X", addr)
 					}
 					fmt.Printf("\n")
 				}
 
-				lastValue = l
+				lastValue = vi
 				return true
 			})
 		}

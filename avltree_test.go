@@ -23,21 +23,21 @@ func floatToBytes(float float64) []byte {
 	return bytes
 }
 
-func (node *AvlNode) isFloat(float float64) bool {
+func (node *AvlNode[T]) isFloat(float float64) bool {
 	if node == nil {
 		return false
 	}
 	return bytes.Equal(node.key, floatToBytes(float))
 }
 
-func checkTree(tree *AvlTree) bool {
+func checkTree[T float64 | int](tree *AvlTree[T]) bool {
 	if !tree.isValid() {
 		return false
 	}
 
 	count := 0
-	tree.Iterate(func(node *AvlNode) bool {
-		key := int(bytesToFloat(node.key))
+	tree.Iterate(func(node *AvlNode[T]) bool {
+		key := T(bytesToFloat(node.key))
 		if key != node.value {
 			return false
 		}
@@ -49,7 +49,7 @@ func checkTree(tree *AvlTree) bool {
 }
 
 func TestAvlInsertLL(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	if !checkTree(tree) {
@@ -72,7 +72,7 @@ func TestAvlInsertLL(t *testing.T) {
 }
 
 func TestAvlInsertLR(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	if !checkTree(tree) {
@@ -95,7 +95,7 @@ func TestAvlInsertLR(t *testing.T) {
 }
 
 func TestAvlInsertRL(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(10), 10)
 	if !checkTree(tree) {
@@ -118,7 +118,7 @@ func TestAvlInsertRL(t *testing.T) {
 }
 
 func TestAvlInsertRR(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(10), 10)
 	if !checkTree(tree) {
@@ -141,7 +141,7 @@ func TestAvlInsertRR(t *testing.T) {
 }
 
 func TestAvlMultiLevel(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(2461), 2461)
 	tree.printTreeBalance("-----------------")
@@ -162,7 +162,7 @@ func TestAvlMultiLevel(t *testing.T) {
 }
 
 func TestAvlMultiLevel2(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(686), 686)
 	tree.printTreeBalance("-----------------")
@@ -183,7 +183,7 @@ func TestAvlMultiLevel2(t *testing.T) {
 }
 
 func TestAvlMultiLevel3(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.printTreeBalance("------------")
 	tree.Set(floatToBytes(7150), 7150)
@@ -205,7 +205,7 @@ func TestAvlMultiLevel3(t *testing.T) {
 }
 
 func TestAvlMultiLevel4(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.printTreeBalance("------------")
 	tree.Set(floatToBytes(5499), 5499)
@@ -227,7 +227,7 @@ func TestAvlMultiLevel4(t *testing.T) {
 }
 
 func TestAvlMultiLevel5(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.printTreeBalance("------------")
 	tree.Set(floatToBytes(2249), 2249)
@@ -253,7 +253,7 @@ func TestAvlMultiLevel5(t *testing.T) {
 }
 
 func TestAvlDeleteRoot(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	if !checkTree(tree) {
@@ -273,7 +273,7 @@ func TestAvlDeleteRoot(t *testing.T) {
 }
 
 func TestAvlDeleteLeft(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	tree.Set(floatToBytes(20), 20)
@@ -294,7 +294,7 @@ func TestAvlDeleteLeft(t *testing.T) {
 }
 
 func TestAvlDeleteRight(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	tree.Set(floatToBytes(40), 40)
@@ -315,7 +315,7 @@ func TestAvlDeleteRight(t *testing.T) {
 }
 
 func TestAvlDeletePromoteLeft(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	tree.Set(floatToBytes(20), 20)
@@ -340,7 +340,7 @@ func TestAvlDeletePromoteLeft(t *testing.T) {
 }
 
 func TestAvlDeletePromoteRight(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	tree.Set(floatToBytes(40), 40)
@@ -365,7 +365,7 @@ func TestAvlDeletePromoteRight(t *testing.T) {
 }
 
 func TestAvlDeletePromoteLeftFull(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	tree.Set(floatToBytes(20), 20)
@@ -391,7 +391,7 @@ func TestAvlDeletePromoteLeftFull(t *testing.T) {
 }
 
 func TestAvlInsertDelete5(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.printTreeBalance("------------")
 	tree.Set(floatToBytes(2460), 2460)
@@ -420,7 +420,7 @@ func TestAvlInsertDelete5(t *testing.T) {
 }
 
 func TestAvlInsertDelete6(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.printTreeBalance("------------")
 	tree.Set(floatToBytes(7472), 7472)
@@ -442,7 +442,7 @@ func TestAvlInsertDelete6(t *testing.T) {
 }
 
 func TestAvlInsertDelete22(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.printTreeBalance("------------")
 	tree.Set(floatToBytes(743), 743)
@@ -506,7 +506,7 @@ func testInsertDelete(worst int) (out []int) {
 		}
 	}()
 
-	tree := NewAvlTree()
+	tree := newAvlTree[int]()
 	numbers := make([]int, 0, 1024)
 	for i := 0; i < 1024; i++ {
 		op := rand.Intn(4)
@@ -555,7 +555,7 @@ func TestAvlInsertDeleteRandom(t *testing.T) {
 	}
 
 	if worst != nil {
-		tree := NewAvlTree()
+		tree := newAvlTree[float64]()
 		for _, v := range worst {
 			fmt.Println("tree.printTreeBalance(\"------------\")")
 			if v > 0 {
@@ -572,7 +572,7 @@ func TestAvlInsertDeleteRandom(t *testing.T) {
 }
 
 func TestAvlFindOne(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	tree.Set(floatToBytes(30), 30)
 	if !checkTree(tree) {
@@ -597,8 +597,8 @@ func TestAvlFindOne(t *testing.T) {
 }
 
 func TestAvlFindStress(t *testing.T) {
-	formatter := func(node *AvlNode) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
-	tree := NewAvlTree()
+	formatter := func(node *AvlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
+	tree := newAvlTree[float64]()
 
 	numbers := make([]int, 0, 2500)
 
@@ -638,7 +638,7 @@ func TestAvlFindStress(t *testing.T) {
 }
 
 func TestAvlSetKey(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	key, added := tree.SetKey(floatToBytes(30))
 	if !added {
@@ -654,13 +654,13 @@ func TestAvlSetKey(t *testing.T) {
 	if added {
 		t.Fatal("key not added")
 	}
-	if key.value.(int) != 30 {
+	if key.value != 30 {
 		t.Fatal("wrong value")
 	}
 }
 
 func TestAvlFindLeft(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	match := tree.FindLeft(floatToBytes(30))
 	if match != nil {
@@ -708,10 +708,10 @@ func TestAvlFindLeft(t *testing.T) {
 }
 
 func TestAvlFindLeftStress(t *testing.T) {
-	formatter := func(node *AvlNode) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
+	formatter := func(node *AvlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
 
 	for pass := 0; pass < 2500; pass++ {
-		tree := NewAvlTree()
+		tree := newAvlTree[float64]()
 		limit := rand.Intn(130)
 		numbers := make([]int, 0, limit)
 
@@ -749,7 +749,7 @@ func TestAvlFindLeftStress(t *testing.T) {
 }
 
 func TestAvlFindRight(t *testing.T) {
-	tree := NewAvlTree()
+	tree := newAvlTree[float64]()
 
 	match := tree.FindRight(floatToBytes(30))
 	if match != nil {
@@ -797,10 +797,10 @@ func TestAvlFindRight(t *testing.T) {
 }
 
 func TestAvlFindRightStress(t *testing.T) {
-	formatter := func(node *AvlNode) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
+	formatter := func(node *AvlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
 
 	for pass := 0; pass < 2500; pass++ {
-		tree := NewAvlTree()
+		tree := newAvlTree[float64]()
 		limit := rand.Intn(130)
 		numbers := make([]int, 0, limit)
 

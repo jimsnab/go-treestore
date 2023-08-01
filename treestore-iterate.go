@@ -3,7 +3,6 @@ package treestore
 import (
 	"bytes"
 	"strings"
-	"sync/atomic"
 )
 
 type (
@@ -42,10 +41,10 @@ type (
 func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, count int) {
 	var loc keyLocation
 	if len(sk.tokens) == 0 {
-		loc.kn = ts.dbNode
+		loc.kn = &ts.dbNode
 		loc.level = ts.dbNode.ownerTree
 		loc.level.lock.RLock()
-		atomic.AddInt32(&ts.activeLocks, 1)
+		ts.activeLocks.Add(1)
 	} else {
 		loc = ts.locateKeyNodeForRead(sk)
 	}
@@ -75,10 +74,10 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 	if limit > 0 {
 		n := 0
 		patternRunes := []rune(pattern)
-		lockedLevel.tree.Iterate(func(node *AvlNode) bool {
+		lockedLevel.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
 			if isPatternRunes(patternRunes, bytes.Runes(node.key)) {
 				if n >= startAt {
-					kn := node.value.(*keyNode)
+					kn := node.value
 					lk := LevelKey{
 						segment:     node.key,
 						hasValue:    kn.current != nil,
@@ -107,7 +106,7 @@ func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyN
 		hasChildren: kn.nextLevel != nil,
 	}
 	if kn.metadata != nil {
-		km.metadata = kn.metadata.metadata
+		km.metadata = kn.metadata
 	}
 	if kn.current != nil {
 		km.currentValue = kn.current.value
@@ -182,7 +181,7 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 
 	lockedLevel = nextLevel
 	lockedLevel.lock.RLock()
-	atomic.AddInt32(&ts.activeLocks, 1)
+	ts.activeLocks.Add(1)
 
 	for {
 		seg := patternSegs[patternIndex]
@@ -195,11 +194,11 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 			}
 
 			segments = append(segments, seg)
-			kn := avlNode.value.(*keyNode)
+			kn := avlNode.value
 
 			patternIndex++
 			if patternIndex >= len(patternSegs) {
-				// leaf match
+				// valueInstance match
 				stopped = ts.iterateFullInvokeCallback(segments, kn, callback)
 				break
 			}
@@ -214,9 +213,9 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 			lockedLevel = nextLevel
 		} else if segstr == "**" {
 			// multi-level pattern iteration
-			all := lockedLevel.tree.Iterate(func(node *AvlNode) bool {
+			all := lockedLevel.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
 				subSegments := append(segments, node.key)
-				kn := node.value.(*keyNode)
+				kn := node.value
 
 				if ts.iterateFullWorkerIsMatch(patternSegs, subSegments) {
 					if ts.iterateFullInvokeCallback(subSegments, kn, callback) {
@@ -239,9 +238,9 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 			nextPatternIndex := patternIndex + 1
 			end := nextPatternIndex >= len(patternSegs)
 
-			all := lockedLevel.tree.Iterate(func(node *AvlNode) bool {
+			all := lockedLevel.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
 				subSegments := append(segments, node.key)
-				kn := node.value.(*keyNode)
+				kn := node.value
 
 				if ts.iterateFullWorkerIsMatch(patternSegs, subSegments) {
 					if ts.iterateFullInvokeCallback(subSegments, kn, callback) {
@@ -263,7 +262,7 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 	}
 
 	lockedLevel.lock.RUnlock()
-	atomic.AddInt32(&ts.activeLocks, -1)
+	ts.activeLocks.Add(-1)
 	return
 }
 
@@ -286,13 +285,13 @@ func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 	if len(skPattern.tokens) == 0 {
 		// sentinel special case
 		ts.dbNode.ownerTree.lock.RLock()
-		atomic.AddInt32(&ts.activeLocks, 1)
+		ts.activeLocks.Add(1)
 		defer func() {
 			ts.dbNode.ownerTree.lock.RUnlock()
-			atomic.AddInt32(&ts.activeLocks, -1)
+			ts.activeLocks.Add(-1)
 		}()
 
-		ts.iterateFullInvokeCallback(skPattern.tokens, ts.dbNode, func(km *KeyMatch) bool {
+		ts.iterateFullInvokeCallback(skPattern.tokens, &ts.dbNode, func(km *KeyMatch) bool {
 			keys = append(keys, km)
 			return true
 		})
@@ -327,13 +326,13 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 	if len(skPattern.tokens) == 0 {
 		// sentinel special case
 		ts.dbNode.ownerTree.lock.RLock()
-		atomic.AddInt32(&ts.activeLocks, 1)
+		ts.activeLocks.Add(1)
 		defer func() {
 			ts.dbNode.ownerTree.lock.RUnlock()
-			atomic.AddInt32(&ts.activeLocks, -1)
+			ts.activeLocks.Add(-1)
 		}()
 
-		ts.iterateFullInvokeCallback(skPattern.tokens, ts.dbNode, func(km *KeyMatch) bool {
+		ts.iterateFullInvokeCallback(skPattern.tokens, &ts.dbNode, func(km *KeyMatch) bool {
 			if km.hasValue {
 				kvm := &KeyValueMatch{
 					sk:            km.sk,

@@ -125,7 +125,7 @@ func MakeStoreKeyFromPath(tokenPath TokenPath) StoreKey {
 	tokenSet := TokenPathToTokenSet(tokenPath)
 	sk := StoreKey{
 		tokens: tokenSet,
-		path: TokenSetToTokenPath(tokenSet),
+		path:   TokenSetToTokenPath(tokenSet),
 	}
 
 	return sk
