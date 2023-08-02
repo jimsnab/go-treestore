@@ -12,8 +12,8 @@ type (
 	TokenPath    string
 
 	StoreKey struct {
-		path   TokenPath
-		tokens TokenSet
+		Path   TokenPath `json:"path"`
+		Tokens TokenSet  `json:"tokens"`
 	}
 )
 
@@ -115,8 +115,8 @@ func MakeStoreKey(parts ...string) StoreKey {
 	tokenSet := TokenPathToTokenSet(tokenPath)
 
 	return StoreKey{
-		path:   tokenPath,
-		tokens: tokenSet,
+		Path:   tokenPath,
+		Tokens: tokenSet,
 	}
 }
 
@@ -124,8 +124,8 @@ func MakeStoreKey(parts ...string) StoreKey {
 func MakeStoreKeyFromPath(tokenPath TokenPath) StoreKey {
 	tokenSet := TokenPathToTokenSet(tokenPath)
 	sk := StoreKey{
-		tokens: tokenSet,
-		path:   TokenSetToTokenPath(tokenSet),
+		Tokens: tokenSet,
+		Path:   TokenSetToTokenPath(tokenSet),
 	}
 
 	return sk
@@ -134,16 +134,16 @@ func MakeStoreKeyFromPath(tokenPath TokenPath) StoreKey {
 // Makes the structure needed to interact with the TreeStore from token segments
 func MakeStoreKeyFromTokenSegments(segments ...TokenSegment) StoreKey {
 	sk := StoreKey{}
-	sk.tokens = make(TokenSet, 0, len(segments))
-	sk.tokens = append(sk.tokens, segments...)
-	sk.path = TokenSetToTokenPath(sk.tokens)
+	sk.Tokens = make(TokenSet, 0, len(segments))
+	sk.Tokens = append(sk.Tokens, segments...)
+	sk.Path = TokenSetToTokenPath(sk.Tokens)
 
 	return sk
 }
 
 // Decomposes the TreeStore key structure
 func SplitStoreKey(sk StoreKey) []string {
-	return SplitTokenPath(sk.path)
+	return SplitTokenPath(sk.Path)
 }
 
 // Returns the Unix ns tick as a byte array

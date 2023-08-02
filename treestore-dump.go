@@ -17,8 +17,8 @@ type (
 // Prints the tree store, returns false if an error was found
 func (ts *TreeStore) DiagDump() bool {
 	rootSk := StoreKey{
-		tokens: TokenSet{},
-		path:   "",
+		Tokens: TokenSet{},
+		Path:   "",
 	}
 
 	treeStoreDump := &treeStoreDump{
@@ -78,14 +78,14 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		kn := node.value
 
 		sk := &StoreKey{
-			tokens: baseSk.tokens,
+			Tokens: baseSk.Tokens,
 		}
 		if node.value != &tsd.ts.dbNode {
-			sk.tokens = append(sk.tokens, node.key)
+			sk.Tokens = append(sk.Tokens, node.key)
 		}
-		sk.path = TokenSetToTokenPath(sk.tokens)
+		sk.Path = TokenSetToTokenPath(sk.Tokens)
 
-		indexAddr, isIndexed := tsd.ts.keys[sk.path]
+		indexAddr, isIndexed := tsd.ts.keys[sk.Path]
 		keyText := TokenSegmentToString(node.key)
 
 		if isIndexed && indexAddr != kn.address {
@@ -94,7 +94,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 
 		if kn.current != nil || kn.history != nil {
 			keyText += "  [HAS VALUE]"
-			tsd.used[sk.path] = kn.address
+			tsd.used[sk.Path] = kn.address
 		}
 
 		fmt.Printf("%s%04X %s\n", indent, kn.address, keyText)
@@ -139,7 +139,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		}
 
 		if kn.current != nil && !isIndexed {
-			tsd.errors = append(tsd.errors, fmt.Sprintf("key %s has a value but is not found in index", sk.path))
+			tsd.errors = append(tsd.errors, fmt.Sprintf("key %s has a value but is not found in index", sk.Path))
 		}
 
 		if kn.nextLevel != nil {

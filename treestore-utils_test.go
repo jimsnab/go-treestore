@@ -177,11 +177,11 @@ func TestTokenSet(t *testing.T) {
 
 func TestTokenSetWrappers(t *testing.T) {
 	sk := MakeStoreKey("cow", "mouse", "pig")
-	if sk.path != "/cow/mouse/pig" {
+	if sk.Path != "/cow/mouse/pig" {
 		t.Error("convenience make token path")
 	}
 
-	ts := sk.tokens
+	ts := sk.Tokens
 	if ts == nil || len(ts) != 3 || !bytes.Equal(ts[0], []byte("cow")) || !bytes.Equal(ts[1], []byte("mouse")) || !bytes.Equal(ts[2], []byte("pig")) {
 		t.Error("convenience make token set")
 	}
@@ -192,19 +192,19 @@ func TestTokenSetWrappers(t *testing.T) {
 	}
 
 	sk2 := MakeStoreKeyFromPath("/cow/mouse/pig")
-	if sk2.path != "/cow/mouse/pig" {
+	if sk2.Path != "/cow/mouse/pig" {
 		t.Error("convenience make sk from path")
 	}
-	ts = sk2.tokens
+	ts = sk2.Tokens
 	if ts == nil || len(ts) != 3 || !bytes.Equal(ts[0], []byte("cow")) || !bytes.Equal(ts[1], []byte("mouse")) || !bytes.Equal(ts[2], []byte("pig")) {
 		t.Error("convenience make token set from path")
 	}
 
 	sk3 := MakeStoreKeyFromTokenSegments(ts...)
-	if sk3.path != "/cow/mouse/pig" {
+	if sk3.Path != "/cow/mouse/pig" {
 		t.Error("convenience make sk from token segments")
 	}
-	ts = sk3.tokens
+	ts = sk3.Tokens
 	if ts == nil || len(ts) != 3 || !bytes.Equal(ts[0], []byte("cow")) || !bytes.Equal(ts[1], []byte("mouse")) || !bytes.Equal(ts[2], []byte("pig")) {
 		t.Error("convenience make token set from segments")
 	}

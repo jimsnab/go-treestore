@@ -13,20 +13,20 @@ type (
 	}
 
 	KeyMatch struct {
-		Sk            StoreKey
-		Metadata      map[string]string
-		HasValue      bool
-		HasChildren   bool
-		CurrentValue  any
-		Relationships []StoreAddress
+		Sk            StoreKey          `json:"sk"`
+		Metadata      map[string]string `json:"metadata,omitempty"`
+		HasValue      bool              `json:"has_value"`
+		HasChildren   bool              `json:"has_children"`
+		CurrentValue  any               `json:"current_value,omitempty"`
+		Relationships []StoreAddress    `json:"relationships,omitempty"`
 	}
 
 	KeyValueMatch struct {
-		Sk            StoreKey
-		Metadata      map[string]string
-		HasChildren   bool
-		CurrentValue  any
-		Relationships []StoreAddress
+		Sk            StoreKey          `json:"sk"`
+		Metadata      map[string]string `json:"metadata,omitempty"`
+		HasChildren   bool              `json:"has_children"`
+		CurrentValue  any               `json:"current_value,omitempty"`
+		Relationships []StoreAddress    `json:"relationships,omitempty"`
 	}
 
 	iterateFullCallback func(km *KeyMatch) bool
@@ -40,7 +40,7 @@ type (
 // a reasonable limit.
 func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, count int) {
 	var loc keyLocation
-	if len(sk.tokens) == 0 {
+	if len(sk.Tokens) == 0 {
 		loc.kn = &ts.dbNode
 		loc.level = ts.dbNode.ownerTree
 		loc.level.lock.RLock()
@@ -51,7 +51,7 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 
 	lockedLevel := loc.level
 
-	if loc.index < len(sk.tokens) {
+	if loc.index < len(sk.Tokens) {
 		ts.completeKeyNodeRead(lockedLevel)
 		return
 	}
@@ -267,10 +267,10 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 }
 
 func (ts *TreeStore) iterateFull(skPattern StoreKey, callback iterateFullCallback) {
-	segments := make([]TokenSegment, 0, len(skPattern.tokens))
+	segments := make([]TokenSegment, 0, len(skPattern.Tokens))
 	nextLevel := ts.dbNode.nextLevel
 
-	ts.iterateFullWorker(skPattern.tokens, 0, segments, nextLevel, callback)
+	ts.iterateFullWorker(skPattern.Tokens, 0, segments, nextLevel, callback)
 }
 
 // Full iteration function walks each tree store level according to skPattern and returns every
@@ -282,7 +282,7 @@ func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 		return
 	}
 
-	if len(skPattern.tokens) == 0 {
+	if len(skPattern.Tokens) == 0 {
 		// sentinel special case
 		ts.dbNode.ownerTree.lock.RLock()
 		ts.activeLocks.Add(1)
@@ -291,7 +291,7 @@ func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 			ts.activeLocks.Add(-1)
 		}()
 
-		ts.iterateFullInvokeCallback(skPattern.tokens, &ts.dbNode, func(km *KeyMatch) bool {
+		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, func(km *KeyMatch) bool {
 			keys = append(keys, km)
 			return true
 		})
@@ -323,7 +323,7 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		return
 	}
 
-	if len(skPattern.tokens) == 0 {
+	if len(skPattern.Tokens) == 0 {
 		// sentinel special case
 		ts.dbNode.ownerTree.lock.RLock()
 		ts.activeLocks.Add(1)
@@ -332,7 +332,7 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 			ts.activeLocks.Add(-1)
 		}()
 
-		ts.iterateFullInvokeCallback(skPattern.tokens, &ts.dbNode, func(km *KeyMatch) bool {
+		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, func(km *KeyMatch) bool {
 			if km.HasValue {
 				kvm := &KeyValueMatch{
 					Sk:            km.Sk,
