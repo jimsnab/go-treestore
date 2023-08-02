@@ -248,11 +248,11 @@ func TestSaveLoadRelationships(t *testing.T) {
 		t.Error("get both keys")
 	}
 
-	if keys[0].relationships != nil || keys[0].sk.path != "/cat" {
+	if keys[0].Relationships != nil || keys[0].Sk.path != "/cat" {
 		t.Error("first key no relationships")
 	}
 
-	if len(keys[1].relationships) != 1 || keys[1].relationships[0] != addr1 || keys[1].sk.path != "/pet" {
+	if len(keys[1].Relationships) != 1 || keys[1].Relationships[0] != addr1 || keys[1].Sk.path != "/pet" {
 		t.Error("second key one relationship")
 	}
 

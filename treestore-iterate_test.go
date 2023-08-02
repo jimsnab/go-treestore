@@ -379,7 +379,7 @@ func TestFullIterateSentinel(t *testing.T) {
 		t.Fatal("sentinel match")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("default sentinel")
 	}
 
@@ -390,7 +390,7 @@ func TestFullIterateSentinel(t *testing.T) {
 		t.Fatal("sentinel match")
 	}
 
-	if keys[0].currentValue != 320 || keys[0].hasChildren || !keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != 320 || keys[0].HasChildren || !keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("sentinel has value")
 	}
 
@@ -416,7 +416,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Fatal("test key match")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test key")
 	}
 
@@ -425,7 +425,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Fatal("test key match *")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test key *")
 	}
 
@@ -434,7 +434,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Fatal("test key match t*")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test key t*")
 	}
 
@@ -443,7 +443,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Fatal("test key match **")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test key **")
 	}
 
@@ -452,7 +452,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Fatal("test key match **/**")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test key **/**")
 	}
 
@@ -483,7 +483,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Fatal("test value match")
 	}
 
-	if keys[0].currentValue != 330 || keys[0].hasChildren || !keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != 330 || keys[0].HasChildren || !keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test value")
 	}
 
@@ -492,7 +492,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Fatal("test value match *")
 	}
 
-	if keys[0].currentValue != 330 || keys[0].hasChildren || !keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != 330 || keys[0].HasChildren || !keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test value *")
 	}
 
@@ -501,7 +501,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Fatal("test value match t*")
 	}
 
-	if keys[0].currentValue != 330 || keys[0].hasChildren || !keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != 330 || keys[0].HasChildren || !keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test value t*")
 	}
 
@@ -510,7 +510,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Fatal("test value match **")
 	}
 
-	if keys[0].currentValue != 330 || keys[0].hasChildren || !keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != 330 || keys[0].HasChildren || !keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test value **")
 	}
 
@@ -519,7 +519,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Fatal("test value match **/**")
 	}
 
-	if keys[0].currentValue != 330 || keys[0].hasChildren || !keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != 330 || keys[0].HasChildren || !keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test value **/**")
 	}
 
@@ -550,7 +550,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Fatal("test/cat match")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test/cat")
 	}
 
@@ -559,7 +559,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Fatal("test match *")
 	}
 
-	if keys[0].currentValue != nil || !keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test *")
 	}
 
@@ -568,7 +568,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Fatal("test match t*")
 	}
 
-	if keys[0].currentValue != nil || !keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test t*")
 	}
 
@@ -577,11 +577,11 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Fatal("test/cat match **")
 	}
 
-	if keys[0].currentValue != nil || !keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test **")
 	}
 
-	if keys[1].currentValue != nil || keys[1].hasChildren || keys[1].hasValue || keys[1].metadata != nil || keys[1].relationships != nil {
+	if keys[1].CurrentValue != nil || keys[1].HasChildren || keys[1].HasValue || keys[1].Metadata != nil || keys[1].Relationships != nil {
 		t.Error("test/cat **")
 	}
 
@@ -590,11 +590,11 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Fatal("test/cat match **/**")
 	}
 
-	if keys[0].currentValue != nil || !keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test **/**")
 	}
 
-	if keys[1].currentValue != nil || keys[1].hasChildren || keys[1].hasValue || keys[1].metadata != nil || keys[1].relationships != nil {
+	if keys[1].CurrentValue != nil || keys[1].HasChildren || keys[1].HasValue || keys[1].Metadata != nil || keys[1].Relationships != nil {
 		t.Error("test/cat **/**")
 	}
 
@@ -603,11 +603,11 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Fatal("test/cat match test/**")
 	}
 
-	if keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test/cat test/**")
 	}
 
-	if keys[0].sk.path != "/test/cat" {
+	if keys[0].Sk.path != "/test/cat" {
 		t.Error("test/cat path test/**")
 	}
 
@@ -627,15 +627,15 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match **")
 	}
 
-	if keys[0].sk.path != "/test" || keys[0].currentValue != nil || !keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test" || keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test **")
 	}
 
-	if keys[1].sk.path != "/test/cat" || keys[1].currentValue != nil || !keys[1].hasChildren || keys[1].hasValue || keys[1].metadata != nil || keys[1].relationships != nil {
+	if keys[1].Sk.path != "/test/cat" || keys[1].CurrentValue != nil || !keys[1].HasChildren || keys[1].HasValue || keys[1].Metadata != nil || keys[1].Relationships != nil {
 		t.Error("test/cat **")
 	}
 
-	if keys[2].sk.path != "/test/cat/calico" || keys[2].currentValue != nil || keys[2].hasChildren || keys[2].hasValue || keys[2].metadata != nil || keys[2].relationships != nil {
+	if keys[2].Sk.path != "/test/cat/calico" || keys[2].CurrentValue != nil || keys[2].HasChildren || keys[2].HasValue || keys[2].Metadata != nil || keys[2].Relationships != nil {
 		t.Error("test/cat/calico **")
 	}
 
@@ -644,7 +644,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match **/calico")
 	}
 
-	if keys[0].sk.path != "/test/cat/calico" || keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("test/cat **/calico")
 	}
 
@@ -653,7 +653,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match test/**/calico")
 	}
 
-	if keys[0].sk.path != "/test/cat/calico" || keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("verify test/**/calico")
 	}
 
@@ -662,7 +662,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match test/**/cat/calico")
 	}
 
-	if keys[0].sk.path != "/test/cat/calico" || keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("verify test/**/cat/calico")
 	}
 
@@ -671,7 +671,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match test/**/cat/**")
 	}
 
-	if keys[0].sk.path != "/test/cat/calico" || keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("verify test/**/cat/**")
 	}
 
@@ -685,7 +685,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match test/c*/**")
 	}
 
-	if keys[0].sk.path != "/test/cat/calico" || keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("verify test/c*/**")
 	}
 
@@ -694,7 +694,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match test/*/**")
 	}
 
-	if keys[0].sk.path != "/test/cat/calico" || keys[0].currentValue != nil || keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("verify test/*/**")
 	}
 
@@ -703,11 +703,11 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Fatal("test/cat/calico match **/*/**")
 	}
 
-	if keys[0].sk.path != "/test/cat" || keys[0].currentValue != nil || !keys[0].hasChildren || keys[0].hasValue || keys[0].metadata != nil || keys[0].relationships != nil {
+	if keys[0].Sk.path != "/test/cat" || keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
 		t.Error("verify **/*")
 	}
 
-	if keys[1].sk.path != "/test/cat/calico" || keys[1].currentValue != nil || keys[1].hasChildren || keys[1].hasValue || keys[1].metadata != nil || keys[1].relationships != nil {
+	if keys[1].Sk.path != "/test/cat/calico" || keys[1].CurrentValue != nil || keys[1].HasChildren || keys[1].HasValue || keys[1].Metadata != nil || keys[1].Relationships != nil {
 		t.Error("verify **/*/**")
 	}
 
@@ -749,29 +749,29 @@ func TestFullIterateRanges(t *testing.T) {
 	}
 
 	keys = ts.GetMatchingKeys(pattern, 0, 1)
-	if len(keys) != 1 || keys[0].sk.path != "/test/cat/maine coon" {
+	if len(keys) != 1 || keys[0].Sk.path != "/test/cat/maine coon" {
 		t.Error("limit 1")
 	}
 
 	keys = ts.GetMatchingKeys(pattern, 1, 1)
-	if len(keys) != 1 || keys[0].sk.path != "/test/cat/ragdoll" {
+	if len(keys) != 1 || keys[0].Sk.path != "/test/cat/ragdoll" {
 		t.Error("limit 1 second")
 	}
 
 	keys = ts.GetMatchingKeys(pattern, 2, 2)
-	if len(keys) != 2 || keys[0].sk.path != "/test/cat/siberian" || keys[1].sk.path != "/test/dog/brittany" {
+	if len(keys) != 2 || keys[0].Sk.path != "/test/cat/siberian" || keys[1].Sk.path != "/test/dog/brittany" {
 		t.Error("limit 2 at 2")
 	}
 
 	pattern2 := MakeStoreKey("test", "**", "*n")
 
 	keys = ts.GetMatchingKeys(pattern2, 0, 1)
-	if len(keys) != 1 || keys[0].sk.path != "/test/cat/maine coon" {
+	if len(keys) != 1 || keys[0].Sk.path != "/test/cat/maine coon" {
 		t.Error("test/**/*n limit 1")
 	}
 
 	keys = ts.GetMatchingKeys(pattern2, 1, 1)
-	if len(keys) != 1 || keys[0].sk.path != "/test/cat/siberian" {
+	if len(keys) != 1 || keys[0].Sk.path != "/test/cat/siberian" {
 		t.Error("test/**/*n limit 1 at 1")
 	}
 
@@ -783,12 +783,12 @@ func TestFullIterateRanges(t *testing.T) {
 	pattern3 := MakeStoreKey("test", "*", "*n")
 
 	keys = ts.GetMatchingKeys(pattern3, 0, 1)
-	if len(keys) != 1 || keys[0].sk.path != "/test/cat/maine coon" {
+	if len(keys) != 1 || keys[0].Sk.path != "/test/cat/maine coon" {
 		t.Error("test/*/*n limit 1")
 	}
 
 	keys = ts.GetMatchingKeys(pattern3, 1, 1)
-	if len(keys) != 1 || keys[0].sk.path != "/test/cat/siberian" {
+	if len(keys) != 1 || keys[0].Sk.path != "/test/cat/siberian" {
 		t.Error("test/*/*n limit 1 at 1")
 	}
 
@@ -817,7 +817,7 @@ func TestValueIterateSentinel(t *testing.T) {
 		t.Fatal("sentinel match")
 	}
 
-	if values[0].currentValue != 320 || values[0].hasChildren || values[0].metadata != nil || values[0].relationships != nil {
+	if values[0].CurrentValue != 320 || values[0].HasChildren || values[0].Metadata != nil || values[0].Relationships != nil {
 		t.Error("sentinel has value")
 	}
 
@@ -854,29 +854,29 @@ func TestValueIterate(t *testing.T) {
 	}
 
 	values = ts.GetMatchingKeyValues(pattern, 0, 1)
-	if len(values) != 1 || values[0].sk.path != "/test/cat/maine coon" {
+	if len(values) != 1 || values[0].Sk.path != "/test/cat/maine coon" {
 		t.Error("limit 1")
 	}
 
 	values = ts.GetMatchingKeyValues(pattern, 1, 1)
-	if len(values) != 1 || values[0].sk.path != "/test/cat/ragdoll" {
+	if len(values) != 1 || values[0].Sk.path != "/test/cat/ragdoll" {
 		t.Error("limit 1 second")
 	}
 
 	values = ts.GetMatchingKeyValues(pattern, 2, 2)
-	if len(values) != 2 || values[0].sk.path != "/test/cat/siberian" || values[1].sk.path != "/test/dog/brittany" {
+	if len(values) != 2 || values[0].Sk.path != "/test/cat/siberian" || values[1].Sk.path != "/test/dog/brittany" {
 		t.Error("limit 2 at 2")
 	}
 
 	pattern2 := MakeStoreKey("test", "**", "*n")
 
 	values = ts.GetMatchingKeyValues(pattern2, 0, 1)
-	if len(values) != 1 || values[0].sk.path != "/test/cat/maine coon" {
+	if len(values) != 1 || values[0].Sk.path != "/test/cat/maine coon" {
 		t.Error("test/**/*n limit 1")
 	}
 
 	values = ts.GetMatchingKeyValues(pattern2, 1, 1)
-	if len(values) != 1 || values[0].sk.path != "/test/cat/siberian" {
+	if len(values) != 1 || values[0].Sk.path != "/test/cat/siberian" {
 		t.Error("test/**/*n limit 1 at 1")
 	}
 
@@ -888,12 +888,12 @@ func TestValueIterate(t *testing.T) {
 	pattern3 := MakeStoreKey("test", "*", "*n")
 
 	values = ts.GetMatchingKeyValues(pattern3, 0, 1)
-	if len(values) != 1 || values[0].sk.path != "/test/cat/maine coon" {
+	if len(values) != 1 || values[0].Sk.path != "/test/cat/maine coon" {
 		t.Error("test/*/*n limit 1")
 	}
 
 	values = ts.GetMatchingKeyValues(pattern3, 1, 1)
-	if len(values) != 1 || values[0].sk.path != "/test/cat/siberian" {
+	if len(values) != 1 || values[0].Sk.path != "/test/cat/siberian" {
 		t.Error("test/*/*n limit 1 at 1")
 	}
 

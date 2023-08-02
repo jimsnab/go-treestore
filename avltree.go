@@ -7,30 +7,30 @@ import (
 )
 
 type (
-	AvlNode[T any] struct {
+	avlNode[T any] struct {
 		key     []byte
-		left    *AvlNode[T]
-		right   *AvlNode[T]
-		parent  *AvlNode[T]
+		left    *avlNode[T]
+		right   *avlNode[T]
+		parent  *avlNode[T]
 		balance int
 		value   T
 	}
 
-	AvlTree[T any] struct {
-		root  *AvlNode[T]
+	avlTree[T any] struct {
+		root  *avlNode[T]
 		nodes int
 	}
 
 	avlOperation[T any] struct {
 		key   []byte
 		value T
-		leaf  *AvlNode[T]
+		leaf  *avlNode[T]
 		added bool
 	}
 
-	AvlIterator[T any] func(node *AvlNode[T]) bool
+	avlIterator[T any] func(node *avlNode[T]) bool
 
-	testingKeyToString[T any] func(node *AvlNode[T]) string
+	testingKeyToString[T any] func(node *avlNode[T]) string
 
 	winnerDirection int
 )
@@ -41,8 +41,8 @@ const (
 	winnerNone
 )
 
-func newAvlTree[T any]() *AvlTree[T] {
-	return &AvlTree[T]{}
+func newAvlTree[T any]() *avlTree[T] {
+	return &avlTree[T]{}
 }
 
 func keyCompare(l, r []byte) int {
@@ -171,7 +171,7 @@ func smallestNegativeDifference(base, a, b []byte) int {
 }
 
 // locates a key in the AVL tree
-func (tree *AvlTree[T]) Find(key []byte) (node *AvlNode[T]) {
+func (tree *avlTree[T]) Find(key []byte) (node *avlNode[T]) {
 	n := tree.root
 
 	for {
@@ -195,7 +195,7 @@ func (tree *AvlTree[T]) Find(key []byte) (node *AvlNode[T]) {
 
 // Locates a key in the AVL tree; if an exact match doesn't exists, locates
 // the greatest value that is less than the search key (which may be nil).
-func (tree *AvlTree[T]) FindLeft(key []byte) (node *AvlNode[T]) {
+func (tree *avlTree[T]) FindLeft(key []byte) (node *avlNode[T]) {
 	n := tree.root
 	var cmp int
 
@@ -232,7 +232,7 @@ func (tree *AvlTree[T]) FindLeft(key []byte) (node *AvlNode[T]) {
 
 // Locates a key in the AVL tree; if an exact match doesn't exists, locates
 // the smallest value that is greater than the search key (which may be nil).
-func (tree *AvlTree[T]) FindRight(key []byte) (node *AvlNode[T]) {
+func (tree *avlTree[T]) FindRight(key []byte) (node *avlNode[T]) {
 	n := tree.root
 	var cmp int
 
@@ -268,7 +268,7 @@ func (tree *AvlTree[T]) FindRight(key []byte) (node *AvlNode[T]) {
 }
 
 // adds a key to the AVL tree, or replaces the existing node value
-func (tree *AvlTree[T]) Set(key []byte, value T) (node *AvlNode[T], added bool) {
+func (tree *avlTree[T]) Set(key []byte, value T) (node *avlNode[T], added bool) {
 	op := &avlOperation[T]{
 		key:   key,
 		value: value,
@@ -285,7 +285,7 @@ func (tree *AvlTree[T]) Set(key []byte, value T) (node *AvlNode[T], added bool) 
 }
 
 // adds a key to the AVL tree, or finds the existing node
-func (tree *AvlTree[T]) SetKey(key []byte) (node *AvlNode[T], added bool) {
+func (tree *avlTree[T]) SetKey(key []byte) (node *avlNode[T], added bool) {
 	op := &avlOperation[T]{
 		key: key,
 	}
@@ -299,7 +299,7 @@ func (tree *AvlTree[T]) SetKey(key []byte) (node *AvlNode[T], added bool) {
 }
 
 // removes a key from the AVL tree, returing true if the key was found and deleted
-func (tree *AvlTree[T]) Delete(key []byte) bool {
+func (tree *avlTree[T]) Delete(key []byte) bool {
 	op := &avlOperation[T]{
 		key: key,
 	}
@@ -313,9 +313,9 @@ func (tree *AvlTree[T]) Delete(key []byte) bool {
 }
 
 // recursive worker that searches for the insertion position for a new node, and adds and rebalances the tree if key doesn't already exist
-func (op *avlOperation[T]) insertNode(parent *AvlNode[T], node *AvlNode[T]) (out *AvlNode[T], balanced bool) {
+func (op *avlOperation[T]) insertNode(parent *avlNode[T], node *avlNode[T]) (out *avlNode[T], balanced bool) {
 	if node == nil {
-		out = &AvlNode[T]{
+		out = &avlNode[T]{
 			key:    op.key,
 			value:  op.value,
 			parent: parent,
@@ -354,7 +354,7 @@ func (op *avlOperation[T]) insertNode(parent *AvlNode[T], node *AvlNode[T]) (out
 }
 
 // recursive worker that searches for a node, and if found, deletes and rebalances the tree
-func (op *avlOperation[T]) deleteNode(node *AvlNode[T]) (out *AvlNode[T], rebalanced bool) {
+func (op *avlOperation[T]) deleteNode(node *avlNode[T]) (out *avlNode[T], rebalanced bool) {
 	if node == nil {
 		rebalanced = true
 		return
@@ -414,7 +414,7 @@ func (op *avlOperation[T]) deleteNode(node *AvlNode[T]) (out *AvlNode[T], rebala
 }
 
 // worker to update the balance factor
-func (node *AvlNode[T]) adjustBalance(second *AvlNode[T], third *AvlNode[T], direction int) {
+func (node *avlNode[T]) adjustBalance(second *avlNode[T], third *avlNode[T], direction int) {
 	switch third.balance {
 	case 0:
 		node.balance = 0
@@ -430,7 +430,7 @@ func (node *AvlNode[T]) adjustBalance(second *AvlNode[T], third *AvlNode[T], dir
 }
 
 // worker to balance the tree after left insertion makes the tree left heavy
-func (node *AvlNode[T]) rotateLeft(middle *AvlNode[T]) *AvlNode[T] {
+func (node *avlNode[T]) rotateLeft(middle *avlNode[T]) *avlNode[T] {
 	nodeParent := node.parent
 	if middle.balance < 0 {
 		// left-left rotation
@@ -464,7 +464,7 @@ func (node *AvlNode[T]) rotateLeft(middle *AvlNode[T]) *AvlNode[T] {
 }
 
 // worker to balance the tree after right insertion makes the tree right heavy
-func (node *AvlNode[T]) rotateRight(middle *AvlNode[T]) *AvlNode[T] {
+func (node *avlNode[T]) rotateRight(middle *avlNode[T]) *avlNode[T] {
 	nodeParent := node.parent
 	if middle.balance > 0 {
 		// right-right rotation
@@ -498,7 +498,7 @@ func (node *AvlNode[T]) rotateRight(middle *AvlNode[T]) *AvlNode[T] {
 }
 
 // worker to rotate after a right node deletion leaves the tree unbalanced
-func (node *AvlNode[T]) deleteRotateLeft(middle *AvlNode[T]) (out *AvlNode[T], rebalanced bool) {
+func (node *avlNode[T]) deleteRotateLeft(middle *avlNode[T]) (out *avlNode[T], rebalanced bool) {
 	if middle.balance == 0 {
 		nodeParent := node.parent
 		subtreeC := middle.right
@@ -515,7 +515,7 @@ func (node *AvlNode[T]) deleteRotateLeft(middle *AvlNode[T]) (out *AvlNode[T], r
 }
 
 // worker to rotate after a left node deletion leaves the tree unbalanced
-func (node *AvlNode[T]) deleteRotateRight(middle *AvlNode[T]) (out *AvlNode[T], rebalanced bool) {
+func (node *avlNode[T]) deleteRotateRight(middle *avlNode[T]) (out *avlNode[T], rebalanced bool) {
 	if middle.balance == 0 {
 		nodeParent := node.parent
 		subtreeB := middle.left
@@ -532,7 +532,7 @@ func (node *AvlNode[T]) deleteRotateRight(middle *AvlNode[T]) (out *AvlNode[T], 
 }
 
 // testing function
-func (node *AvlNode[T]) subtreeHeight() (height int) {
+func (node *avlNode[T]) subtreeHeight() (height int) {
 	if node == nil {
 		return
 	}
@@ -548,7 +548,7 @@ func (node *AvlNode[T]) subtreeHeight() (height int) {
 }
 
 // testing function
-func (node *AvlNode[T]) isBalanced() bool {
+func (node *avlNode[T]) isBalanced() bool {
 	if node == nil {
 		return true
 	}
@@ -558,7 +558,7 @@ func (node *AvlNode[T]) isBalanced() bool {
 }
 
 // testing function
-func (node *AvlNode[T]) checkBalanceFactors() bool {
+func (node *avlNode[T]) checkBalanceFactors() bool {
 	if node == nil {
 		return true
 	}
@@ -575,7 +575,7 @@ func (node *AvlNode[T]) checkBalanceFactors() bool {
 }
 
 // testing function
-func (node *AvlNode[T]) checkParentLinks() bool {
+func (node *avlNode[T]) checkParentLinks() bool {
 	if node == nil {
 		return true
 	}
@@ -591,7 +591,7 @@ func (node *AvlNode[T]) checkParentLinks() bool {
 }
 
 // testing function
-func (tree *AvlTree[T]) isValid() bool {
+func (tree *avlTree[T]) isValid() bool {
 	if !tree.root.checkBalanceFactors() {
 		return false
 	}
@@ -602,11 +602,11 @@ func (tree *AvlTree[T]) isValid() bool {
 }
 
 // iterates the AVL tree in sorted order
-func (tree *AvlTree[T]) Iterate(iter AvlIterator[T]) bool {
+func (tree *avlTree[T]) Iterate(iter avlIterator[T]) bool {
 	return tree.root.iterateNext(iter)
 }
 
-func (node *AvlNode[T]) iterateNext(iter AvlIterator[T]) bool {
+func (node *avlNode[T]) iterateNext(iter avlIterator[T]) bool {
 	if node == nil {
 		return true
 	}
@@ -628,9 +628,9 @@ func (node *AvlNode[T]) iterateNext(iter AvlIterator[T]) bool {
 }
 
 // testing function
-func (tree *AvlTree[T]) countEach() int {
+func (tree *avlTree[T]) countEach() int {
 	count := 0
-	tree.Iterate(func(node *AvlNode[T]) bool {
+	tree.Iterate(func(node *avlNode[T]) bool {
 		count++
 		return true
 	})
@@ -638,19 +638,19 @@ func (tree *AvlTree[T]) countEach() int {
 }
 
 // testing function
-func (tree *AvlTree[T]) printTreeBalance(header string) {
-	tree.printTree(header, func(node *AvlNode[T]) string { return fmt.Sprintf("%v", node.balance) })
+func (tree *avlTree[T]) printTreeBalance(header string) {
+	tree.printTree(header, func(node *avlNode[T]) string { return fmt.Sprintf("%v", node.balance) })
 }
 
 // testing function
-func (tree *AvlTree[T]) printTree(header string, fn testingKeyToString[T]) {
+func (tree *avlTree[T]) printTree(header string, fn testingKeyToString[T]) {
 	fmt.Println(header)
 	if tree.root == nil {
 		fmt.Println("(nil)")
 		return
 	}
 	maxWidth := 0
-	tree.Iterate(func(node *AvlNode[T]) bool {
+	tree.Iterate(func(node *avlNode[T]) bool {
 		width := len(fn(node))
 		if width > maxWidth {
 			maxWidth = width
@@ -664,12 +664,12 @@ func (tree *AvlTree[T]) printTree(header string, fn testingKeyToString[T]) {
 	nodeWidth := maxWidth + 2
 	fieldWidth := int(heightExp) * nodeWidth
 
-	nextLineNodes := []*AvlNode[T]{}
+	nextLineNodes := []*avlNode[T]{}
 	nextLineNodes = append(nextLineNodes, tree.root)
 
 	for {
 		lineNodes := nextLineNodes
-		nextLineNodes = []*AvlNode[T]{}
+		nextLineNodes = []*avlNode[T]{}
 
 		keyLine := ""
 		connectorLine := ""
@@ -701,7 +701,7 @@ func (tree *AvlTree[T]) printTree(header string, fn testingKeyToString[T]) {
 }
 
 // testing function
-func (node *AvlNode[T]) nodeText(fieldWidth, nodeWidth int, fn testingKeyToString[T]) (keyLine, connectorLine string) {
+func (node *avlNode[T]) nodeText(fieldWidth, nodeWidth int, fn testingKeyToString[T]) (keyLine, connectorLine string) {
 	if node == nil {
 		keyLine = strings.Repeat(" ", fieldWidth)
 		connectorLine = keyLine

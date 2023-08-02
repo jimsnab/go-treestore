@@ -25,7 +25,7 @@ type (
 
 	keyTree struct {
 		lock   sync.RWMutex
-		tree   *AvlTree[*keyNode]
+		tree   *avlTree[*keyNode]
 		parent *keyNode
 	}
 
@@ -34,7 +34,7 @@ type (
 		ownerTree  *keyTree
 		nextLevel  *keyTree
 		current    *valueInstance
-		history    *AvlTree[*valueInstance]
+		history    *avlTree[*valueInstance]
 		expiration int64
 		metadata   map[string]string
 	}

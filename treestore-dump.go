@@ -74,7 +74,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		tsd.errors = append(tsd.errors, "parent linkage error")
 	}
 
-	level.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
+	level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 		kn := node.value
 
 		sk := &StoreKey{
@@ -115,7 +115,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		var lastValue *valueInstance
 
 		if kn.history != nil {
-			kn.history.Iterate(func(node *AvlNode[*valueInstance]) bool {
+			kn.history.Iterate(func(node *avlNode[*valueInstance]) bool {
 				vi := node.value
 				timestamp := timestampFromUnixNs(unixNsFromBytes(node.key))
 

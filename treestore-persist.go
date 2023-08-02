@@ -77,7 +77,7 @@ func saveKeyValues(kn *keyNode) (values []diskValue) {
 
 	values = make([]diskValue, 0, kn.history.nodes)
 
-	kn.history.Iterate(func(node *AvlNode[*valueInstance]) bool {
+	kn.history.Iterate(func(node *avlNode[*valueInstance]) bool {
 		vi := node.value
 
 		rel := serializeRelationshipArray(vi.relationships)
@@ -98,7 +98,7 @@ func saveKeyValues(kn *keyNode) (values []diskValue) {
 func saveChildren(parent *keyNode, enc *gob.Encoder) (err error) {
 	level := parent.nextLevel
 	if level != nil {
-		level.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
+		level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 			kn := node.value
 			dkn := diskKeyNode{
 				Key:           node.key,
@@ -186,7 +186,7 @@ func (ts *TreeStore) Save(l lane.Lane, fileName string) (err error) {
 	return
 }
 
-func loadValues(values []diskValue) (current *valueInstance, history *AvlTree[*valueInstance]) {
+func loadValues(values []diskValue) (current *valueInstance, history *avlTree[*valueInstance]) {
 	if values == nil {
 		return
 	}
@@ -212,7 +212,7 @@ func loadValues(values []diskValue) (current *valueInstance, history *AvlTree[*v
 	return
 }
 
-func addKeyToValueIndex(sentinel *keyNode, node *AvlNode[*keyNode], keys map[TokenPath]StoreAddress) {
+func addKeyToValueIndex(sentinel *keyNode, node *avlNode[*keyNode], keys map[TokenPath]StoreAddress) {
 	tokens := TokenSet{}
 
 	for p := node.value; p != sentinel; p = p.ownerTree.parent {

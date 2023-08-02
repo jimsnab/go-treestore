@@ -13,20 +13,20 @@ type (
 	}
 
 	KeyMatch struct {
-		sk            StoreKey
-		metadata      map[string]string
-		hasValue      bool
-		hasChildren   bool
-		currentValue  any
-		relationships []StoreAddress
+		Sk            StoreKey
+		Metadata      map[string]string
+		HasValue      bool
+		HasChildren   bool
+		CurrentValue  any
+		Relationships []StoreAddress
 	}
 
 	KeyValueMatch struct {
-		sk            StoreKey
-		metadata      map[string]string
-		hasChildren   bool
-		currentValue  any
-		relationships []StoreAddress
+		Sk            StoreKey
+		Metadata      map[string]string
+		HasChildren   bool
+		CurrentValue  any
+		Relationships []StoreAddress
 	}
 
 	iterateFullCallback func(km *KeyMatch) bool
@@ -74,7 +74,7 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 	if limit > 0 {
 		n := 0
 		patternRunes := []rune(pattern)
-		lockedLevel.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
+		lockedLevel.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 			if isPatternRunes(patternRunes, bytes.Runes(node.key)) {
 				if n >= startAt {
 					kn := node.value
@@ -101,16 +101,16 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 // worker that calls the full iterator callback
 func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyNode, callback iterateFullCallback) (stopped bool) {
 	km := KeyMatch{
-		sk:          MakeStoreKeyFromTokenSegments(segments...),
-		hasValue:    kn.current != nil,
-		hasChildren: kn.nextLevel != nil,
+		Sk:          MakeStoreKeyFromTokenSegments(segments...),
+		HasValue:    kn.current != nil,
+		HasChildren: kn.nextLevel != nil,
 	}
 	if kn.metadata != nil {
-		km.metadata = kn.metadata
+		km.Metadata = kn.metadata
 	}
 	if kn.current != nil {
-		km.currentValue = kn.current.value
-		km.relationships = kn.current.relationships
+		km.CurrentValue = kn.current.value
+		km.Relationships = kn.current.relationships
 	}
 
 	stopped = !callback(&km)
@@ -213,7 +213,7 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 			lockedLevel = nextLevel
 		} else if segstr == "**" {
 			// multi-level pattern iteration
-			all := lockedLevel.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
+			all := lockedLevel.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 				subSegments := append(segments, node.key)
 				kn := node.value
 
@@ -238,7 +238,7 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 			nextPatternIndex := patternIndex + 1
 			end := nextPatternIndex >= len(patternSegs)
 
-			all := lockedLevel.tree.Iterate(func(node *AvlNode[*keyNode]) bool {
+			all := lockedLevel.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 				subSegments := append(segments, node.key)
 				kn := node.value
 
@@ -333,13 +333,13 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		}()
 
 		ts.iterateFullInvokeCallback(skPattern.tokens, &ts.dbNode, func(km *KeyMatch) bool {
-			if km.hasValue {
+			if km.HasValue {
 				kvm := &KeyValueMatch{
-					sk:            km.sk,
-					metadata:      km.metadata,
-					hasChildren:   km.hasChildren,
-					currentValue:  km.currentValue,
-					relationships: km.relationships,
+					Sk:            km.Sk,
+					Metadata:      km.Metadata,
+					HasChildren:   km.HasChildren,
+					CurrentValue:  km.CurrentValue,
+					Relationships: km.Relationships,
 				}
 				values = append(values, kvm)
 			}
@@ -351,14 +351,14 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 
 	n := 0
 	ts.iterateFull(skPattern, func(km *KeyMatch) bool {
-		if km.hasValue {
+		if km.HasValue {
 			if n >= startAt {
 				kvm := &KeyValueMatch{
-					sk:            km.sk,
-					metadata:      km.metadata,
-					hasChildren:   km.hasChildren,
-					currentValue:  km.currentValue,
-					relationships: km.relationships,
+					Sk:            km.Sk,
+					Metadata:      km.Metadata,
+					HasChildren:   km.HasChildren,
+					CurrentValue:  km.CurrentValue,
+					Relationships: km.Relationships,
 				}
 				values = append(values, kvm)
 				if len(values) >= limit {

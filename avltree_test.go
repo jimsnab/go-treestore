@@ -23,20 +23,20 @@ func floatToBytes(float float64) []byte {
 	return bytes
 }
 
-func (node *AvlNode[T]) isFloat(float float64) bool {
+func (node *avlNode[T]) isFloat(float float64) bool {
 	if node == nil {
 		return false
 	}
 	return bytes.Equal(node.key, floatToBytes(float))
 }
 
-func checkTree[T float64 | int](tree *AvlTree[T]) bool {
+func checkTree[T float64 | int](tree *avlTree[T]) bool {
 	if !tree.isValid() {
 		return false
 	}
 
 	count := 0
-	tree.Iterate(func(node *AvlNode[T]) bool {
+	tree.Iterate(func(node *avlNode[T]) bool {
 		key := T(bytesToFloat(node.key))
 		if key != node.value {
 			return false
@@ -597,7 +597,7 @@ func TestAvlFindOne(t *testing.T) {
 }
 
 func TestAvlFindStress(t *testing.T) {
-	formatter := func(node *AvlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
+	formatter := func(node *avlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
 	tree := newAvlTree[float64]()
 
 	numbers := make([]int, 0, 2500)
@@ -708,7 +708,7 @@ func TestAvlFindLeft(t *testing.T) {
 }
 
 func TestAvlFindLeftStress(t *testing.T) {
-	formatter := func(node *AvlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
+	formatter := func(node *avlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
 
 	for pass := 0; pass < 2500; pass++ {
 		tree := newAvlTree[float64]()
@@ -797,7 +797,7 @@ func TestAvlFindRight(t *testing.T) {
 }
 
 func TestAvlFindRightStress(t *testing.T) {
-	formatter := func(node *AvlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
+	formatter := func(node *avlNode[float64]) string { return fmt.Sprintf("%v", bytesToFloat(node.key)) }
 
 	for pass := 0; pass < 2500; pass++ {
 		tree := newAvlTree[float64]()
