@@ -125,20 +125,21 @@ func saveChildren(parent *keyNode, enc *gob.Encoder) (err error) {
 }
 
 func (ts *TreeStore) acquireExclusiveLock() {
-	ts.dbNode.ownerTree.lock.Lock()
+	ts.keyNodeMu.Lock()
 
 	for {
 		n := ts.activeLocks.Add(1)
 		if n == 1 {
 			break
 		}
+		ts.keyNodeMu.Unlock()
 		ts.activeLocks.Add(-1)
 		time.Sleep(time.Millisecond)
 	}
 }
 
 func (ts *TreeStore) releaseExclusiveLock() {
-	ts.dbNode.ownerTree.lock.Unlock()
+	ts.keyNodeMu.Unlock()
 	ts.activeLocks.Add(-1)
 }
 
