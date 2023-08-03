@@ -352,3 +352,42 @@ func TestSaveLoadMetadata(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSaveLoadTwoLevelValue(t *testing.T) {
+	fs = afero.NewMemMapFs()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey("cat", "test")
+
+	addr, _ := ts.SetKeyValue(sk, 55)
+
+	err := ts.Save(ts.l, "/test.db")
+	if err != nil {
+		t.Errorf("save error %s", err.Error())
+	}
+
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	err = ts2.Load(ts2.l, "/test.db")
+	if err != nil {
+		t.Errorf("load error %s", err.Error())
+	}
+
+	verifyAddr, exists := ts2.LocateKey(sk)
+	if verifyAddr != addr || !exists {
+		t.Error("locate key")
+	}
+
+	verifyAddr, exists = ts2.IsKeyIndexed(sk)
+	if verifyAddr != addr || !exists {
+		t.Error("value not indexed")
+	}
+
+	val, keyExists, valueExists := ts2.GetKeyValue(sk)
+	if val != 55 || !keyExists || !valueExists {
+		t.Error("value verify")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
