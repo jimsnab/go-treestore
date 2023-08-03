@@ -47,7 +47,7 @@ func TestIterateLevelRoot(t *testing.T) {
 	ts.SetKey(sk)
 
 	keys, count := ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].segment) != "a" || count != 1 {
+	if len(keys) != 1 || string(keys[0].Segment) != "a" || count != 1 {
 		t.Error("one node")
 	}
 
@@ -56,7 +56,7 @@ func TestIterateLevelRoot(t *testing.T) {
 	ts.SetKey(sk2)
 
 	keys, count = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].segment) != "a" || string(keys[1].segment) != "b" || count != 2 {
+	if len(keys) != 2 || string(keys[0].Segment) != "a" || string(keys[1].Segment) != "b" || count != 2 {
 		t.Error("two nodes")
 	}
 
@@ -65,7 +65,7 @@ func TestIterateLevelRoot(t *testing.T) {
 	ts.SetKey(sk3)
 
 	keys, count = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if len(keys) != 3 || string(keys[0].segment) != "a" || string(keys[1].segment) != "b" || string(keys[2].segment) != "d" || count != 3 {
+	if len(keys) != 3 || string(keys[0].Segment) != "a" || string(keys[1].Segment) != "b" || string(keys[2].Segment) != "d" || count != 3 {
 		t.Error("three nodes")
 	}
 }
@@ -105,11 +105,11 @@ func TestIterateSecondLevel(t *testing.T) {
 	ts.SetKey(sk2)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].segment) != "cat" || count != 1 {
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
 		t.Error("one node")
 	}
 
-	if keys[0].hasValue || keys[0].hasChildren {
+	if keys[0].HasValue || keys[0].HasChildren {
 		t.Error("key only node")
 	}
 
@@ -118,11 +118,11 @@ func TestIterateSecondLevel(t *testing.T) {
 	ts.SetKey(sk3)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].segment) != "cat" || count != 1 {
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
 		t.Error("one node")
 	}
 
-	if keys[0].hasValue || !keys[0].hasChildren {
+	if keys[0].HasValue || !keys[0].HasChildren {
 		t.Error("key only node")
 	}
 
@@ -131,15 +131,15 @@ func TestIterateSecondLevel(t *testing.T) {
 	ts.SetKeyValue(sk4, 80)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].segment) != "cat" || string(keys[1].segment) != "dog" || count != 2 {
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
 		t.Error("two nodes")
 	}
 
-	if keys[0].hasValue || !keys[0].hasChildren {
+	if keys[0].HasValue || !keys[0].HasChildren {
 		t.Error("cat node flags")
 	}
 
-	if !keys[1].hasValue || keys[1].hasChildren {
+	if !keys[1].HasValue || keys[1].HasChildren {
 		t.Error("dog node flags")
 	}
 
@@ -148,15 +148,15 @@ func TestIterateSecondLevel(t *testing.T) {
 	ts.SetKeyValue(sk5, 80)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].segment) != "cat" || string(keys[1].segment) != "dog" || count != 2 {
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
 		t.Error("two nodes")
 	}
 
-	if keys[0].hasValue || !keys[0].hasChildren {
+	if keys[0].HasValue || !keys[0].HasChildren {
 		t.Error("cat node flags 2")
 	}
 
-	if !keys[1].hasValue || !keys[1].hasChildren {
+	if !keys[1].HasValue || !keys[1].HasChildren {
 		t.Error("dog node flags 2")
 	}
 }
@@ -183,11 +183,11 @@ func TestIterateThirdLevel(t *testing.T) {
 	ts.SetKey(sk2)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].segment) != "cat" || count != 1 {
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
 		t.Error("one node")
 	}
 
-	if keys[0].hasValue || keys[0].hasChildren {
+	if keys[0].HasValue || keys[0].HasChildren {
 		t.Error("key only node")
 	}
 
@@ -196,11 +196,11 @@ func TestIterateThirdLevel(t *testing.T) {
 	ts.SetKey(sk3)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].segment) != "cat" || count != 1 {
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
 		t.Error("one node")
 	}
 
-	if keys[0].hasValue || !keys[0].hasChildren {
+	if keys[0].HasValue || !keys[0].HasChildren {
 		t.Error("key only node")
 	}
 
@@ -209,15 +209,15 @@ func TestIterateThirdLevel(t *testing.T) {
 	ts.SetKeyValue(sk4, 80)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].segment) != "cat" || string(keys[1].segment) != "dog" || count != 2 {
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
 		t.Error("two nodes")
 	}
 
-	if keys[0].hasValue || !keys[0].hasChildren {
+	if keys[0].HasValue || !keys[0].HasChildren {
 		t.Error("cat node flags")
 	}
 
-	if !keys[1].hasValue || keys[1].hasChildren {
+	if !keys[1].HasValue || keys[1].HasChildren {
 		t.Error("dog node flags")
 	}
 
@@ -226,15 +226,15 @@ func TestIterateThirdLevel(t *testing.T) {
 	ts.SetKeyValue(sk5, 80)
 
 	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].segment) != "cat" || string(keys[1].segment) != "dog" || count != 2 {
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
 		t.Error("two nodes")
 	}
 
-	if keys[0].hasValue || !keys[0].hasChildren {
+	if keys[0].HasValue || !keys[0].HasChildren {
 		t.Error("cat node flags 2")
 	}
 
-	if !keys[1].hasValue || !keys[1].hasChildren {
+	if !keys[1].HasValue || !keys[1].HasChildren {
 		t.Error("dog node flags 2")
 	}
 }
@@ -278,7 +278,7 @@ func TestIterateLevelPages(t *testing.T) {
 			t.Error("one item page")
 		}
 
-		if string(keys[0].segment) != values[i] {
+		if string(keys[0].Segment) != values[i] {
 			t.Error("value mismatch")
 		}
 
@@ -292,11 +292,11 @@ func TestIterateLevelPages(t *testing.T) {
 			t.Error("two item page")
 		}
 
-		if string(keys[0].segment) != values[i] {
+		if string(keys[0].Segment) != values[i] {
 			t.Error("first value mismatch")
 		}
 		if len(keys) == 2 {
-			if string(keys[1].segment) != values[i+1] {
+			if string(keys[1].Segment) != values[i+1] {
 				t.Error("second value mismatch")
 			}
 		}
@@ -307,7 +307,7 @@ func TestIterateLevelPages(t *testing.T) {
 		}
 
 		for j := 0; j < remaining; j++ {
-			if string(keys[j].segment) != values[i+j] {
+			if string(keys[j].Segment) != values[i+j] {
 				t.Errorf("page value %d", i+j)
 			}
 		}
@@ -318,7 +318,7 @@ func TestIterateLevelPages(t *testing.T) {
 		}
 
 		for j := 0; j < remaining; j++ {
-			if string(keys[j].segment) != values[i+j] {
+			if string(keys[j].Segment) != values[i+j] {
 				t.Errorf("page value %d", i+j)
 			}
 		}

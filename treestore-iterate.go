@@ -7,9 +7,9 @@ import (
 
 type (
 	LevelKey struct {
-		segment     TokenSegment
-		hasValue    bool
-		hasChildren bool
+		Segment     TokenSegment `json:"segment"`
+		HasValue    bool	`json:"has_value"`
+		HasChildren bool `json:"has_children"`
 	}
 
 	KeyMatch struct {
@@ -79,9 +79,9 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 				if n >= startAt {
 					kn := node.value
 					lk := LevelKey{
-						segment:     node.key,
-						hasValue:    kn.current != nil,
-						hasChildren: kn.nextLevel != nil,
+						Segment:     node.key,
+						HasValue:    kn.current != nil,
+						HasChildren: kn.nextLevel != nil,
 					}
 					keys = append(keys, lk)
 					if len(keys) >= limit {
