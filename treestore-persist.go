@@ -212,15 +212,10 @@ func loadValues(values []diskValue) (current *valueInstance, history *avlTree[*v
 	return
 }
 
-func addKeyToValueIndex(sentinel *keyNode, node *avlNode[*keyNode], keys map[TokenPath]StoreAddress) {
-	tokens := TokenSet{}
-
-	for p := node.value; p != sentinel; p = p.ownerTree.parent {
-		tokens = append([]TokenSegment{node.key}, tokens...)
-	}
-
+func (ts *TreeStore) addKeyToValueIndex(kn *keyNode, keys map[TokenPath]StoreAddress) {
+	tokens := ts.getTokenSet(kn)
 	keyPath := TokenSetToTokenPath(tokens)
-	keys[keyPath] = node.value.address
+	keys[keyPath] = kn.address
 }
 
 func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
@@ -280,6 +275,7 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 		}
 
 		kn := keyNode{
+			key:        dkn.Key,
 			address:    StoreAddress(dkn.Address),
 			ownerTree:  level,
 			expiration: dkn.Expiration,
@@ -291,10 +287,10 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 		kn.history = history
 
 		addresses[kn.address] = &kn
-		node, _ := level.tree.Set(dkn.Key, &kn)
+		level.tree.Set(kn.key, &kn)
 
 		if kn.current != nil {
-			addKeyToValueIndex(dbNode, node, keys)
+			ts.addKeyToValueIndex(&kn, keys)
 		}
 	}
 

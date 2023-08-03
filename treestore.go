@@ -30,6 +30,7 @@ type (
 	}
 
 	keyNode struct {
+		key        []byte
 		address    StoreAddress
 		ownerTree  *keyTree
 		nextLevel  *keyTree
@@ -72,19 +73,17 @@ const (
 )
 
 func NewTreeStore(l lane.Lane) *TreeStore {
-	dbNode := keyNode{
-		address:   1,
-		ownerTree: newKeyTree(nil),
-	}
-
 	ts := TreeStore{
 		l:           l,
-		dbNode:      dbNode,
 		nextAddress: 1,
 		keys:        map[TokenPath]StoreAddress{},
 		cas:         map[StoreAddress]uint64{},
 	}
-	dbNode.ownerTree.tree.Set([]byte{}, &ts.dbNode)
+
+	ts.dbNode.address = 1
+	ts.dbNode.ownerTree = newKeyTree(&ts.dbNode)
+	ts.dbNode.key = []byte{}
+	ts.dbNode.ownerTree.tree.Set(ts.dbNode.key, &ts.dbNode)
 	ts.addresses = map[StoreAddress]*keyNode{1: &ts.dbNode}
 	return &ts
 }
@@ -367,11 +366,12 @@ func (ts *TreeStore) completeKeyNodeWrite(level *keyTree) {
 
 func (ts *TreeStore) appendKeyNode(lockedLevel *keyTree, token TokenSegment) (kn *keyNode) {
 	kn = &keyNode{
+		key:       token,
 		address:   StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1)),
 		ownerTree: lockedLevel,
 	}
 
-	lockedLevel.tree.Set(token, kn)
+	lockedLevel.tree.Set(kn.key, kn)
 
 	ts.keyMu.Lock()
 	ts.addresses[kn.address] = kn
@@ -974,5 +974,13 @@ func (ts *TreeStore) GetMetadataAttributes(sk StoreKey) (attributes []string) {
 		attributes = []string{}
 	}
 
+	return
+}
+
+func (ts *TreeStore) getTokenSet(kn *keyNode) (tokens TokenSet) {
+	for kn != &ts.dbNode {
+		tokens = append(TokenSet{kn.key}, tokens...)
+		kn = kn.ownerTree.parent
+	}
 	return
 }

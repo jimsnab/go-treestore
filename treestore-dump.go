@@ -34,7 +34,7 @@ func (ts *TreeStore) DiagDump() bool {
 	}
 
 	fmt.Printf("values: %d\n", len(ts.keys))
-	treeStoreDump.dumpLevel(ts.dbNode.ownerTree, "", nil, &rootSk)
+	treeStoreDump.dumpLevel(ts.dbNode.ownerTree, "", &ts.dbNode, &rootSk)
 
 	if len(treeStoreDump.used) != len(ts.keys) {
 		treeStoreDump.errors = append(treeStoreDump.errors, fmt.Sprintf("mismatch in %d iterated keys with values versus the key index length %d", len(treeStoreDump.used), len(ts.keys)))
@@ -71,7 +71,7 @@ func (ts *TreeStore) DiagDump() bool {
 
 func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParent *keyNode, baseSk *StoreKey) {
 	if level.parent != expectedParent {
-		tsd.errors = append(tsd.errors, "parent linkage error")
+		tsd.errors = append(tsd.errors, fmt.Sprintf("tree level's parent %p is not the expected parent %p", level.parent, expectedParent))
 	}
 
 	level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
