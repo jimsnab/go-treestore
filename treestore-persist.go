@@ -25,11 +25,12 @@ type (
 		Metadata      map[string]string
 	}
 	diskHeader struct {
-		Version          int
-		NextAddress      uint64
-		SentinelValues   []diskValue
-		SentinelMetadata map[string]string
-		Cas              map[StoreAddress]uint64
+		Version            int
+		NextAddress        uint64
+		SentinelValues     []diskValue
+		SentinelMetadata   map[string]string
+		SentinelExpiration int64
+		Cas                map[StoreAddress]uint64
 		// variable number of diskKeyNode structs follow, terminated by a diskKeyNode that has Address of 0
 	}
 )
@@ -153,10 +154,11 @@ func (ts *TreeStore) Save(l lane.Lane, fileName string) (err error) {
 	defer ts.releaseExclusiveLock()
 
 	hdr := diskHeader{
-		Version:          1,
-		NextAddress:      uint64(ts.nextAddress),
-		SentinelValues:   saveKeyValues(&ts.dbNode),
-		SentinelMetadata: ts.dbNode.metadata,
+		Version:            1,
+		NextAddress:        uint64(ts.nextAddress),
+		SentinelValues:     saveKeyValues(&ts.dbNode),
+		SentinelMetadata:   ts.dbNode.metadata,
+		SentinelExpiration: ts.dbNode.expiration,
 	}
 	hdr.Cas = ts.cas
 
@@ -246,9 +248,13 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 	dbNode.current = sentinelCurrentValue
 	dbNode.history = sentinelHistory
 	dbNode.metadata = hdr.SentinelMetadata
+	dbNode.expiration = hdr.SentinelExpiration
 
 	addresses := map[StoreAddress]*keyNode{1: dbNode}
 	keys := map[TokenPath]StoreAddress{}
+	if dbNode.current != nil {
+		ts.addKeyToValueIndex(dbNode, keys)
+	}
 
 	for {
 		dkn := diskKeyNode{}

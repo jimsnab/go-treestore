@@ -39,26 +39,31 @@ type (
 // Memory is allocated up front to hold `limit` keys, so be careful to pass
 // a reasonable limit.
 func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, count int) {
-	var loc keyLocation
-	if len(sk.Tokens) == 0 {
-		loc.kn = &ts.dbNode
-		loc.level = ts.dbNode.ownerTree
-		loc.level.lock.RLock()
+	var level *keyTree
+	var index int
+	var kn *keyNode
+
+	end := len(sk.Tokens)
+
+	if end == 0 {
+		kn = &ts.dbNode
+		level = ts.dbNode.ownerTree
+		level.lock.RLock()
 		ts.activeLocks.Add(1)
 	} else {
-		loc = ts.locateKeyNodeForRead(sk)
+		level, index, kn = ts.locateKeyNodeForRead(sk)
 	}
 
-	lockedLevel := loc.level
+	lockedLevel := level
 
-	if loc.index < len(sk.Tokens) {
+	if index < end {
 		ts.completeKeyNodeRead(lockedLevel)
 		return
 	}
 
 	keys = make([]LevelKey, 0, limit)
 
-	nextLockedLevel := loc.kn.nextLevel
+	nextLockedLevel := kn.nextLevel
 	if nextLockedLevel == nil {
 		// no children
 		ts.completeKeyNodeRead(lockedLevel)

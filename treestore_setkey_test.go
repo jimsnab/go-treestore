@@ -425,3 +425,221 @@ func TestSetRelationship(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSetKeyOneRelationship(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk1 := MakeStoreKey("index", "1")
+	sk2 := MakeStoreKey("data", "sample")
+
+	address2, exists := ts.SetKey(sk2)
+	if address2 == 0 || exists {
+		t.Error("second set")
+	}
+
+	address1, exists, orgVal := ts.SetKeyValueEx(sk1, nil, SetExNoValueUpdate, 0, []StoreAddress{address2})
+	if address1 == 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(sk1, 0)
+	if !hasLink || rv == nil || rv.CurrentValue != nil || rv.Sk.Path != "/data/sample" {
+		t.Error("follow relationship")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(sk1, 1)
+	if hasLink || rv != nil {
+		t.Error("no relationship")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSetKeyOneRelationshipWithValue(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk1 := MakeStoreKey("index", "1")
+	sk2 := MakeStoreKey("data", "sample")
+
+	address2, firstValue := ts.SetKeyValue(sk2, 687)
+	if address2 == 0 || !firstValue {
+		t.Error("second set")
+	}
+
+	address1, exists, orgVal := ts.SetKeyValueEx(sk1, nil, SetExNoValueUpdate, 0, []StoreAddress{address2})
+	if address1 == 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(sk1, 0)
+	if !hasLink || rv == nil || rv.CurrentValue != 687 || rv.Sk.Path != "/data/sample" {
+		t.Error("follow relationship")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(sk1, 1)
+	if hasLink || rv != nil {
+		t.Error("no relationship")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSetKeyOddRelationships(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk1 := MakeStoreKey("index", "1")
+	sk2 := MakeStoreKey("index", "2")
+
+	address1, exists, orgVal := ts.SetKeyValueEx(sk1, nil, SetExNoValueUpdate, 0, []StoreAddress{200})
+	if address1 == 0 || exists || orgVal != nil {
+		t.Error("first set")
+	}
+
+	address2, exists, orgVal := ts.SetKeyValueEx(sk2, nil, SetExNoValueUpdate, 0, []StoreAddress{0, 1})
+	if address2 == 0 || exists || orgVal != nil {
+		t.Error("second set")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(sk1, 0)
+	if !hasLink || rv != nil {
+		t.Error("address doesn't exist")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(sk2, 0)
+	if hasLink || rv != nil {
+		t.Error("link to nothing")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(sk2, 1)
+	if !hasLink || rv == nil || len(rv.Sk.Tokens) != 0 {
+		t.Error("link to sentinel")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(MakeStoreKey("missing"), 1)
+	if hasLink || rv != nil {
+		t.Error("no key")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestGetKeyByAddress(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey("fox", "mouse", "chicken")
+
+	address, exists := ts.SetKey(sk)
+	if address == 0 || exists {
+		t.Error("key set")
+	}
+
+	sk2, exists := ts.KeyFromAddress(address)
+	if !exists || sk2.Path != "/fox/mouse/chicken" {
+		t.Error("key from address")
+	}
+
+	sk2, exists = ts.KeyFromAddress(1)
+	if !exists || sk2.Path != "" {
+		t.Error("sentinel from address")
+	}
+
+	sk2, exists = ts.KeyFromAddress(0)
+	if exists {
+		t.Error("null address")
+	}
+
+	sk2, exists = ts.KeyFromAddress(100)
+	if exists {
+		t.Error("missing address")
+	}
+
+	keyExists, valueExists, sk2, value := ts.KeyValueFromAddress(address)
+	if !keyExists || valueExists || sk2.Path != "/fox/mouse/chicken" || value != nil {
+		t.Error("value from address")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestGetValueKeyByAddress(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey("fox", "mouse", "chicken")
+
+	address, firstValue := ts.SetKeyValue(sk, 972)
+	if address == 0 || !firstValue {
+		t.Error("value set")
+	}
+
+	sk2, exists := ts.KeyFromAddress(address)
+	if !exists || sk2.Path != "/fox/mouse/chicken" {
+		t.Error("key from address")
+	}
+
+	sk2, exists = ts.KeyFromAddress(1)
+	if !exists || sk2.Path != "" {
+		t.Error("sentinel from address")
+	}
+
+	sk2, exists = ts.KeyFromAddress(0)
+	if exists {
+		t.Error("null address")
+	}
+
+	sk2, exists = ts.KeyFromAddress(100)
+	if exists {
+		t.Error("missing address")
+	}
+
+	keyExists, valueExists, sk2, value := ts.KeyValueFromAddress(address)
+	if !keyExists || !valueExists || sk2.Path != "/fox/mouse/chicken" || value != 972 {
+		t.Error("value from address")
+	}
+
+	keyExists, valueExists, sk2, value = ts.KeyValueFromAddress(1)
+	if !keyExists || valueExists || sk2.Path != "" || value != nil {
+		t.Error("sentinal key from address")
+	}
+
+	keyExists, valueExists, sk2, value = ts.KeyValueFromAddress(0)
+	if keyExists || valueExists || value != nil {
+		t.Error("null value address")
+	}
+
+	keyExists, valueExists, sk2, value = ts.KeyValueFromAddress(100)
+	if keyExists || valueExists || value != nil {
+		t.Error("invalid value address")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestGetSentinelValueByAddress(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey()
+
+	address, firstValue := ts.SetKeyValue(sk, 972)
+	if address != 1 || !firstValue {
+		t.Error("value set")
+	}
+
+	keyExists, valueExists, sk2, value := ts.KeyValueFromAddress(address)
+	if !keyExists || !valueExists || sk2.Path != "" || value != 972 {
+		t.Error("value from address")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}

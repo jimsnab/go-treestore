@@ -391,3 +391,121 @@ func TestSaveLoadTwoLevelValue(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSaveLoadSentinel(t *testing.T) {
+	fs = afero.NewMemMapFs()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey()
+	sk2 := MakeStoreKey("foo")
+
+	addr, _ := ts.SetKey(sk2)
+
+	ts.SetKeyValueEx(sk, 230, 0, -1000*(1000*1000*1000), []StoreAddress{addr})
+	ttl := ts.GetKeyTtl(sk)
+	checkpoint := time.Now().UTC().UnixNano()
+	if ttl < checkpoint {
+		t.Error("relative ttl")
+	}
+	ts.SetKeyValueEx(sk, 630, 0, -1, []StoreAddress{addr})
+	ts.SetMetadataAttribute(sk, "test", "cat")
+
+	err := ts.Save(ts.l, "/test.db")
+	if err != nil {
+		t.Errorf("save error %s", err.Error())
+	}
+
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	err = ts2.Load(ts2.l, "/test.db")
+	if err != nil {
+		t.Errorf("load error %s", err.Error())
+	}
+
+	v, keyExists, valueExists := ts2.GetKeyValue(sk)
+	if v != 630 || !keyExists || !valueExists {
+		t.Error("latest value verify")
+	}
+
+	v, valueExists = ts2.GetKeyValueAtTime(sk, checkpoint)
+	if v != 230 || !valueExists {
+		t.Error("first value verify")
+	}
+
+	ttl2 := ts2.GetKeyTtl(sk)
+	if ttl2 != ttl {
+		t.Error("ttl verify")
+	}
+
+	exists, md := ts2.GetMetadataAttribute(sk, "test")
+	if !exists || md != "cat" {
+		t.Error("metadata verify")
+	}
+
+	hasLink, rv := ts2.GetRelationshipValue(sk, 0)
+	if !hasLink || rv == nil || rv.CurrentValue != nil || rv.Sk.Path != "/foo" {
+		t.Error("follow relationship")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSaveLoadThreeLevels(t *testing.T) {
+	fs = afero.NewMemMapFs()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey("first", "second", "third")
+	sk2 := MakeStoreKey("foo", "bar")
+
+	addr, _ := ts.SetKey(sk2)
+
+	ts.SetKeyValueEx(sk, 230, 0, -1000*(1000*1000*1000), []StoreAddress{addr})
+	ttl := ts.GetKeyTtl(sk)
+	checkpoint := time.Now().UTC().UnixNano()
+	if ttl < checkpoint {
+		t.Error("relative ttl")
+	}
+	ts.SetKeyValueEx(sk, 630, 0, -1, []StoreAddress{addr})
+	ts.SetMetadataAttribute(sk, "test", "cat")
+
+	err := ts.Save(ts.l, "/test.db")
+	if err != nil {
+		t.Errorf("save error %s", err.Error())
+	}
+
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	err = ts2.Load(ts2.l, "/test.db")
+	if err != nil {
+		t.Errorf("load error %s", err.Error())
+	}
+
+	v, keyExists, valueExists := ts2.GetKeyValue(sk)
+	if v != 630 || !keyExists || !valueExists {
+		t.Error("latest value verify")
+	}
+
+	v, valueExists = ts2.GetKeyValueAtTime(sk, checkpoint)
+	if v != 230 || !valueExists {
+		t.Error("first value verify")
+	}
+
+	ttl2 := ts2.GetKeyTtl(sk)
+	if ttl2 != ttl {
+		t.Error("ttl verify")
+	}
+
+	exists, md := ts2.GetMetadataAttribute(sk, "test")
+	if !exists || md != "cat" {
+		t.Error("metadata verify")
+	}
+
+	hasLink, rv := ts2.GetRelationshipValue(sk, 0)
+	if !hasLink || rv == nil || rv.CurrentValue != nil || rv.Sk.Path != "/foo/bar" {
+		t.Error("follow relationship")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}

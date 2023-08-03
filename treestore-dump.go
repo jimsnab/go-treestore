@@ -2,6 +2,7 @@ package treestore
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -101,7 +102,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		tsd.addresses[kn.address] = kn
 
 		if kn.metadata != nil {
-			fmt.Printf("%s  %v\n", indent, kn.metadata)
+			fmt.Printf("%s  Metadata: %s\n", indent, strings.TrimPrefix(fmt.Sprintf("%v", kn.metadata), "map"))
 		}
 
 		if kn.expiration > 0 {
