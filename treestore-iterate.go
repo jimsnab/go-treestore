@@ -8,8 +8,8 @@ import (
 type (
 	LevelKey struct {
 		Segment     TokenSegment `json:"segment"`
-		HasValue    bool	`json:"has_value"`
-		HasChildren bool `json:"has_children"`
+		HasValue    bool         `json:"has_value"`
+		HasChildren bool         `json:"has_children"`
 	}
 
 	KeyMatch struct {

@@ -880,7 +880,7 @@ func (ts *TreeStore) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, orig
 }
 
 // Sets a metadata attribute on a key, returning the original value (if any)
-func (ts *TreeStore) SetMetdataAttribute(sk StoreKey, attribute, value string) (keyExists bool, originalValue string) {
+func (ts *TreeStore) SetMetadataAttribute(sk StoreKey, attribute, value string) (keyExists bool, originalValue string) {
 	loc := ts.locateKeyNodeForWrite(sk)
 	defer ts.completeKeyNodeWrite(loc.level)
 

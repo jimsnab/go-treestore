@@ -320,7 +320,7 @@ func TestSaveLoadMetadata(t *testing.T) {
 
 	sk := MakeStoreKey("cat")
 	ts.SetKey(sk)
-	ts.SetMetdataAttribute(sk, "abc", "123")
+	ts.SetMetadataAttribute(sk, "abc", "123")
 
 	err := ts.Save(ts.l, "/test.db")
 	if err != nil {

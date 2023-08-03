@@ -13,7 +13,7 @@ func TestMetadataSet(t *testing.T) {
 	sk := MakeStoreKey("test")
 
 	ts.SetKey(sk)
-	exists, orgVal := ts.SetMetdataAttribute(sk, "abc", "123")
+	exists, orgVal := ts.SetMetadataAttribute(sk, "abc", "123")
 	if !exists || orgVal != "" {
 		t.Error("first attribute set")
 	}
@@ -23,7 +23,7 @@ func TestMetadataSet(t *testing.T) {
 		t.Error("verify first attribute")
 	}
 
-	exists, orgVal = ts.SetMetdataAttribute(sk, "abc", "456")
+	exists, orgVal = ts.SetMetadataAttribute(sk, "abc", "456")
 	if !exists || orgVal != "123" {
 		t.Error("second attribute set")
 	}
@@ -33,7 +33,7 @@ func TestMetadataSet(t *testing.T) {
 		t.Error("verify second attribute")
 	}
 
-	exists, orgVal = ts.SetMetdataAttribute(MakeStoreKey("foo"), "abc", "890")
+	exists, orgVal = ts.SetMetadataAttribute(MakeStoreKey("foo"), "abc", "890")
 	if exists || orgVal != "" {
 		t.Error("attribute attempt on missing key")
 	}
@@ -50,7 +50,7 @@ func TestMetadataClear(t *testing.T) {
 	sk := MakeStoreKey("test")
 
 	ts.SetKey(sk)
-	exists, orgVal := ts.SetMetdataAttribute(sk, "abc", "123")
+	exists, orgVal := ts.SetMetadataAttribute(sk, "abc", "123")
 	if !exists || orgVal != "" {
 		t.Error("first attribute set")
 	}
@@ -70,7 +70,7 @@ func TestMetadataClear(t *testing.T) {
 		t.Error("clear missing attribute")
 	}
 
-	exists, orgVal = ts.SetMetdataAttribute(sk, "abc", "456")
+	exists, orgVal = ts.SetMetadataAttribute(sk, "abc", "456")
 	if !exists || orgVal != "" {
 		t.Error("second attribute set")
 	}
@@ -80,7 +80,7 @@ func TestMetadataClear(t *testing.T) {
 		t.Error("verify second attribute")
 	}
 
-	exists, orgVal = ts.SetMetdataAttribute(sk, "def", "100")
+	exists, orgVal = ts.SetMetadataAttribute(sk, "def", "100")
 	if !exists || orgVal != "" {
 		t.Error("third attribute set")
 	}
@@ -90,7 +90,7 @@ func TestMetadataClear(t *testing.T) {
 		t.Error("clear missing attribute")
 	}
 
-	exists, orgVal = ts.SetMetdataAttribute(sk, "def", "100")
+	exists, orgVal = ts.SetMetadataAttribute(sk, "def", "100")
 	if !exists || orgVal != "" {
 		t.Error("third attribute set")
 	}
@@ -146,12 +146,12 @@ func TestMetadataSentinel(t *testing.T) {
 
 	sk := MakeStoreKey()
 
-	exists, orgVal := ts.SetMetdataAttribute(sk, "abc", "123")
+	exists, orgVal := ts.SetMetadataAttribute(sk, "abc", "123")
 	if !exists || orgVal != "" {
 		t.Error("first attribute set")
 	}
 
-	exists, orgVal = ts.SetMetdataAttribute(sk, "abc", "321")
+	exists, orgVal = ts.SetMetadataAttribute(sk, "abc", "321")
 	if !exists || orgVal != "123" {
 		t.Error("second attribute set")
 	}
