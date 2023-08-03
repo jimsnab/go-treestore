@@ -78,8 +78,12 @@ func TokenSegmentToString(segment TokenSegment) string {
 // A token path is a forward-slash separated list of escaped token strings.
 // See `EscapeTokenString()` and `MakeTokenPath()`
 func TokenPathToTokenSet(tokenPath TokenPath) TokenSet {
-	if !strings.HasPrefix(string(tokenPath), "/") {
+	if tokenPath == "" {
 		return TokenSet{}
+	}
+
+	if !strings.HasPrefix(string(tokenPath), "/") {
+		tokenPath = "/" + tokenPath
 	}
 
 	parts := strings.Split(string(tokenPath[1:]), "/")

@@ -154,6 +154,16 @@ func TestTokenSet(t *testing.T) {
 		t.Error("empty token set")
 	}
 
+	tokens = TokenPathToTokenSet("foo")
+	if tokens == nil || len(tokens) != 1 {
+		t.Error("token path without slash")
+	}
+
+	tokenPath = TokenSetToTokenPath(tokens)
+	if tokenPath != "/foo" {
+		t.Error("normalized token path")
+	}
+
 	tokens = TokenPathToTokenSet("//")
 	if tokens == nil || len(tokens) != 2 || !bytes.Equal(tokens[0], []byte("")) || !bytes.Equal(tokens[1], []byte("")) {
 		t.Error("two empty token path segments")
