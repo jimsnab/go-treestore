@@ -38,10 +38,11 @@ type (
 //
 // Memory is allocated up front to hold `limit` keys, so be careful to pass
 // a reasonable limit.
-func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey, count int) {
+func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit int) (keys []LevelKey) {
 	var level *keyTree
 	var index int
 	var kn *keyNode
+	var expired bool
 
 	end := len(sk.Tokens)
 
@@ -50,13 +51,14 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 		level = ts.dbNode.ownerTree
 		level.lock.RLock()
 		ts.activeLocks.Add(1)
+		expired = false
 	} else {
-		level, index, kn = ts.locateKeyNodeForRead(sk)
+		level, index, kn, expired = ts.locateKeyNodeForRead(sk)
 	}
 
 	lockedLevel := level
 
-	if index < end {
+	if index < end || expired {
 		ts.completeKeyNodeRead(lockedLevel)
 		return
 	}
@@ -74,15 +76,17 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 	lockedLevel.lock.RUnlock()
 	lockedLevel = nextLockedLevel
 
-	count = lockedLevel.tree.nodes
-
 	if limit > 0 {
 		n := 0
 		patternRunes := []rune(pattern)
 		lockedLevel.tree.Iterate(func(node *avlNode[*keyNode]) bool {
+			kn := node.value
+			if kn.isExpired() {
+				return true
+			}
+
 			if isPatternRunes(patternRunes, bytes.Runes(node.key)) {
 				if n >= startAt {
-					kn := node.value
 					lk := LevelKey{
 						Segment:     node.key,
 						HasValue:    kn.current != nil,
@@ -105,6 +109,10 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 
 // worker that calls the full iterator callback
 func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyNode, callback iterateFullCallback) (stopped bool) {
+	if kn.isExpired() {
+		return
+	}
+
 	km := KeyMatch{
 		Key:         TokenSetToTokenPath(segments),
 		HasValue:    kn.current != nil,

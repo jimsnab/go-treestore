@@ -193,7 +193,7 @@ func TestSaveLoadNotExpired(t *testing.T) {
 	sk := MakeStoreKey("cat")
 
 	tick := time.Now().UTC().UnixNano()
-	tick += 24 * 60 * 60 * 1000 * 1000 * 1000
+	tick += 24 * 60 * 60 * nsPerSec
 	addr, _, _ := ts.SetKeyValueEx(sk, 551, 0, tick, nil)
 
 	err := ts.Save(ts.l, "/test.db")

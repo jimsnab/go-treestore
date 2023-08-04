@@ -14,27 +14,27 @@ import (
 func TestIterateLevelEmpty(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
-	keys, count := ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if keys == nil || len(keys) != 0 || count != 0 {
+	keys := ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
+	if keys == nil || len(keys) != 0 {
 		t.Error("empty root")
 	}
 
 	ts.SetKey(MakeStoreKey())
 
-	keys, count = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if keys == nil || len(keys) != 0 || count != 0 {
+	keys = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
+	if keys == nil || len(keys) != 0 {
 		t.Error("empty root with sentinel")
 	}
 
 	ts.SetKeyValue(MakeStoreKey(), 1)
 
-	keys, count = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if keys == nil || len(keys) != 0 || count != 0 {
+	keys = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
+	if keys == nil || len(keys) != 0 {
 		t.Error("empty root with sentinel value")
 	}
 
-	keys, count = ts.GetLevelKeys(MakeStoreKey("not there"), "*", 0, 100)
-	if keys != nil || count != 0 {
+	keys = ts.GetLevelKeys(MakeStoreKey("not there"), "*", 0, 100)
+	if keys != nil {
 		t.Error("empty root no key")
 	}
 }
@@ -46,8 +46,8 @@ func TestIterateLevelRoot(t *testing.T) {
 
 	ts.SetKey(sk)
 
-	keys, count := ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].Segment) != "a" || count != 1 {
+	keys := ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
+	if len(keys) != 1 || string(keys[0].Segment) != "a" {
 		t.Error("one node")
 	}
 
@@ -55,8 +55,8 @@ func TestIterateLevelRoot(t *testing.T) {
 
 	ts.SetKey(sk2)
 
-	keys, count = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].Segment) != "a" || string(keys[1].Segment) != "b" || count != 2 {
+	keys = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
+	if len(keys) != 2 || string(keys[0].Segment) != "a" || string(keys[1].Segment) != "b" {
 		t.Error("two nodes")
 	}
 
@@ -64,8 +64,8 @@ func TestIterateLevelRoot(t *testing.T) {
 
 	ts.SetKey(sk3)
 
-	keys, count = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
-	if len(keys) != 3 || string(keys[0].Segment) != "a" || string(keys[1].Segment) != "b" || string(keys[2].Segment) != "d" || count != 3 {
+	keys = ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
+	if len(keys) != 3 || string(keys[0].Segment) != "a" || string(keys[1].Segment) != "b" || string(keys[2].Segment) != "d" {
 		t.Error("three nodes")
 	}
 }
@@ -77,8 +77,8 @@ func TestIterateLevelNoBase(t *testing.T) {
 
 	ts.SetKey(sk)
 
-	keys, count := ts.GetLevelKeys(MakeStoreKey("d"), "*", 0, 100)
-	if keys != nil || count != 0 {
+	keys := ts.GetLevelKeys(MakeStoreKey("d"), "*", 0, 100)
+	if keys != nil {
 		t.Error("no base match")
 	}
 }
@@ -88,15 +88,15 @@ func TestIterateSecondLevel(t *testing.T) {
 
 	sk := MakeStoreKey("a")
 
-	keys, count := ts.GetLevelKeys(sk, "*", 0, 100)
-	if keys != nil || count != 0 {
+	keys := ts.GetLevelKeys(sk, "*", 0, 100)
+	if keys != nil {
 		t.Error("no second level")
 	}
 
 	ts.SetKey(sk)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if keys == nil || len(keys) != 0 || count != 0 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if keys == nil || len(keys) != 0 {
 		t.Error("empty second level")
 	}
 
@@ -104,8 +104,8 @@ func TestIterateSecondLevel(t *testing.T) {
 
 	ts.SetKey(sk2)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" {
 		t.Error("one node")
 	}
 
@@ -117,8 +117,8 @@ func TestIterateSecondLevel(t *testing.T) {
 
 	ts.SetKey(sk3)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" {
 		t.Error("one node")
 	}
 
@@ -130,8 +130,8 @@ func TestIterateSecondLevel(t *testing.T) {
 
 	ts.SetKeyValue(sk4, 80)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" {
 		t.Error("two nodes")
 	}
 
@@ -147,8 +147,8 @@ func TestIterateSecondLevel(t *testing.T) {
 
 	ts.SetKeyValue(sk5, 80)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" {
 		t.Error("two nodes")
 	}
 
@@ -166,15 +166,15 @@ func TestIterateThirdLevel(t *testing.T) {
 
 	sk := MakeStoreKey("data", "test")
 
-	keys, count := ts.GetLevelKeys(sk, "*", 0, 100)
-	if keys != nil || count != 0 {
+	keys := ts.GetLevelKeys(sk, "*", 0, 100)
+	if keys != nil {
 		t.Error("no second level")
 	}
 
 	ts.SetKey(sk)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if keys == nil || len(keys) != 0 || count != 0 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if keys == nil || len(keys) != 0 {
 		t.Error("empty second level")
 	}
 
@@ -182,8 +182,8 @@ func TestIterateThirdLevel(t *testing.T) {
 
 	ts.SetKey(sk2)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" {
 		t.Error("one node")
 	}
 
@@ -195,8 +195,8 @@ func TestIterateThirdLevel(t *testing.T) {
 
 	ts.SetKey(sk3)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 1 || string(keys[0].Segment) != "cat" || count != 1 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 1 || string(keys[0].Segment) != "cat" {
 		t.Error("one node")
 	}
 
@@ -208,8 +208,8 @@ func TestIterateThirdLevel(t *testing.T) {
 
 	ts.SetKeyValue(sk4, 80)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" {
 		t.Error("two nodes")
 	}
 
@@ -225,8 +225,8 @@ func TestIterateThirdLevel(t *testing.T) {
 
 	ts.SetKeyValue(sk5, 80)
 
-	keys, count = ts.GetLevelKeys(sk, "*", 0, 100)
-	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" || count != 2 {
+	keys = ts.GetLevelKeys(sk, "*", 0, 100)
+	if len(keys) != 2 || string(keys[0].Segment) != "cat" || string(keys[1].Segment) != "dog" {
 		t.Error("two nodes")
 	}
 
@@ -262,19 +262,19 @@ func TestIterateLevelPages(t *testing.T) {
 	sort.Strings(values)
 
 	root := MakeStoreKey()
-	keys, count := ts.GetLevelKeys(root, "*", 0, 0)
-	if keys == nil || len(keys) != 0 || count != 250 {
+	keys := ts.GetLevelKeys(root, "*", 0, 0)
+	if keys == nil || len(keys) != 0 {
 		t.Error("empty page")
 	}
 
 	for i := 0; i < 250; i++ {
-		keys, count = ts.GetLevelKeys(root, "*", i, 0)
-		if keys == nil || len(keys) != 0 || count != 250 {
+		keys = ts.GetLevelKeys(root, "*", i, 0)
+		if keys == nil || len(keys) != 0 {
 			t.Error("empty page with non zero start")
 		}
 
-		keys, count = ts.GetLevelKeys(root, "*", i, 1)
-		if keys == nil || len(keys) != 1 || count != 250 {
+		keys = ts.GetLevelKeys(root, "*", i, 1)
+		if keys == nil || len(keys) != 1 {
 			t.Error("one item page")
 		}
 
@@ -287,8 +287,8 @@ func TestIterateLevelPages(t *testing.T) {
 		if remaining < remaining2 {
 			remaining2 = remaining
 		}
-		keys, count = ts.GetLevelKeys(root, "*", i, 2)
-		if keys == nil || len(keys) != remaining2 || count != 250 {
+		keys = ts.GetLevelKeys(root, "*", i, 2)
+		if keys == nil || len(keys) != remaining2 {
 			t.Error("two item page")
 		}
 
@@ -301,8 +301,8 @@ func TestIterateLevelPages(t *testing.T) {
 			}
 		}
 
-		keys, count = ts.GetLevelKeys(root, "*", i, remaining)
-		if keys == nil || len(keys) != remaining || count != 250 {
+		keys = ts.GetLevelKeys(root, "*", i, remaining)
+		if keys == nil || len(keys) != remaining {
 			t.Error("remaining items page")
 		}
 
@@ -312,8 +312,8 @@ func TestIterateLevelPages(t *testing.T) {
 			}
 		}
 
-		keys, count = ts.GetLevelKeys(root, "*", i, 1000)
-		if keys == nil || len(keys) != remaining || count != 250 {
+		keys = ts.GetLevelKeys(root, "*", i, 1000)
+		if keys == nil || len(keys) != remaining {
 			t.Error("large page with start offset")
 		}
 
@@ -348,13 +348,13 @@ func TestIterateLevelPattern(t *testing.T) {
 	sort.Strings(values)
 
 	root := MakeStoreKey()
-	keys, count := ts.GetLevelKeys(root, "", 0, 100)
-	if keys == nil || len(keys) != 0 || count != 250 {
+	keys := ts.GetLevelKeys(root, "", 0, 100)
+	if keys == nil || len(keys) != 0 {
 		t.Error("empty page")
 	}
 
-	keys, count = ts.GetLevelKeys(root, values[0], 0, 100)
-	if len(keys) != 1 || count != 250 {
+	keys = ts.GetLevelKeys(root, values[0], 0, 100)
+	if len(keys) != 1 {
 		t.Error("exact match")
 	}
 
@@ -365,8 +365,8 @@ func TestIterateLevelPattern(t *testing.T) {
 		}
 	}
 
-	keys, count = ts.GetLevelKeys(root, "1*", 0, 250)
-	if len(keys) != ones || count != 250 {
+	keys = ts.GetLevelKeys(root, "1*", 0, 250)
+	if len(keys) != ones {
 		t.Error("match ones")
 	}
 }
