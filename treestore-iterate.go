@@ -13,7 +13,7 @@ type (
 	}
 
 	KeyMatch struct {
-		Sk            StoreKey          `json:"sk"`
+		Key           TokenPath         `json:"key"`
 		Metadata      map[string]string `json:"metadata,omitempty"`
 		HasValue      bool              `json:"has_value"`
 		HasChildren   bool              `json:"has_children"`
@@ -22,7 +22,7 @@ type (
 	}
 
 	KeyValueMatch struct {
-		Sk            StoreKey          `json:"sk"`
+		Key           TokenPath         `json:"key"`
 		Metadata      map[string]string `json:"metadata,omitempty"`
 		HasChildren   bool              `json:"has_children"`
 		CurrentValue  any               `json:"current_value,omitempty"`
@@ -106,7 +106,7 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 // worker that calls the full iterator callback
 func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyNode, callback iterateFullCallback) (stopped bool) {
 	km := KeyMatch{
-		Sk:          MakeStoreKeyFromTokenSegments(segments...),
+		Key:         TokenSetToTokenPath(segments),
 		HasValue:    kn.current != nil,
 		HasChildren: kn.nextLevel != nil,
 	}
@@ -340,7 +340,7 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, func(km *KeyMatch) bool {
 			if km.HasValue {
 				kvm := &KeyValueMatch{
-					Sk:            km.Sk,
+					Key:           km.Key,
 					Metadata:      km.Metadata,
 					HasChildren:   km.HasChildren,
 					CurrentValue:  km.CurrentValue,
@@ -359,7 +359,7 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		if km.HasValue {
 			if n >= startAt {
 				kvm := &KeyValueMatch{
-					Sk:            km.Sk,
+					Key:           km.Key,
 					Metadata:      km.Metadata,
 					HasChildren:   km.HasChildren,
 					CurrentValue:  km.CurrentValue,
