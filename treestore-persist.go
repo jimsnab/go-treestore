@@ -209,7 +209,7 @@ func loadValues(values []diskValue) (current *valueInstance, history *avlTree[*v
 			value:         value.Value,
 			relationships: deserializeRelationshipArray(value.Relationships),
 		}
-		history.Set(tickBytes(value.Timestamp), current)
+		history.Set(unixTimestampBytes(value.Timestamp), current)
 	}
 
 	return

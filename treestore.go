@@ -372,7 +372,7 @@ func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 		value: value,
 	}
 
-	now := currentTickBytes()
+	now := currentunixTimestampBytes()
 
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
@@ -467,7 +467,7 @@ func (ts *TreeStore) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 			newLeaf.relationships = kn.current.relationships
 		}
 
-		now := currentTickBytes()
+		now := currentunixTimestampBytes()
 		if kn.history == nil {
 			kn.history = newAvlTree[*valueInstance]()
 		}
@@ -606,7 +606,7 @@ func (ts *TreeStore) GetKeyValueAtTime(sk StoreKey, tickNs int64) (value any, ex
 			tickNs = time.Now().UTC().UnixNano() - tickNs
 		}
 		if kn.history != nil && tickNs >= 0 {
-			item := kn.history.FindLeft(tickBytes(tickNs))
+			item := kn.history.FindLeft(unixTimestampBytes(tickNs))
 			if item != nil {
 				value = item.value.value
 				exists = true
@@ -915,6 +915,10 @@ func (ts *TreeStore) KeyFromAddress(addr StoreAddress) (sk StoreKey, exists bool
 	ts.keyNodeMu.RLock()
 	defer ts.keyNodeMu.RUnlock()
 
+	return ts.keyFromAddressLocked(addr)
+}
+
+func (ts *TreeStore) keyFromAddressLocked(addr StoreAddress) (sk StoreKey, exists bool) {
 	kn, tokens := ts.getTokenSetForAddressLocked(addr)
 	if kn != nil {
 		exists = true
@@ -983,4 +987,33 @@ func (ts *TreeStore) GetRelationshipValue(sk StoreKey, relationshipIndex int) (h
 	}
 
 	return
+}
+
+// worker - iterates the sublevels and removes all values from the index
+// the caller must hold a write lock on ts.keyNodeMu
+func (ts *TreeStore) discardChildren(sk StoreKey, kn *keyNode) {
+	level := kn.nextLevel
+	if level != nil {
+		level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
+			childSk := AppendStoreKeySegment(sk, node.key)
+			ts.discardChildren(childSk, node.value)
+			delete(ts.addresses, node.value.address)
+			if node.value.current != nil {
+				delete(ts.keys, childSk.Path)
+			}
+			return true
+		})
+		level.tree.Clear()
+		kn.nextLevel = nil
+	}
+}
+
+// worker - removes the node's value (if any) as well as all child keys
+// the caller must hold a write lock on ts.keyNodeMu
+func (ts *TreeStore) resetNode(sk StoreKey, kn *keyNode) {
+	ts.discardChildren(sk, kn)
+	kn.current = nil
+	kn.metadata = nil
+	kn.expiration = 0
+	delete(ts.keys, sk.Path)
 }

@@ -7,8 +7,175 @@ import (
 	"math"
 	"math/rand"
 	"sort"
+	"strings"
 	"testing"
 )
+
+func (node *avlNode[T]) subtreeHeight() (height int) {
+	if node == nil {
+		return
+	}
+
+	leftHeight := node.left.subtreeHeight()
+	rightHeight := node.right.subtreeHeight()
+
+	if leftHeight >= rightHeight {
+		return leftHeight + 1
+	} else {
+		return rightHeight + 1
+	}
+}
+
+func (node *avlNode[T]) isBalanced() bool {
+	if node == nil {
+		return true
+	}
+
+	delta := node.left.subtreeHeight() - node.right.subtreeHeight()
+	return delta >= -1 && delta <= 1
+}
+
+func (node *avlNode[T]) checkBalanceFactors() bool {
+	if node == nil {
+		return true
+	}
+
+	if !node.left.checkBalanceFactors() || !node.right.checkBalanceFactors() {
+		return false
+	}
+
+	lh := node.left.subtreeHeight()
+	rh := node.right.subtreeHeight()
+
+	balance := rh - lh
+	return node.balance == balance
+}
+
+func (node *avlNode[T]) checkParentLinks() bool {
+	if node == nil {
+		return true
+	}
+
+	if node.left != nil && node.left.parent != node {
+		return false
+	}
+	if node.right != nil && node.right.parent != node {
+		return false
+	}
+
+	return true
+}
+
+func (tree *avlTree[T]) isValid() bool {
+	if !tree.root.checkBalanceFactors() {
+		return false
+	}
+	if !tree.root.checkParentLinks() {
+		return false
+	}
+	return tree.root.isBalanced()
+}
+
+func (tree *avlTree[T]) countEach() int {
+	count := 0
+	tree.Iterate(func(node *avlNode[T]) bool {
+		count++
+		return true
+	})
+	return count
+}
+
+func (tree *avlTree[T]) printTreeBalance(header string) {
+	tree.printTree(header, func(node *avlNode[T]) string { return fmt.Sprintf("%v", node.balance) })
+}
+
+func (tree *avlTree[T]) printTree(header string, fn testingKeyToString[T]) {
+	fmt.Println(header)
+	if tree.root == nil {
+		fmt.Println("(nil)")
+		return
+	}
+	maxWidth := 0
+	tree.Iterate(func(node *avlNode[T]) bool {
+		width := len(fn(node))
+		if width > maxWidth {
+			maxWidth = width
+		}
+		return true
+	})
+
+	height := tree.root.subtreeHeight()
+
+	heightExp := math.Pow(2, float64(height)) / 2
+	nodeWidth := maxWidth + 2
+	fieldWidth := int(heightExp) * nodeWidth
+
+	nextLineNodes := []*avlNode[T]{}
+	nextLineNodes = append(nextLineNodes, tree.root)
+
+	for {
+		lineNodes := nextLineNodes
+		nextLineNodes = []*avlNode[T]{}
+
+		keyLine := ""
+		connectorLine := ""
+		more := false
+		for _, node := range lineNodes {
+			kl, cl := node.nodeText(fieldWidth, nodeWidth, fn)
+			keyLine += kl
+			connectorLine += cl
+
+			if node != nil {
+				nextLineNodes = append(nextLineNodes, node.left, node.right)
+				more = more || (node.left != nil || node.right != nil)
+			} else {
+				nextLineNodes = append(nextLineNodes, nil, nil)
+			}
+		}
+
+		fmt.Println(keyLine)
+		if strings.ContainsAny(connectorLine, "/\\") {
+			fmt.Println(connectorLine)
+		}
+
+		fieldWidth /= 2
+
+		if !more {
+			break
+		}
+	}
+}
+
+func (node *avlNode[T]) nodeText(fieldWidth, nodeWidth int, fn testingKeyToString[T]) (keyLine, connectorLine string) {
+	if node == nil {
+		keyLine = strings.Repeat(" ", fieldWidth)
+		connectorLine = keyLine
+	} else {
+		leftSpaces := (fieldWidth - nodeWidth) / 2
+		connectorLine = strings.Repeat(" ", leftSpaces)
+		if node.left != nil {
+			connectorLine += "/"
+		} else {
+			connectorLine += " "
+		}
+		connectorLine += strings.Repeat(" ", nodeWidth-2)
+		if node.right != nil {
+			connectorLine += "\\"
+		} else {
+			connectorLine += " "
+		}
+		connectorLine += strings.Repeat(" ", fieldWidth-len(connectorLine))
+
+		keyText := fn(node)
+		leftSpaces += (nodeWidth - len(keyText)) / 2
+		rightSpaces := fieldWidth - leftSpaces - len(keyText)
+
+		keyLine = strings.Repeat(" ", leftSpaces)
+		keyLine += keyText
+		keyLine += strings.Repeat(" ", rightSpaces)
+	}
+	return
+}
 
 func bytesToFloat(bytes []byte) float64 {
 	bits := binary.BigEndian.Uint64(bytes)
@@ -852,5 +1019,38 @@ func TestAvlFindRightStress(t *testing.T) {
 				}
 			}
 		}
+	}
+}
+
+func TestAvlClear(t *testing.T) {
+	tree := newAvlTree[float64]()
+
+	tree.Set(floatToBytes(30), 30)
+	if !checkTree(tree) {
+		tree.printTreeBalance("-----------------")
+		t.Fatal("tree invalid")
+	}
+
+	match := tree.Find(floatToBytes(30))
+	if match == nil {
+		t.Fatal("not found")
+	}
+
+	tree.Clear()
+
+	match = tree.Find(floatToBytes(30))
+	if match != nil {
+		t.Fatal("found")
+	}
+
+	tree.Set(floatToBytes(30), 30)
+	if !checkTree(tree) {
+		tree.printTreeBalance("-----------------")
+		t.Fatal("tree invalid")
+	}
+
+	match = tree.Find(floatToBytes(30))
+	if match == nil {
+		t.Fatal("not found 2")
 	}
 }

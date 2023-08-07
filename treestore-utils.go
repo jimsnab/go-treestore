@@ -74,6 +74,21 @@ func TokenSegmentToString(segment TokenSegment) string {
 	return EscapeTokenString(string(segment))
 }
 
+// Converts an escaped string to a token segment
+func TokenStringToSegment(segment string) TokenSegment {
+	return TokenSegment(UnescapeTokenString(segment))
+}
+
+// Adds a token segment to an existing path
+func AppendTokenSegment(tokenSet TokenSet, segment TokenSegment) TokenSet {
+	return append(tokenSet, segment)
+}
+
+// Adds a token string to an existing path
+func AppendTokenSegmentString(tokenSet TokenSet, segString string) TokenSet {
+	return append(tokenSet, TokenStringToSegment(segString))
+}
+
 // Converts a token path to a token set used in operations walking the database trees.
 // A token path is a forward-slash separated list of escaped token strings.
 // See `EscapeTokenString()` and `MakeTokenPath()`
@@ -90,7 +105,7 @@ func TokenPathToTokenSet(tokenPath TokenPath) TokenSet {
 	tokens := make(TokenSet, len(parts))
 
 	for index, part := range parts {
-		tokens[index] = TokenSegment(UnescapeTokenString(part))
+		tokens[index] = TokenStringToSegment(part)
 	}
 
 	return tokens
@@ -150,8 +165,26 @@ func SplitStoreKey(sk StoreKey) []string {
 	return SplitTokenPath(sk.Path)
 }
 
+// Appends a token segment to a StoreKey
+func AppendStoreKeySegment(sk StoreKey, segment TokenSegment) StoreKey {
+	sk2 := StoreKey{}
+	sk2.Tokens = append(sk.Tokens, segment)
+	sk2.Path = TokenSetToTokenPath(sk2.Tokens)
+
+	return sk2
+}
+
+// Appends a token segment to a StoreKey
+func AppendStoreKeySegmentString(sk StoreKey, segString string) StoreKey {
+	sk2 := StoreKey{}
+	sk2.Tokens = append(sk.Tokens, TokenStringToSegment(segString))
+	sk2.Path = TokenSetToTokenPath(sk2.Tokens)
+
+	return sk2
+}
+
 // Returns the Unix ns tick as a byte array
-func currentTickBytes() []byte {
+func currentunixTimestampBytes() []byte {
 	now := time.Now().UTC().UnixNano()
 
 	b := make([]byte, 8)
@@ -161,7 +194,7 @@ func currentTickBytes() []byte {
 }
 
 // Makes the byte array equivalent of the Unix ns tick
-func tickBytes(tick int64) []byte {
+func unixTimestampBytes(tick int64) []byte {
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(tick))
 	return b
