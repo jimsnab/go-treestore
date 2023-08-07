@@ -40,9 +40,7 @@ func (ts *TreeStore) restoreKey(rootPath TokenPath, sk StoreKey, kn *keyNode, en
 				if vi, err = ts.importValue(rootPath, kn.address, en.History[0]); err != nil {
 					return
 				}
-				kn.current = &valueInstance{
-					value: vi,
-				}
+				kn.current = vi
 			} else {
 				newest := int64(0)
 				kn.history = newAvlTree[*valueInstance]()

@@ -135,7 +135,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 			})
 		}
 
-		if kn.current != lastValue {
+		if kn.current != lastValue && !(kn.history == nil && lastValue == nil) {
 			tsd.errors = append(tsd.errors, fmt.Sprintf("current value %p does not agree with history %p", kn.current, lastValue))
 		}
 

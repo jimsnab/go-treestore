@@ -637,3 +637,33 @@ func TestImportExportReferenceAbs(t *testing.T) {
 
 	ts2.DiagDump()
 }
+
+func TestImportExportSaveRecoverInt(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey()
+
+	raw := []byte(`{"children":{"test":{"history":[{"timestamp":0,"value":"123","type":"int"}]}}}`)
+
+	err := ts.Import(sk, raw)
+	if err != nil {
+		t.Error("import")
+	}
+
+	sk2 := MakeStoreKey("test")
+	v2, ke, ve := ts.GetKeyValue(sk2)
+	val, _ := v2.(int)
+	if val != 123 || !ke || !ve {
+		t.Error("value verify")
+	}
+
+	serialized, err := ts.Export(sk)
+	if err != nil {
+		t.Error("export")
+	}
+	if !bytes.Equal(raw, serialized) {
+		t.Error("round trip")
+	}
+
+	ts.DiagDump()
+}
