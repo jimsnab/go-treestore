@@ -2,6 +2,7 @@ package treestore
 
 import (
 	"encoding/binary"
+	"fmt"
 	"strings"
 	"time"
 )
@@ -19,6 +20,26 @@ type (
 
 const nsPerSec = (1 /*sec*/ * 1000 /*ms*/ * 1000 /*us*/ * 1000 /*ns*/)
 
+func hexDigit(ch rune) (digit int) {
+	if ch >= '0' && ch <= '9' {
+		return int(ch - '0')
+	} else if ch >= 'A' && ch <= 'F' {
+		return int(ch-'A') + 10
+	} else if ch >= 'a' && ch <= 'f' {
+		return int(ch-'a') + 10
+	}
+	return -1
+}
+
+func hexToByte(ch1, ch2 rune) int {
+	d1 := hexDigit(ch1)
+	d2 := hexDigit(ch2)
+	if d1 < 0 || d2 < 0 {
+		return -1
+	}
+	return (d1 << 4) + d2
+}
+
 // escapes the forward slash to \s and the backslash to \S
 func EscapeTokenString(plainText string) string {
 	var sb strings.Builder
@@ -28,6 +49,8 @@ func EscapeTokenString(plainText string) string {
 			sb.WriteString(`\s`)
 		} else if ch == '\\' {
 			sb.WriteString(`\S`)
+		} else if ch < 32 {
+			sb.WriteString(fmt.Sprintf("\\x%02X", ch))
 		} else {
 			sb.WriteRune(ch)
 		}
@@ -38,9 +61,35 @@ func EscapeTokenString(plainText string) string {
 
 // unescapes \s to the forward slash and \S to the the backslash
 func UnescapeTokenString(tokenText string) string {
-	result := strings.ReplaceAll(tokenText, `\s`, `/`)
-	result = strings.ReplaceAll(result, `\S`, `\`)
-	return result
+	runes := []rune(tokenText)
+	var sb strings.Builder
+	for pos := 0; pos < len(runes); pos++ {
+		ch := runes[pos]
+		if ch == '\\' && pos+1 < len(runes) {
+			ch2 := runes[pos+1]
+			if ch2 == 's' {
+				sb.WriteRune('/')
+				pos++
+			} else if ch2 == 'S' {
+				sb.WriteRune('\\')
+				pos++
+			} else if ch2 == 'x' && pos+3 < len(runes) {
+				n := hexToByte(runes[pos+2], runes[pos+3])
+				if n < 0 {
+					sb.WriteRune(ch)
+				} else {
+					sb.WriteRune(rune(n))
+					pos += 3
+				}
+			} else {
+				sb.WriteRune(ch)
+			}
+		} else {
+			sb.WriteRune(ch)
+		}
+	}
+
+	return sb.String()
 }
 
 // constructs a token path from a slice of unescaped strings
@@ -184,7 +233,7 @@ func AppendStoreKeySegmentString(sk StoreKey, segString string) StoreKey {
 }
 
 // Returns the Unix ns tick as a byte array
-func currentunixTimestampBytes() []byte {
+func currentUnixTimestampBytes() []byte {
 	now := time.Now().UTC().UnixNano()
 
 	b := make([]byte, 8)

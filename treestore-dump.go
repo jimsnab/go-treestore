@@ -1,6 +1,7 @@
 package treestore
 
 import (
+	"encoding/binary"
 	"fmt"
 	"strings"
 	"time"
@@ -75,8 +76,22 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		tsd.errors = append(tsd.errors, fmt.Sprintf("tree level's parent %p is not the expected parent %p", level.parent, expectedParent))
 	}
 
+	isArrayElem := false
+	if level.parent != nil {
+		flag, _ := level.parent.metadata["array"]
+		if flag == "true" {
+			isArrayElem = true
+		}
+	}
+
 	level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 		kn := node.value
+
+		if kn == &tsd.ts.dbNode {
+			// when sentinel has array children, the node itself is falsely
+			// detected as an array element
+			isArrayElem = false
+		}
 
 		sk := &StoreKey{
 			Tokens: baseSk.Tokens,
@@ -87,7 +102,21 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 		sk.Path = TokenSetToTokenPath(sk.Tokens)
 
 		indexAddr, isIndexed := tsd.ts.keys[sk.Path]
-		keyText := TokenSegmentToString(node.key)
+		var keyText string
+		keyText = TokenSegmentToString(node.key)
+
+		if isArrayElem {
+			if len(node.key) != 4 {
+				tsd.errors = append(tsd.errors, fmt.Sprintf("key marked as an array as the wrong length %d at %04X %s", len(node.key), kn.address, sk.Path))
+			} else {
+				n := binary.BigEndian.Uint32(node.key)
+				if n >= uint32(level.tree.nodes) {
+					tsd.errors = append(tsd.errors, fmt.Sprintf("index out of bounds %s", sk.Path))
+				} else {
+					keyText = fmt.Sprintf("[%d]", n)
+				}
+			}
+		}
 
 		if isIndexed && indexAddr != kn.address {
 			tsd.errors = append(tsd.errors, fmt.Sprintf("key %s index address is %v but node address is %v", keyText, indexAddr, kn.address))
@@ -120,9 +149,14 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 				vi := node.value
 				timestamp := timestampFromUnixNs(unixNsFromBytes(node.key))
 
-				valText := fmt.Sprintf("%v", vi.value)
+				var valText string
+				if vi != nil {
+					valText = fmt.Sprintf("%v", vi.value)
+				} else {
+					valText = "nil"
+				}
 				fmt.Printf("%s %s := %s\n", indent, timestamp.Format(time.RFC3339), cleanString(valText, 80))
-				if len(vi.relationships) > 0 {
+				if vi != nil && len(vi.relationships) > 0 {
 					fmt.Printf("%s ->", indent)
 					for _, addr := range vi.relationships {
 						fmt.Printf(" %04X", addr)

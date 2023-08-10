@@ -30,6 +30,11 @@ func TestTokenEscape(t *testing.T) {
 	if escaped != `cat\SSdog` {
 		t.Error("backward slash string")
 	}
+
+	escaped = EscapeTokenString("cat\ndog")
+	if escaped != `cat\x0Adog` {
+		t.Error("control chars")
+	}
 }
 
 func TestTokenUnescape(t *testing.T) {
@@ -55,6 +60,26 @@ func TestTokenUnescape(t *testing.T) {
 
 	unescaped = UnescapeTokenString(`cat\dog`)
 	if unescaped != `cat\dog` {
+		t.Error("malformed string")
+	}
+
+	unescaped = UnescapeTokenString(`cat\x0Adog`)
+	if unescaped != "cat\ndog" {
+		t.Error("malformed string")
+	}
+
+	unescaped = UnescapeTokenString(`cat\x0`)
+	if unescaped != `cat\x0` {
+		t.Error("malformed string")
+	}
+
+	unescaped = UnescapeTokenString(`cat\x`)
+	if unescaped != `cat\x` {
+		t.Error("malformed string")
+	}
+
+	unescaped = UnescapeTokenString(`cat\`)
+	if unescaped != `cat\` {
 		t.Error("malformed string")
 	}
 }

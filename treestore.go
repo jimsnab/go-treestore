@@ -372,7 +372,7 @@ func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 		value: value,
 	}
 
-	now := currentunixTimestampBytes()
+	now := currentUnixTimestampBytes()
 
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
@@ -467,7 +467,7 @@ func (ts *TreeStore) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 			newLeaf.relationships = kn.current.relationships
 		}
 
-		now := currentunixTimestampBytes()
+		now := currentUnixTimestampBytes()
 		if kn.history == nil {
 			kn.history = newAvlTree[*valueInstance]()
 		}
