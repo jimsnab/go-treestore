@@ -312,11 +312,15 @@ func TestMergeTwoArrays(t *testing.T) {
 	sk1 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x00`)
 	sk2 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x01`)
 	sk3 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x02`)
+	sk4 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x03`)
+	sk5 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x04`)
 
 	val1, _, _ := ts.GetKeyValue(sk1)
 	val2, _, _ := ts.GetKeyValue(sk2)
 	val3, _, _ := ts.GetKeyValue(sk3)
-	if val1 != "horse" || val2 != "duck" || val3 != "cow" {
+	val4, _, _ := ts.GetKeyValue(sk4)
+	val5, _, _ := ts.GetKeyValue(sk5)
+	if val1 != "cow" || val2 != "pig" || val3 != "horse" || val4 != "duck" || val5 != "cow" {
 		t.Error("verify vals")
 	}
 
@@ -342,9 +346,13 @@ func TestMergeTwoArrays2(t *testing.T) {
 	}
 
 	sk1 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x00`)
+	sk2 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x01`)
+	sk3 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x02`)
 
 	val1, _, _ := ts.GetKeyValue(sk1)
-	if val1 != "horse" {
+	val2, _, _ := ts.GetKeyValue(sk2)
+	val3, _, _ := ts.GetKeyValue(sk3)
+	if val1 != "cow" || val2 != "pig" || val3 != "horse" {
 		t.Error("verify vals")
 	}
 
@@ -369,7 +377,7 @@ func TestMergeTwoArrays3(t *testing.T) {
 		t.Error("second json")
 	}
 
-	sk1 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x00/animals/horse`)
+	sk1 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x01/animals/horse`)
 	sk2 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x00/animals/cow`)
 	sk3 := MakeStoreKeyFromPath(`/test/farm/\x00\x00\x00\x00/animals/pig`)
 

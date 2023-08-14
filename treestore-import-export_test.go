@@ -23,7 +23,9 @@ func TestImportExportEmpty(t *testing.T) {
 		t.Error("import empty")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValue(t *testing.T) {
@@ -49,7 +51,9 @@ func TestImportExportSentinelValue(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueBytes(t *testing.T) {
@@ -75,7 +79,9 @@ func TestImportExportSentinelValueBytes(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueJson(t *testing.T) {
@@ -103,7 +109,9 @@ func TestImportExportSentinelValueJson(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueBase64(t *testing.T) {
@@ -131,7 +139,9 @@ func TestImportExportSentinelValueBase64(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueInt(t *testing.T) {
@@ -159,7 +169,9 @@ func TestImportExportSentinelValueInt(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueInt64(t *testing.T) {
@@ -187,7 +199,9 @@ func TestImportExportSentinelValueInt64(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueUint64(t *testing.T) {
@@ -215,7 +229,9 @@ func TestImportExportSentinelValueUint64(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueBool(t *testing.T) {
@@ -243,7 +259,9 @@ func TestImportExportSentinelValueBool(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelValueFloat64(t *testing.T) {
@@ -271,7 +289,9 @@ func TestImportExportSentinelValueFloat64(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelRelationship(t *testing.T) {
@@ -297,7 +317,9 @@ func TestImportExportSentinelRelationship(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSentinelExpiration(t *testing.T) {
@@ -325,7 +347,9 @@ func TestImportExportSentinelExpiration(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportRootValue(t *testing.T) {
@@ -376,7 +400,9 @@ func TestImportExportRootValueImportChild(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportRootValueImportChild2(t *testing.T) {
@@ -405,7 +431,9 @@ func TestImportExportRootValueImportChild2(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportRootValueImportChild3(t *testing.T) {
@@ -436,7 +464,9 @@ func TestImportExportRootValueImportChild3(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportRootValueImportChild4(t *testing.T) {
@@ -473,7 +503,9 @@ func TestImportExportRootValueImportChild4(t *testing.T) {
 		t.Error("removed value")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportInvalidRelationship(t *testing.T) {
@@ -499,7 +531,9 @@ func TestImportExportInvalidRelationship(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportReferenceSelf(t *testing.T) {
@@ -526,7 +560,9 @@ func TestImportExportReferenceSelf(t *testing.T) {
 		t.Error("value verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportReferenceRelativeInvalid(t *testing.T) {
@@ -559,7 +595,9 @@ func TestImportExportReferenceRelativeInvalid(t *testing.T) {
 		t.Error("relationship verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportReferenceRelative(t *testing.T) {
@@ -592,7 +630,9 @@ func TestImportExportReferenceRelative(t *testing.T) {
 		t.Error("relationship verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportReferenceAbs(t *testing.T) {
@@ -635,7 +675,9 @@ func TestImportExportReferenceAbs(t *testing.T) {
 		t.Error("relationship verify")
 	}
 
-	ts2.DiagDump()
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
 }
 
 func TestImportExportSaveRecoverInt(t *testing.T) {
@@ -665,5 +707,7 @@ func TestImportExportSaveRecoverInt(t *testing.T) {
 		t.Error("round trip")
 	}
 
-	ts.DiagDump()
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
 }

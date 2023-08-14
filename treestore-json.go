@@ -231,9 +231,16 @@ func (ts *TreeStore) mergeJsonKey(sk StoreKey, kn *keyNode, data any) {
 		} else {
 			kn.metadata["array"] = "true"
 		}
+
+		arrayLen := 0
+		if kn.nextLevel != nil {
+			arrayLen = kn.nextLevel.tree.nodes
+		}
+
+		// append this array to an existing array
 		for i, v := range t {
 			n := make([]byte, 4)
-			binary.BigEndian.PutUint32(n, uint32(i))
+			binary.BigEndian.PutUint32(n, uint32(i+arrayLen))
 			childSk := AppendStoreKeySegment(sk, n)
 			childKn, lockedLevel := ts.ensureMergeChild(kn, n)
 			ts.mergeJsonKey(childSk, childKn, v)
