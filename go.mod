@@ -8,6 +8,7 @@ require (
 )
 
 require (
+	github.com/Knetic/govaluate v3.0.0+incompatible // indirect
 	github.com/djherbis/atime v1.1.0 // indirect
 	github.com/google/uuid v1.3.0 // indirect
 	github.com/jimsnab/go-simpleutils v1.0.14 // indirect
