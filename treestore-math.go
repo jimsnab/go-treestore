@@ -119,7 +119,7 @@ var defaultConverter typeConverter = func(x any) any { return x }
 // For ternary conditionals, an operation can be skipped by using fail().
 //
 //	"i>100?i+1:fail()"        no modifications if the sk value is < 100
-func (ts *TreeStore) CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, modified bool) {
+func (ts *TreeStore) CalculateKeyValue(sk StoreKey, expression string) (address StoreAddress, newValue any) {
 	var mathExtensions = map[string]govaluate.ExpressionFunction{
 		"lookup": func(args ...any) (any, error) {
 			if len(args) != 1 {
@@ -296,6 +296,6 @@ func (ts *TreeStore) CalculateKeyValue(sk StoreKey, expression string) (address 
 	kn.history.Set(now, newLeaf)
 
 	address = kn.address
-	modified = true
+	newValue = result
 	return
 }

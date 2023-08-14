@@ -627,7 +627,11 @@ func TestImportExportReferenceRelative(t *testing.T) {
 
 	hasLink, rv := ts2.GetRelationshipValue(MakeStoreKeyFromPath("/test/livestock"), 0)
 	if !hasLink || rv == nil || rv.Sk.Path != "/test/animals/pig" {
-		t.Error("relationship verify")
+		if rv == nil {
+			t.Error("relationship verify /test/livestock not followed")
+		} else {
+			t.Error("relationship verify " + rv.Sk.Path)
+		}
 	}
 
 	if !ts2.DiagDump() {
