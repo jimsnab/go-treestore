@@ -422,3 +422,33 @@ func TestDeleteTreeSentinel(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSetDelTree(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey("client", "test", "key")
+
+	addr, exists := ts.SetKey(sk)
+	if addr != 4 || exists {
+		t.Error("initial key")
+	}
+
+	removed := ts.DeleteKeyTree(sk)
+	if !removed {
+		t.Error("remove it")
+	}
+
+	removed = ts.DeleteKeyTree(sk)
+	if removed {
+		t.Error("remove it again")
+	}
+
+	verifyAddr, located := ts.LocateKey(sk)
+	if verifyAddr != 0 || located {
+		t.Error("verify")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}

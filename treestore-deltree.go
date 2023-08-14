@@ -22,6 +22,10 @@ func (ts *TreeStore) DeleteKeyTree(sk StoreKey) (removed bool) {
 		return
 	}
 
+	if !expired {
+		removed = true
+	}
+
 	level.lock.Lock() // ensure any pending operations on the keynode complete
 	ts.activeLocks.Add(1)
 	defer func() {
@@ -29,15 +33,9 @@ func (ts *TreeStore) DeleteKeyTree(sk StoreKey) (removed bool) {
 		ts.activeLocks.Add(-1)
 	}()
 
-	if kn.hasChild() {
-		removed = true
-		ts.discardChildren(sk, kn)
-	}
+	ts.discardChildren(sk, kn)
 
 	if ts.removeKeyFromIndexLocked(sk) || expired {
-		if !expired {
-			removed = true
-		}
 		kn.current = nil
 	}
 	kn.history = nil
