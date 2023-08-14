@@ -640,6 +640,12 @@ func TestImportExportReferenceRelative(t *testing.T) {
 }
 
 func TestImportExportReferenceAbs(t *testing.T) {
+	oldHook := invalidAddrHook
+	defer func() {
+		invalidAddrHook = oldHook
+	}()
+	invalidAddrHook = func() { panic("invalid relationship address") }
+
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
 
@@ -652,7 +658,14 @@ func TestImportExportReferenceAbs(t *testing.T) {
 	addr2, _ := ts.SetKey(sk2)
 	addr3, _ := ts.SetKey(sk3)
 
-	ts.SetKeyValueEx(sk4, nil, SetExNoValueUpdate, 0, []StoreAddress{addr1, addr2, addr3})
+	if addr1 != 4 || addr2 != 5 || addr3 != 6 {
+		t.Fatal("unexpected addresses")
+	}
+
+	addr, exists, orgVal := ts.SetKeyValueEx(sk4, nil, SetExNoValueUpdate, 0, []StoreAddress{addr1, addr2, addr3})
+	if addr != 7 || exists || orgVal != nil {
+		t.Fatal("setex")
+	}
 
 	data, err := ts.Export(MakeStoreKey())
 	if data == nil || err != nil {

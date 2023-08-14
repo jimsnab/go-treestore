@@ -90,6 +90,7 @@ func (ts *TreeStore) importValue(rootPath TokenPath, selfAddr StoreAddress, ev *
 			if rel == ".sentinel" {
 				vi.relationships = append(vi.relationships, 1)
 			} else if rel == ".invalid" {
+				invalidAddrHook()
 				vi.relationships = append(vi.relationships, StoreAddress((1<<64)-1))
 			} else if rel == ".self" {
 				vi.relationships = append(vi.relationships, selfAddr)
@@ -106,6 +107,7 @@ func (ts *TreeStore) importValue(rootPath TokenPath, selfAddr StoreAddress, ev *
 				if tokenIndex >= len(targetSk.Tokens) && !expired {
 					vi.relationships = append(vi.relationships, kn.address)
 				} else {
+					invalidAddrHook()
 					vi.relationships = append(vi.relationships, StoreAddress((1<<64)-1))
 				}
 			}

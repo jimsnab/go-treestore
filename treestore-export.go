@@ -21,7 +21,11 @@ type (
 		Type          string   `json:"type,omitempty"`
 		Relationships []string `json:"relationships,omitempty"`
 	}
+
+	testHook func()
 )
+
+var invalidAddrHook testHook = func() {}
 
 // Serialize the tree store into a single JSON doc.
 //
@@ -118,6 +122,7 @@ func (ts *TreeStore) exportValue(rootSk StoreKey, vi *valueInstance, timestamp i
 			} else {
 				toPath, exists := ts.keyFromAddressLocked(addr)
 				if !exists {
+					invalidAddrHook()
 					ev.Relationships = append(ev.Relationships, ".invalid")
 				} else if toPath.Path == rootSk.Path {
 					ev.Relationships = append(ev.Relationships, ".self")
