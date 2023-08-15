@@ -529,6 +529,36 @@ func TestSetKeyOddRelationships(t *testing.T) {
 	}
 }
 
+func TestSetKeyNoValueRelationship(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk1 := MakeStoreKey("a")
+	sk2 := MakeStoreKey("b")
+
+	addr1, _ := ts.SetKey(sk1)
+	if addr1 != 2 {
+		t.Error("set key")
+	}
+
+	addr2, _, _ := ts.SetKeyValueEx(sk2, nil, SetExNoValueUpdate, 0, []StoreAddress{addr1})
+	if addr2 != 3 {
+		t.Error("set key 2")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(sk2, 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/a" {
+		t.Error("key link")
+	}
+
+	if rv.CurrentValue != nil {
+		t.Error("value nil")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
 func TestGetKeyByAddress(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
