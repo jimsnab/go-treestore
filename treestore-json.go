@@ -28,7 +28,7 @@ func (ts *TreeStore) GetKeyAsJson(sk StoreKey) (jsonData []byte, err error) {
 
 func (ts *TreeStore) buildJsonLevel(kn *keyNode) any {
 	if kn.metadata != nil {
-		isArray, _ := kn.metadata["array"]
+		isArray := kn.metadata["array"]
 		if isArray == "true" {
 			return ts.buildJsonLevelArray(kn)
 		}
@@ -110,7 +110,7 @@ func (ts *TreeStore) buildJsonLevelArray(kn *keyNode) []any {
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk exists, its value, children and history are deleted, and the new
 // json data takes its place.
-func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte) (replaced bool, err error) {
+func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte) (replaced bool, address StoreAddress, err error) {
 	// build up the new node before locking
 	newKn, err := ts.newJsonKey(jsonData)
 	if err != nil {
@@ -130,13 +130,14 @@ func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte) (replaced bool, er
 	}
 
 	ts.assignJsonKey(sk, kn, newKn)
+	address = kn.address
 	return
 }
 
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk doesn't exists, no changes are made. Otherwise the key node's
 // value and children are deleted, and the new json data takes its place.
-func (ts *TreeStore) ReplaceKeyJson(sk StoreKey, jsonData []byte) (replaced bool, err error) {
+func (ts *TreeStore) ReplaceKeyJson(sk StoreKey, jsonData []byte) (replaced bool, address StoreAddress, err error) {
 	// build up the new node before locking
 	newKn, err := ts.newJsonKey(jsonData)
 	if err != nil {
@@ -157,13 +158,14 @@ func (ts *TreeStore) ReplaceKeyJson(sk StoreKey, jsonData []byte) (replaced bool
 	replaced = true
 	ts.resetNode(sk, kn)
 	ts.assignJsonKey(sk, kn, newKn)
+	address = kn.address
 	return
 }
 
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk exists, no changes are made. Otherwise a new key node is created
 // with its child data set according to the json structure.
-func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte) (created bool, err error) {
+func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte) (created bool, address StoreAddress, err error) {
 	// build up the new node before locking
 	newKn, err := ts.newJsonKey(jsonData)
 	if err != nil {
@@ -191,13 +193,14 @@ func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte) (created bool, 
 	defer ts.completeKeyNodeWrite(level)
 
 	ts.assignJsonKey(sk, kn, newKn)
+	address = kn.address
 	return
 }
 
 // Overlays json data on top of existing data. This is one of the slower APIs
 // because each part of json is independently written to the store, and a
 // write lock is required across the whole operation.
-func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte) (err error) {
+func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte) (address StoreAddress, err error) {
 	ts.keyNodeMu.Lock()
 	defer ts.keyNodeMu.Unlock()
 
@@ -210,6 +213,7 @@ func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte) (err error) {
 	defer ts.completeKeyNodeWrite(ll)
 
 	ts.mergeJsonKey(sk, kn, data)
+	address = kn.address
 	return
 }
 

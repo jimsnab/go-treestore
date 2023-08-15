@@ -16,8 +16,8 @@ func TestSetJsonSimple(t *testing.T) {
 
 	jsonData := []byte(`{"pet": "cat"}`)
 
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if replaced || addr == 0 || err != nil {
 		t.Error("set first")
 	}
 
@@ -28,8 +28,8 @@ func TestSetJsonSimple(t *testing.T) {
 
 	jsonData = []byte(`{"pet": "dog"}`)
 
-	replaced, err = ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err = ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("set second")
 	}
 
@@ -49,8 +49,8 @@ func TestSetJsonValueTypes(t *testing.T) {
 
 	jsonData := []byte(`{"pet": 123}`)
 
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if replaced || addr == 0 || err != nil {
 		t.Error("set first")
 	}
 
@@ -61,8 +61,8 @@ func TestSetJsonValueTypes(t *testing.T) {
 
 	jsonData = []byte(`{"pet": true}`)
 
-	replaced, err = ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err = ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("set second")
 	}
 
@@ -73,8 +73,8 @@ func TestSetJsonValueTypes(t *testing.T) {
 
 	jsonData = []byte(`{"pet": null}`)
 
-	replaced, err = ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err = ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("set third")
 	}
 
@@ -94,8 +94,8 @@ func TestSetJsonValueTypesMerge(t *testing.T) {
 
 	jsonData := []byte(`{"pet": 123}`)
 
-	err := ts.MergeKeyJson(sk, jsonData)
-	if err != nil {
+	addr, err := ts.MergeKeyJson(sk, jsonData)
+	if addr == 0 || err != nil {
 		t.Error("merge first")
 	}
 
@@ -106,8 +106,8 @@ func TestSetJsonValueTypesMerge(t *testing.T) {
 
 	jsonData = []byte(`{"pet": true}`)
 
-	err = ts.MergeKeyJson(sk, jsonData)
-	if err != nil {
+	addr, err = ts.MergeKeyJson(sk, jsonData)
+	if addr == 0 || err != nil {
 		t.Error("merge second")
 	}
 
@@ -118,8 +118,8 @@ func TestSetJsonValueTypesMerge(t *testing.T) {
 
 	jsonData = []byte(`{"pet": null}`)
 
-	err = ts.MergeKeyJson(sk, jsonData)
-	if err != nil {
+	addr, err = ts.MergeKeyJson(sk, jsonData)
+	if addr == 0 || err != nil {
 		t.Error("merge third")
 	}
 
@@ -141,8 +141,8 @@ func TestSetJsonValueTypesMergeOverwrite(t *testing.T) {
 	ts.SetKeyValueEx(sk2, 500, 0, 0, []StoreAddress{1})
 
 	jsonData := []byte(`{"pet": "cat"}`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
@@ -164,8 +164,8 @@ func TestSetJsonValueTypesMergeOverwrite(t *testing.T) {
 		t.Error("set ttl")
 	}
 
-	replaced, err = ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err = ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("second json")
 	}
 
@@ -184,14 +184,14 @@ func TestMergeTwoJsons(t *testing.T) {
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`{"pet": "cat"}`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
 	jsonData2 := []byte(`{"pet": { "cat": "meow" }}`)
-	replaced, err = ts.SetKeyJson(sk, jsonData2)
-	if !replaced || err != nil {
+	replaced, addr, err = ts.SetKeyJson(sk, jsonData2)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("second json")
 	}
 
@@ -205,8 +205,8 @@ func TestMergeSentinelValue(t *testing.T) {
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`100`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
@@ -216,8 +216,8 @@ func TestMergeSentinelValue(t *testing.T) {
 	}
 
 	jsonData2 := []byte(`null`)
-	replaced, err = ts.SetKeyJson(sk, jsonData2)
-	if !replaced || err != nil {
+	replaced, addr, err = ts.SetKeyJson(sk, jsonData2)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("second json")
 	}
 
@@ -236,8 +236,8 @@ func TestMergeSentinelArray(t *testing.T) {
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`["test", "123"]`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
@@ -267,8 +267,8 @@ func TestJsonSetTree(t *testing.T) {
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`{"test":{"animals":[{"type":"cat"},{"type":"dog","food":"purina"}]}}`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
@@ -298,14 +298,14 @@ func TestMergeTwoArrays(t *testing.T) {
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`["cow", "pig"]`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
 	jsonData2 := []byte(`["horse", "duck", "cow"]`)
-	err = ts.MergeKeyJson(sk, jsonData2)
-	if err != nil {
+	addr, err = ts.MergeKeyJson(sk, jsonData2)
+	if addr == 0 || err != nil {
 		t.Error("second json")
 	}
 
@@ -334,14 +334,14 @@ func TestMergeTwoArrays2(t *testing.T) {
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`["cow", "pig"]`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
 	jsonData2 := []byte(`["horse"]`)
-	err = ts.MergeKeyJson(sk, jsonData2)
-	if err != nil {
+	addr, err = ts.MergeKeyJson(sk, jsonData2)
+	if addr == 0 || err != nil {
 		t.Error("second json")
 	}
 
@@ -366,14 +366,14 @@ func TestMergeTwoArrays3(t *testing.T) {
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`[{"animals": {"cow": true, "pig": true}}]`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
 	jsonData2 := []byte(`[{"animals": {"horse": true}}]`)
-	err = ts.MergeKeyJson(sk, jsonData2)
-	if err != nil {
+	addr, err = ts.MergeKeyJson(sk, jsonData2)
+	if addr == 0 || err != nil {
 		t.Error("second json")
 	}
 
@@ -398,14 +398,14 @@ func TestMergeTwoMaps(t *testing.T) {
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`{"animals": {"cow": true, "pig": true}}`)
-	replaced, err := ts.SetKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData)
+	if replaced || addr == 0 || err != nil {
 		t.Error("first json")
 	}
 
 	jsonData2 := []byte(`{"animals": {"horse": true}}`)
-	err = ts.MergeKeyJson(sk, jsonData2)
-	if err != nil {
+	addr, err = ts.MergeKeyJson(sk, jsonData2)
+	if addr == 0 || err != nil {
 		t.Error("second json")
 	}
 
@@ -433,20 +433,20 @@ func TestReplaceJsonSimple(t *testing.T) {
 
 	jsonData := []byte(`{"pet": "cat"}`)
 
-	replaced, err := ts.ReplaceKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err := ts.ReplaceKeyJson(sk, jsonData)
+	if replaced || addr != 0 || err != nil {
 		t.Error("replace before exists")
 	}
 
-	replaced, err = ts.SetKeyJson(sk, jsonData)
-	if replaced || err != nil {
+	replaced, addr, err = ts.SetKeyJson(sk, jsonData)
+	if replaced || addr == 0 || err != nil {
 		t.Error("set first")
 	}
 
 	jsonData = []byte(`{"pet": "dog"}`)
 
-	replaced, err = ts.ReplaceKeyJson(sk, jsonData)
-	if !replaced || err != nil {
+	replaced, addr, err = ts.ReplaceKeyJson(sk, jsonData)
+	if !replaced || addr == 0 || err != nil {
 		t.Error("replace after exists")
 	}
 
@@ -466,13 +466,13 @@ func TestCreateJsonSimple(t *testing.T) {
 
 	jsonData := []byte(`{"pet": "cat"}`)
 
-	created, err := ts.CreateKeyJson(sk, jsonData)
-	if !created || err != nil {
+	created, addr, err := ts.CreateKeyJson(sk, jsonData)
+	if !created || addr == 0 || err != nil {
 		t.Error("create first")
 	}
 
-	created, err = ts.CreateKeyJson(sk, jsonData)
-	if created || err != nil {
+	created, addr, err = ts.CreateKeyJson(sk, jsonData)
+	if created || addr != 0 || err != nil {
 		t.Error("create second")
 	}
 
@@ -493,22 +493,22 @@ func TestCreateJsonExpired(t *testing.T) {
 
 	jsonData := []byte(`{"pet": "cat"}`)
 
-	created, err := ts.CreateKeyJson(sk, jsonData)
-	if !created || err != nil {
+	created, addr, err := ts.CreateKeyJson(sk, jsonData)
+	if !created || addr == 0 || err != nil {
 		t.Error("create first")
 	}
 
 	ts.SetKeyTtl(sk, 1)
 
-	created, err = ts.CreateKeyJson(sk, jsonData)
-	if created || err != nil {
+	created, addr, err = ts.CreateKeyJson(sk, jsonData)
+	if created || addr != 0 || err != nil {
 		t.Error("create second")
 	}
 
 	ts.SetKeyTtl(sk2, 1)
 
-	created, err = ts.CreateKeyJson(sk, jsonData)
-	if !created || err != nil {
+	created, addr, err = ts.CreateKeyJson(sk, jsonData)
+	if !created || addr == 0 || err != nil {
 		t.Error("create third")
 	}
 
