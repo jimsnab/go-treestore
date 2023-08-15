@@ -64,7 +64,7 @@ func (ts *TreeStore) restoreKey(rootPath TokenPath, sk StoreKey, kn *keyNode, en
 			kn.nextLevel = childLevel
 
 			for childSeg, child := range en.Children {
-				childSk := AppendStoreKeySegmentString(sk, childSeg)
+				childSk := AppendStoreKeySegmentsStrings(sk, childSeg)
 				childKn := ts.appendKeyNode(childLevel, TokenStringToSegment(childSeg))
 				if err = ts.restoreKey(rootPath, childSk, childKn, child); err != nil {
 					return

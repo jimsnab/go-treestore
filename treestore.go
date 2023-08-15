@@ -995,7 +995,7 @@ func (ts *TreeStore) discardChildren(sk StoreKey, kn *keyNode) {
 	level := kn.nextLevel
 	if level != nil {
 		level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
-			childSk := AppendStoreKeySegment(sk, node.key)
+			childSk := AppendStoreKeySegments(sk, node.key)
 			ts.discardChildren(childSk, node.value)
 			delete(ts.addresses, node.value.address)
 			if node.value.current != nil {

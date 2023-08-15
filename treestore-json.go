@@ -241,7 +241,7 @@ func (ts *TreeStore) mergeJsonKey(sk StoreKey, kn *keyNode, data any) {
 		for i, v := range t {
 			n := make([]byte, 4)
 			binary.BigEndian.PutUint32(n, uint32(i+arrayLen))
-			childSk := AppendStoreKeySegment(sk, n)
+			childSk := AppendStoreKeySegments(sk, n)
 			childKn, lockedLevel := ts.ensureMergeChild(kn, n)
 			ts.mergeJsonKey(childSk, childKn, v)
 			ts.completeKeyNodeWrite(lockedLevel)
@@ -250,7 +250,7 @@ func (ts *TreeStore) mergeJsonKey(sk StoreKey, kn *keyNode, data any) {
 	case map[string]any:
 		for k, v := range t {
 			key := []byte(k)
-			childSk := AppendStoreKeySegment(sk, key)
+			childSk := AppendStoreKeySegments(sk, key)
 			childKn, lockedLevel := ts.ensureMergeChild(kn, key)
 			ts.mergeJsonKey(childSk, childKn, v)
 			ts.completeKeyNodeWrite(lockedLevel)
@@ -371,7 +371,7 @@ func (ts *TreeStore) assignJsonKeyIndex(sk StoreKey, kn *keyNode) {
 
 	if kn.nextLevel != nil {
 		kn.nextLevel.tree.Iterate(func(node *avlNode[*keyNode]) bool {
-			nextSk := AppendStoreKeySegment(sk, node.key)
+			nextSk := AppendStoreKeySegments(sk, node.key)
 			ts.assignJsonKeyIndex(nextSk, node.value)
 			return true
 		})

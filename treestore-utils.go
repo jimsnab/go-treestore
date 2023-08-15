@@ -215,18 +215,22 @@ func SplitStoreKey(sk StoreKey) []string {
 }
 
 // Appends a token segment to a StoreKey
-func AppendStoreKeySegment(sk StoreKey, segment TokenSegment) StoreKey {
+func AppendStoreKeySegments(sk StoreKey, segments ...TokenSegment) StoreKey {
 	sk2 := StoreKey{}
-	sk2.Tokens = append(sk.Tokens, segment)
+	for _,seg := range segments {
+		sk2.Tokens = append(sk.Tokens, seg)
+	}
 	sk2.Path = TokenSetToTokenPath(sk2.Tokens)
 
 	return sk2
 }
 
-// Appends a token segment to a StoreKey
-func AppendStoreKeySegmentString(sk StoreKey, segString string) StoreKey {
+// Appends token segment string(s) to a StoreKey
+func AppendStoreKeySegmentsStrings(sk StoreKey, segStrings ...string) StoreKey {
 	sk2 := StoreKey{}
-	sk2.Tokens = append(sk.Tokens, TokenStringToSegment(segString))
+	for _, seg := range segStrings {
+		sk2.Tokens = append(sk.Tokens, TokenStringToSegment(seg))
+	}
 	sk2.Path = TokenSetToTokenPath(sk2.Tokens)
 
 	return sk2
