@@ -7,15 +7,19 @@ package treestore
 //
 // The sentinal (root) key node cannot be deleted; only its value can be cleared.
 func (ts *TreeStore) DeleteKeyTree(sk StoreKey) (removed bool) {
-	end := len(sk.Tokens)
-	if end == 0 {
-		removed, _ = ts.DeleteKeyWithValue(sk, true)
-		return
-	}
-
 	// likely to modify the linkage of keynodes
 	ts.keyNodeMu.Lock()
 	defer ts.keyNodeMu.Unlock()
+
+	return ts.deleteKeyTreeLocked(sk)
+}
+
+func (ts *TreeStore) deleteKeyTreeLocked(sk StoreKey) (removed bool) {
+	end := len(sk.Tokens)
+	if end == 0 {
+		removed, _ = ts.deleteKeyWithValueLocked(sk, true)
+		return
+	}
 
 	level, index, kn, expired := ts.locateKeyNodeForLock(sk)
 	if index < end {

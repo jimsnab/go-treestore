@@ -630,6 +630,10 @@ func (ts *TreeStore) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 	ts.keyNodeMu.Lock()
 	defer ts.keyNodeMu.Unlock()
 
+	return ts.deleteKeyWithValueLocked(sk, clean)
+}
+
+func (ts *TreeStore) deleteKeyWithValueLocked(sk StoreKey, clean bool) (removed bool, originalValue any) {
 	end := len(sk.Tokens)
 	if end == 0 {
 		ts.dbNodeLevel.lock.Lock() // ensure any pending operations on this keynode complete
@@ -729,15 +733,19 @@ func (ts *TreeStore) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, 
 //
 // The sentinal (root) key node cannot be deleted; only its value can be cleared.
 func (ts *TreeStore) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any) {
-	end := len(sk.Tokens)
-	if end == 0 {
-		valueRemoved, originalValue = ts.DeleteKeyWithValue(sk, true)
-		return
-	}
-
 	// likely to modify the linkage of keynodes
 	ts.keyNodeMu.Lock()
 	defer ts.keyNodeMu.Unlock()
+
+	return ts.deleteKeyLocked(sk)
+}
+
+func (ts *TreeStore) deleteKeyLocked(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any) {
+	end := len(sk.Tokens)
+	if end == 0 {
+		valueRemoved, originalValue = ts.deleteKeyWithValueLocked(sk, true)
+		return
+	}
 
 	level, index, kn, expired := ts.locateKeyNodeForLock(sk)
 	if index < end {
@@ -762,24 +770,27 @@ func (ts *TreeStore) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, orig
 	kn.metadata = nil
 
 	if kn.nextLevel == nil {
-		// permanently delete the node
-		delete(ts.addresses, kn.address)
-		level.tree.Delete(kn.key)
-		kn.ownerTree = nil
-
-		// if the level is empty now, unlink the parent
-		if level.tree.nodes == 0 {
-			parent := level.parent
-			if parent != nil {
-				parent.nextLevel = nil
-				level.parent = nil
-			}
-		}
-
+		ts.deleteKeyNodeLocked(level, kn)
 		keyRemoved = true
 	}
 
 	return
+}
+
+func (ts *TreeStore) deleteKeyNodeLocked(level *keyTree, kn *keyNode) {
+	// permanently delete the node
+	delete(ts.addresses, kn.address)
+	level.tree.Delete(kn.key)
+	kn.ownerTree = nil
+
+	// if the level is empty now, unlink the parent
+	if level.tree.nodes == 0 {
+		parent := level.parent
+		if parent != nil {
+			parent.nextLevel = nil
+			level.parent = nil
+		}
+	}
 }
 
 // Sets a metadata attribute on a key, returning the original value (if any)
