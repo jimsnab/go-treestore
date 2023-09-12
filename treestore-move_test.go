@@ -138,6 +138,42 @@ func TestMoveKeyDestExistsOverwrite(t *testing.T) {
 	}
 }
 
+func TestMoveKeyDestExistsDiscard(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+
+	address, firstValue := ts.SetKeyValue(ssk, 123)
+	if address == 0 || !firstValue {
+		t.Error("src set")
+	}
+
+	osk := MakeStoreKey("target", "other")
+	address, firstValue = ts.SetKeyValue(osk, 123)
+	if address == 0 || !firstValue {
+		t.Error("other set")
+	}
+
+	dsk := MakeStoreKey("target")
+	address, firstValue = ts.SetKeyValue(dsk, 345)
+	if address == 0 || !firstValue {
+		t.Error("second set")
+	}
+
+	exists, moved := ts.MoveKey(ssk, dsk, true)
+	if !exists || !moved {
+		t.Error("not moved")
+	}
+
+	address, exists = ts.LocateKey(osk)
+	if address != 0 || exists {
+		t.Error("other key should have been lost")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
 func TestMoveKeyDestNested(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	ssk := MakeStoreKey("test")
@@ -319,6 +355,26 @@ func TestMoveKeyExtended(t *testing.T) {
 	v, ke, ve := ts.GetKeyValue(dsk)
 	if ke || ve || v != nil {
 		t.Error("fetch expired value")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveKeyExpired(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+
+	address, exists, _ := ts.SetKeyValueEx(ssk, 123, 0, 1, nil)
+	if address == 0 || exists {
+		t.Error("first set")
+	}
+
+	dsk := MakeStoreKey("target")
+	exists, moved := ts.MoveKey(ssk, dsk, false)
+	if exists || moved {
+		t.Error("shouldn't exist")
 	}
 
 	if !ts.DiagDump() {
