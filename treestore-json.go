@@ -6,10 +6,18 @@ import (
 	"sync/atomic"
 )
 
+type (
+	JsonOptions int
+)
+
+const (
+	JsonStringValuesAsKeys JsonOptions = 1 << iota
+)
+
 // Retrieves the child key tree and leaf values in the form of json. If
 // metdata "array" is "true" then the child key nodes are treated as
 // array indicies. (They must be big endian uint32.)
-func (ts *TreeStore) GetKeyAsJson(sk StoreKey) (jsonData []byte, err error) {
+func (ts *TreeStore) GetKeyAsJson(sk StoreKey, opts JsonOptions) (jsonData []byte, err error) {
 	ts.keyNodeMu.RLock()
 	defer ts.keyNodeMu.RUnlock()
 
@@ -19,18 +27,18 @@ func (ts *TreeStore) GetKeyAsJson(sk StoreKey) (jsonData []byte, err error) {
 	defer ts.completeKeyNodeRead(level)
 
 	if tokenIndex >= len(sk.Tokens) && !expired {
-		jd = ts.buildJsonLevel(kn)
+		jd = ts.buildJsonLevel(kn, opts)
 	}
 
 	jsonData, err = json.Marshal(jd)
 	return
 }
 
-func (ts *TreeStore) buildJsonLevel(kn *keyNode) any {
+func (ts *TreeStore) buildJsonLevel(kn *keyNode, opts JsonOptions) any {
 	if kn.metadata != nil {
 		isArray := kn.metadata["array"]
 		if isArray == "true" {
-			return ts.buildJsonLevelArray(kn)
+			return ts.buildJsonLevelArray(kn, opts)
 		}
 	}
 
@@ -40,9 +48,17 @@ func (ts *TreeStore) buildJsonLevel(kn *keyNode) any {
 		ts.activeLocks.Add(1)
 		defer ts.completeKeyNodeRead(level)
 
+		if (opts & JsonStringValuesAsKeys) != 0 {
+			if level.tree.nodes == 1 {
+				if level.tree.root.value.current == nil {
+					return string(level.tree.root.key)
+				}
+			}
+		}
+
 		m := map[string]any{}
 		level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
-			m[string(node.key)] = ts.buildJsonLevel(node.value)
+			m[string(node.key)] = ts.buildJsonLevel(node.value, opts)
 			return true
 		})
 		return m
@@ -78,7 +94,7 @@ func (ts *TreeStore) buildJsonLevel(kn *keyNode) any {
 	return nil
 }
 
-func (ts *TreeStore) buildJsonLevelArray(kn *keyNode) []any {
+func (ts *TreeStore) buildJsonLevelArray(kn *keyNode, opts JsonOptions) []any {
 	if kn.nextLevel == nil {
 		return []any{}
 	}
@@ -100,7 +116,7 @@ func (ts *TreeStore) buildJsonLevelArray(kn *keyNode) []any {
 			return true // ignore invalid
 		}
 
-		a[n] = ts.buildJsonLevel(node.value)
+		a[n] = ts.buildJsonLevel(node.value, opts)
 		return true
 	})
 
@@ -110,9 +126,9 @@ func (ts *TreeStore) buildJsonLevelArray(kn *keyNode) []any {
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk exists, its value, children and history are deleted, and the new
 // json data takes its place.
-func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte) (replaced bool, address StoreAddress, err error) {
+func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions) (replaced bool, address StoreAddress, err error) {
 	// build up the new node before locking
-	newKn, err := ts.newJsonKey(jsonData)
+	newKn, err := ts.newJsonKey(jsonData, opts)
 	if err != nil {
 		return
 	}
@@ -137,9 +153,9 @@ func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte) (replaced bool, ad
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk doesn't exists, no changes are made. Otherwise the key node's
 // value and children are deleted, and the new json data takes its place.
-func (ts *TreeStore) ReplaceKeyJson(sk StoreKey, jsonData []byte) (replaced bool, address StoreAddress, err error) {
+func (ts *TreeStore) ReplaceKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions) (replaced bool, address StoreAddress, err error) {
 	// build up the new node before locking
-	newKn, err := ts.newJsonKey(jsonData)
+	newKn, err := ts.newJsonKey(jsonData, opts)
 	if err != nil {
 		return
 	}
@@ -165,9 +181,9 @@ func (ts *TreeStore) ReplaceKeyJson(sk StoreKey, jsonData []byte) (replaced bool
 // Takes the generalized json data and stores it at the specified key path.
 // If the sk exists, no changes are made. Otherwise a new key node is created
 // with its child data set according to the json structure.
-func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte) (created bool, address StoreAddress, err error) {
+func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions) (created bool, address StoreAddress, err error) {
 	// build up the new node before locking
-	newKn, err := ts.newJsonKey(jsonData)
+	newKn, err := ts.newJsonKey(jsonData, opts)
 	if err != nil {
 		return
 	}
@@ -200,7 +216,7 @@ func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte) (created bool, 
 // Overlays json data on top of existing data. This is one of the slower APIs
 // because each part of json is independently written to the store, and a
 // write lock is required across the whole operation.
-func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte) (address StoreAddress, err error) {
+func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions) (address StoreAddress, err error) {
 	ts.keyNodeMu.Lock()
 	defer ts.keyNodeMu.Unlock()
 
@@ -212,12 +228,28 @@ func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte) (address StoreAd
 	kn, ll, _ := ts.ensureKey(sk)
 	defer ts.completeKeyNodeWrite(ll)
 
-	ts.mergeJsonKey(sk, kn, data)
+	ts.mergeJsonKey(sk, kn, data, opts)
 	address = kn.address
 	return
 }
 
-func (ts *TreeStore) mergeJsonKey(sk StoreKey, kn *keyNode, data any) {
+func (ts *TreeStore) mergeJsonKey(sk StoreKey, kn *keyNode, data any, opts JsonOptions) {
+	if (opts & JsonStringValuesAsKeys) == 0 {
+		ts.mergeJsonKeyValue(sk, kn, data, opts)
+	} else {
+		s, is := data.(string)
+		if !is {
+			ts.mergeJsonKeyValue(sk, kn, data, opts)
+		} else {
+			key := []byte(s)
+			ts.discardChildren(sk, kn)
+			_, lockedLevel := ts.ensureMergeChild(kn, key)
+			ts.completeKeyNodeWrite(lockedLevel)
+		}
+	}
+}
+
+func (ts *TreeStore) mergeJsonKeyValue(sk StoreKey, kn *keyNode, data any, opts JsonOptions) {
 	switch t := data.(type) {
 	case nil, float64, string, bool:
 		newLeaf := valueInstance{
@@ -247,7 +279,7 @@ func (ts *TreeStore) mergeJsonKey(sk StoreKey, kn *keyNode, data any) {
 			binary.BigEndian.PutUint32(n, uint32(i+arrayLen))
 			childSk := AppendStoreKeySegments(sk, n)
 			childKn, lockedLevel := ts.ensureMergeChild(kn, n)
-			ts.mergeJsonKey(childSk, childKn, v)
+			ts.mergeJsonKey(childSk, childKn, v, opts)
 			ts.completeKeyNodeWrite(lockedLevel)
 		}
 
@@ -256,7 +288,7 @@ func (ts *TreeStore) mergeJsonKey(sk StoreKey, kn *keyNode, data any) {
 			key := []byte(k)
 			childSk := AppendStoreKeySegments(sk, key)
 			childKn, lockedLevel := ts.ensureMergeChild(kn, key)
-			ts.mergeJsonKey(childSk, childKn, v)
+			ts.mergeJsonKey(childSk, childKn, v, opts)
 			ts.completeKeyNodeWrite(lockedLevel)
 		}
 	}
@@ -288,22 +320,46 @@ func (ts *TreeStore) ensureMergeChild(parentKn *keyNode, key []byte) (kn *keyNod
 }
 
 // Worker that builds a new tree level with contents of the provided json data.
-func (ts *TreeStore) newJsonKey(jsonData []byte) (kn *keyNode, err error) {
+func (ts *TreeStore) newJsonKey(jsonData []byte, opts JsonOptions) (kn *keyNode, err error) {
 	var data any
 	if err = json.Unmarshal(jsonData, &data); err != nil {
 		return
 	}
 
 	kn = &keyNode{}
-	ts.nextJsonKeyLevel(kn, data)
+	ts.nextJsonKeyLevel(kn, data, opts)
 	return
 }
 
 // Worker that sets a leaf key node value, or recurses to fill the key node's
 // child array or map.
-func (ts *TreeStore) nextJsonKeyLevel(kn *keyNode, data any) {
+func (ts *TreeStore) nextJsonKeyLevel(kn *keyNode, data any, opts JsonOptions) {
+	if (opts & JsonStringValuesAsKeys) == 0 {
+		ts.nextJsonKeyValueLevel(kn, data, opts)
+	} else {
+		s, is := data.(string)
+		if !is {
+			ts.nextJsonKeyValueLevel(kn, data, opts)
+		} else {
+			level := newKeyTree(kn)
+			kn.nextLevel = level
+			key := []byte(s)
+			childKn := &keyNode{
+				key:       key,
+				address:   StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1)),
+				ownerTree: level,
+			}
+
+			level.tree.Set(key, childKn)
+		}
+	}
+}
+
+// Worker that sets a leaf key node value, or recurses to fill the key node's
+// child array or map.
+func (ts *TreeStore) nextJsonKeyValueLevel(kn *keyNode, data any, opts JsonOptions) {
 	switch t := data.(type) {
-	case nil, float64, string, bool:
+	case nil, string, float64, bool:
 		newLeaf := valueInstance{
 			value: t,
 		}
@@ -333,7 +389,7 @@ func (ts *TreeStore) nextJsonKeyLevel(kn *keyNode, data any) {
 			}
 
 			level.tree.Set(key, childKn)
-			ts.nextJsonKeyLevel(childKn, v)
+			ts.nextJsonKeyLevel(childKn, v, opts)
 		}
 
 	case map[string]any:
@@ -348,7 +404,7 @@ func (ts *TreeStore) nextJsonKeyLevel(kn *keyNode, data any) {
 			}
 
 			level.tree.Set(key, childKn)
-			ts.nextJsonKeyLevel(childKn, v)
+			ts.nextJsonKeyLevel(childKn, v, opts)
 		}
 	}
 }
