@@ -50,7 +50,8 @@ func (ts *TreeStore) buildJsonLevel(kn *keyNode, opts JsonOptions) any {
 
 		if (opts & JsonStringValuesAsKeys) != 0 {
 			if level.tree.nodes == 1 {
-				if level.tree.root.value.current == nil {
+				if level.tree.root.value.current == nil &&
+					level.tree.root.value.nextLevel == nil {
 					return string(level.tree.root.key)
 				}
 			}

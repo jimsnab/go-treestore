@@ -772,7 +772,7 @@ func TestJsonIndexUseCase(t *testing.T) {
 
 	sk2 := MakeStoreKeyFromPath(keys[0].Key)
 	tc := len(sk2.Tokens)
-	sk2 = MakeStoreKeyFromTokenSegments(sk2.Tokens[:tc - 2]...)
+	sk2 = MakeStoreKeyFromTokenSegments(sk2.Tokens[:tc-2]...)
 
 	jd, err := ts.GetKeyAsJson(sk2, JsonStringValuesAsKeys)
 	if err != nil {
@@ -787,6 +787,56 @@ func TestJsonIndexUseCase(t *testing.T) {
 
 	if fields["sound"] != "meow" {
 		t.Error("peer field verify")
+	}
+
+	if !ts.DiagDump() {
+		t.Fatal("dump error")
+	}
+}
+
+func TestJsonRetrieveLeafs(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	sk := MakeStoreKey("test")
+
+	jsonData := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
+
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if replaced || addr == 0 || err != nil {
+		t.Error("set")
+	}
+
+	retrieved, err := ts.GetKeyAsJson(sk, JsonStringValuesAsKeys)
+	if err != nil {
+		t.Fatal("get json fail")
+	}
+
+	var m map[string]any
+	err = json.Unmarshal(retrieved, &m)
+	if err != nil {
+		t.Fatal("json parse")
+	}
+
+	m2, exists := m["animals"].(map[string]any)
+	if !exists {
+		t.Error("animals")
+	}
+
+	if len(m2) != 2 {
+		t.Error("anmials length")
+	}
+
+	cat, exists := m2["cat"].(map[string]any)
+	if !exists {
+		t.Error("cat")
+	}
+
+	dog, exists := m2["dog"].(map[string]any)
+	if !exists {
+		t.Error("dog")
+	}
+
+	if cat["sound"].(string) != "meow" || dog["sound"].(string) != "bark" || dog["breeds"].(float64) != 360 {
+		t.Error("details")
 	}
 
 	if !ts.DiagDump() {
