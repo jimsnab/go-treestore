@@ -751,3 +751,45 @@ func TestCreateJsonExpired(t *testing.T) {
 		t.Fatal("dump error")
 	}
 }
+
+func TestJsonIndexUseCase(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	sk := MakeStoreKey("test")
+
+	jsonData := []byte(`{"pet": {"1": {"type": "cat", "sound": "meow"}, "2": {"type": "dog", "sound": "bark"} }}`)
+
+	replaced, addr, err := ts.SetKeyJson(sk, jsonData, JsonStringValuesAsKeys)
+	if replaced || addr == 0 || err != nil {
+		t.Error("set")
+	}
+
+	// find the id of cat
+	keys := ts.GetMatchingKeys(MakeStoreKeyFromPath("/test/pet/*/type/cat"), 0, 100)
+
+	if len(keys) != 1 || keys[0].Key != "/test/pet/1/type/cat" {
+		t.Error("find cat index")
+	}
+
+	sk2 := MakeStoreKeyFromPath(keys[0].Key)
+	tc := len(sk2.Tokens)
+	sk2 = MakeStoreKeyFromTokenSegments(sk2.Tokens[:tc - 2]...)
+
+	jd, err := ts.GetKeyAsJson(sk2, JsonStringValuesAsKeys)
+	if err != nil {
+		t.Fatal("get json fail")
+	}
+
+	var fields map[string]string
+	err = json.Unmarshal(jd, &fields)
+	if err != nil {
+		t.Fatal("json parse fail")
+	}
+
+	if fields["sound"] != "meow" {
+		t.Error("peer field verify")
+	}
+
+	if !ts.DiagDump() {
+		t.Fatal("dump error")
+	}
+}
