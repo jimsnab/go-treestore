@@ -699,3 +699,46 @@ func TestMoveIndex(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestMoveIndexPartial(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk1 := MakeStoreKey("cat")
+	ssk2 := MakeStoreKey("dog")
+	rsk := MakeStoreKey("index1")
+
+	addr1, _ := ts.SetKey(ssk1)
+	if addr1 == 0 {
+		t.Error("first set")
+	}
+
+	addr2, _ := ts.SetKey(ssk2)
+	if addr2 == 0 {
+		t.Error("second set")
+	}
+
+	raddr, _, _ := ts.SetKeyValueEx(rsk, nil, SetExNoValueUpdate, 0, []StoreAddress{addr1, addr2})
+	if raddr == 0 {
+		t.Error("raddr set")
+	}
+
+	dsk := MakeStoreKey("target")
+
+	exists, moved := ts.MoveReferencedKey(ssk1, dsk, false, -1, nil, []StoreKey{rsk})
+	if !exists || !moved {
+		t.Error("not moved")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if hasLink || rv != nil {
+		t.Error("relationship 1 wrong")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(rsk, 1)
+	if !hasLink || rv.Sk.Path != "/dog" {
+		t.Error("relationship 2 wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}

@@ -154,8 +154,16 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 
 	for _, unrefSk := range unrefs {
 		_, tokenIndex, kn, expired := ts.locateKeyNodeForLock(unrefSk)
-		if tokenIndex >= len(unrefSk.Tokens) && !expired {
-			kn.expiration = 1
+		if tokenIndex >= len(unrefSk.Tokens) && !expired && kn.current != nil {
+			for i, addr := range kn.current.relationships {
+				if addr == skn.address {
+					if len(kn.current.relationships) == 1 {
+						kn.expiration = 1
+					} else {
+						kn.current.relationships[i] = 0
+					}
+				}
+			}
 		}
 	}
 
