@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
+	"sync"
 )
 
 type (
@@ -25,6 +26,7 @@ type (
 	testHook func()
 )
 
+var addrHookMu sync.Mutex
 var invalidAddrHook testHook = func() {}
 
 // Serialize the tree store into a single JSON doc.

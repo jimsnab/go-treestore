@@ -60,12 +60,12 @@ func TestMetadataClear(t *testing.T) {
 		t.Error("verify first attribute")
 	}
 
-	attributeExists, orgVal := ts.ClearMetdataAttribute(sk, "nope")
+	attributeExists, orgVal := ts.ClearMetadataAttribute(sk, "nope")
 	if attributeExists || orgVal != "" {
 		t.Error("clear missing attribute")
 	}
 
-	attributeExists, orgVal = ts.ClearMetdataAttribute(sk, "abc")
+	attributeExists, orgVal = ts.ClearMetadataAttribute(sk, "abc")
 	if !attributeExists || orgVal != "123" {
 		t.Error("clear missing attribute")
 	}
@@ -85,7 +85,7 @@ func TestMetadataClear(t *testing.T) {
 		t.Error("third attribute set")
 	}
 
-	attributeExists, orgVal = ts.ClearMetdataAttribute(sk, "def")
+	attributeExists, orgVal = ts.ClearMetadataAttribute(sk, "def")
 	if !attributeExists || orgVal != "100" {
 		t.Error("clear missing attribute")
 	}
@@ -95,7 +95,7 @@ func TestMetadataClear(t *testing.T) {
 		t.Error("third attribute set")
 	}
 
-	ts.ClearKeyMetdata(MakeStoreKey("missing"))
+	ts.ClearKeyMetadata(MakeStoreKey("missing"))
 
 	exists, verifyVal = ts.GetMetadataAttribute(sk, "abc")
 	if !exists || verifyVal != "456" {
@@ -112,7 +112,7 @@ func TestMetadataClear(t *testing.T) {
 		t.Error("verify retrieve attributes")
 	}
 
-	ts.ClearKeyMetdata(sk)
+	ts.ClearKeyMetadata(sk)
 
 	attribs = ts.GetMetadataAttributes(sk)
 	if len(attribs) != 0 || attribs == nil {
@@ -135,7 +135,7 @@ func TestMetadataMissing(t *testing.T) {
 		t.Error("no attribute value on missing key")
 	}
 
-	attribExists, value = ts.ClearMetdataAttribute(sk, "something")
+	attribExists, value = ts.ClearMetadataAttribute(sk, "something")
 	if attribExists || value != "" {
 		t.Error("no attribute to clear on missing key")
 	}
@@ -161,7 +161,7 @@ func TestMetadataSentinel(t *testing.T) {
 		t.Error("verify sentinel metadata")
 	}
 
-	ts.ClearKeyMetdata(sk)
+	ts.ClearKeyMetadata(sk)
 
 	attribs = ts.GetMetadataAttributes(sk)
 	if len(attribs) != 0 || attribs == nil {

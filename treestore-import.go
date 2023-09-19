@@ -20,12 +20,28 @@ func (ts *TreeStore) Import(sk StoreKey, jsonData []byte) (err error) {
 	ts.acquireExclusiveLock()
 	defer ts.releaseExclusiveLock()
 
+	ts.deferredRefs = []*deferredRef{}
+
 	kn, ll, _ := ts.ensureKey(sk)
 	defer ts.completeKeyNodeWrite(ll)
 
 	ts.resetNode(sk, kn)
 
-	err = ts.restoreKey(sk.Path, sk, kn, en)
+	if err = ts.restoreKey(sk.Path, sk, kn, en); err != nil {
+		return
+	}
+
+	for _, dr := range ts.deferredRefs {
+		targetSk := MakeStoreKeyFromPath(TokenPath(dr.target))
+		_, tokenIndex, kn, _ := ts.locateKeyNodeForLock(targetSk)
+		if tokenIndex < len(targetSk.Tokens) {
+			invalidAddrHook()
+		} else {
+			dr.vi.relationships[dr.index] = kn.address
+		}
+	}
+	ts.deferredRefs = nil
+
 	return
 }
 
@@ -103,12 +119,13 @@ func (ts *TreeStore) importValue(rootPath TokenPath, selfAddr StoreAddress, ev *
 				}
 
 				targetSk := MakeStoreKeyFromPath(TokenPath(fullPath))
-				_, tokenIndex, kn, expired := ts.locateKeyNodeForLock(targetSk)
-				if tokenIndex >= len(targetSk.Tokens) && !expired {
-					vi.relationships = append(vi.relationships, kn.address)
-				} else {
-					invalidAddrHook()
+				_, tokenIndex, kn, _ := ts.locateKeyNodeForLock(targetSk)
+				if tokenIndex < len(targetSk.Tokens) {
+					// might not be loaded yet - defer
+					ts.deferredRefs = append(ts.deferredRefs, &deferredRef{target: TokenPath(fullPath), vi: vi, index: len(vi.relationships)})
 					vi.relationships = append(vi.relationships, StoreAddress((1<<64)-1))
+				} else {
+					vi.relationships = append(vi.relationships, kn.address)
 				}
 			}
 		}

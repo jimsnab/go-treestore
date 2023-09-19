@@ -15,7 +15,7 @@ const (
 )
 
 // Retrieves the child key tree and leaf values in the form of json. If
-// metdata "array" is "true" then the child key nodes are treated as
+// metadata "array" is "true" then the child key nodes are treated as
 // array indicies. (They must be big endian uint32.)
 func (ts *TreeStore) GetKeyAsJson(sk StoreKey, opts JsonOptions) (jsonData []byte, err error) {
 	ts.keyNodeMu.RLock()

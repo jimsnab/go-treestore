@@ -653,6 +653,7 @@ func TestImportExportReferenceAbs(t *testing.T) {
 	sk2 := MakeStoreKey("farm", "animals", "horse")
 	sk3 := MakeStoreKey("farm", "animals", "cow")
 	sk4 := MakeStoreKey("livestock")
+	sk5 := MakeStoreKey("abc")
 
 	addr1, _ := ts.SetKey(sk1)
 	addr2, _ := ts.SetKey(sk2)
@@ -664,7 +665,16 @@ func TestImportExportReferenceAbs(t *testing.T) {
 
 	addr, exists, orgVal := ts.SetKeyValueEx(sk4, nil, SetExNoValueUpdate, 0, []StoreAddress{addr1, addr2, addr3})
 	if addr != 7 || exists || orgVal != nil {
-		t.Fatal("setex")
+		t.Fatal("setex sk4")
+	}
+
+	addr, exists, orgVal = ts.SetKeyValueEx(sk5, nil, SetExNoValueUpdate, 0, []StoreAddress{addr1, addr2, addr3})
+	if addr != 8 || exists || orgVal != nil {
+		t.Fatal("setex sk5")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
 	}
 
 	data, err := ts.Export(MakeStoreKey())
@@ -688,6 +698,21 @@ func TestImportExportReferenceAbs(t *testing.T) {
 	}
 
 	hasLink, rv = ts2.GetRelationshipValue(MakeStoreKeyFromPath("/test/livestock"), 2)
+	if !hasLink || rv == nil || rv.Sk.Path != "/test/farm/animals/cow" {
+		t.Error("relationship verify")
+	}
+
+	hasLink, rv = ts2.GetRelationshipValue(MakeStoreKeyFromPath("/test/abc"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/test/farm/animals/pig" {
+		t.Error("relationship verify")
+	}
+
+	hasLink, rv = ts2.GetRelationshipValue(MakeStoreKeyFromPath("/test/abc"), 1)
+	if !hasLink || rv == nil || rv.Sk.Path != "/test/farm/animals/horse" {
+		t.Error("relationship verify")
+	}
+
+	hasLink, rv = ts2.GetRelationshipValue(MakeStoreKeyFromPath("/test/abc"), 2)
 	if !hasLink || rv == nil || rv.Sk.Path != "/test/farm/animals/cow" {
 		t.Error("relationship verify")
 	}

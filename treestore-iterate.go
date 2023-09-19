@@ -186,7 +186,6 @@ func (ts *TreeStore) iterateFullWorkerIsMatch(patternSegs []TokenSegment, candid
 // worker that iterates through the tree store, calling the callback for each key
 // that matches the pattern segment(s)
 func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex int, segments []TokenSegment, nextLevel *keyTree, callback iterateFullCallback) (stopped bool) {
-
 	var lockedLevel *keyTree
 	if nextLevel == nil {
 		return

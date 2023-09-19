@@ -11,15 +11,16 @@ import (
 
 type (
 	TreeStore struct {
-		l           lane.Lane
-		keyNodeMu   sync.RWMutex
-		dbNode      keyNode
-		dbNodeLevel *keyTree
-		nextAddress StoreAddress
-		addresses   map[StoreAddress]*keyNode
-		keys        map[TokenPath]StoreAddress
-		cas         map[StoreAddress]uint64
-		activeLocks atomic.Int32
+		l            lane.Lane
+		keyNodeMu    sync.RWMutex
+		dbNode       keyNode
+		dbNodeLevel  *keyTree
+		nextAddress  StoreAddress
+		addresses    map[StoreAddress]*keyNode
+		keys         map[TokenPath]StoreAddress
+		cas          map[StoreAddress]uint64
+		activeLocks  atomic.Int32
+		deferredRefs []*deferredRef
 	}
 
 	StoreAddress uint64
@@ -51,6 +52,12 @@ type (
 	RelationshipValue struct {
 		Sk           StoreKey
 		CurrentValue any
+	}
+
+	deferredRef struct {
+		target TokenPath
+		vi     *valueInstance
+		index  int
 	}
 )
 
@@ -287,6 +294,25 @@ func (ts *TreeStore) createRestOfKey(sk StoreKey, parentLevel *keyTree, index in
 	return
 }
 
+// worker - like createRestOfKey, but used when caller has acquired the exclusive database lock
+func (ts *TreeStore) createRestOfKeyExclusive(sk StoreKey, parentLevel *keyTree, index int, parent *keyNode) (kn *keyNode) {
+	// currently have the entire database locked
+	level := parentLevel
+	kn = parent
+
+	// add middle levels if necessary
+	for end := len(sk.Tokens); index < end; index++ {
+		if kn != nil {
+			kn.nextLevel = newKeyTree(kn)
+			level = kn.nextLevel
+		}
+
+		kn = ts.appendKeyNode(level, sk.Tokens[index])
+	}
+
+	return
+}
+
 // worker - caller must hold a write lock on ts.keyNodeMu
 func (ts *TreeStore) removeKeyFromIndexLocked(sk StoreKey) (removed bool) {
 	_, removed = ts.keys[sk.Path]
@@ -318,6 +344,21 @@ func (ts *TreeStore) ensureKey(sk StoreKey) (kn *keyNode, lockedLevel *keyTree, 
 		created = true
 	} else if index < len(sk.Tokens) {
 		kn, lockedLevel = ts.createRestOfKey(sk, lockedLevel, index, kn)
+		created = true
+	}
+
+	return
+}
+
+// Worker like ensureKey but used when the caller has locked the whole database
+func (ts *TreeStore) ensureKeyExclusive(sk StoreKey) (kn *keyNode, created bool) {
+	level, index, kn, expired := ts.locateKeyNodeForLock(sk)
+
+	if expired {
+		ts.repurposeExpiredKn(sk, kn)
+		created = true
+	} else if index < len(sk.Tokens) {
+		kn = ts.createRestOfKeyExclusive(sk, level, index, kn)
 		created = true
 	}
 
@@ -530,7 +571,6 @@ func (ts *TreeStore) GetKeyTtl(sk StoreKey) (ttl int64) {
 // Navigates to the valueInstance key node and sets the expiration time in Unix nanoseconds.
 // Specify 0 for no expiration.
 func (ts *TreeStore) SetKeyTtl(sk StoreKey, expiration int64) (exists bool) {
-
 	if len(sk.Tokens) == 0 {
 		exists = true
 		return
@@ -818,7 +858,7 @@ func (ts *TreeStore) SetMetadataAttribute(sk StoreKey, attribute, value string) 
 }
 
 // Removes a single metadata attribute from a key
-func (ts *TreeStore) ClearMetdataAttribute(sk StoreKey, attribute string) (attributeExists bool, originalValue string) {
+func (ts *TreeStore) ClearMetadataAttribute(sk StoreKey, attribute string) (attributeExists bool, originalValue string) {
 	// the key node linkage will not change
 	ts.keyNodeMu.RLock()
 	defer ts.keyNodeMu.RUnlock()
@@ -844,8 +884,8 @@ func (ts *TreeStore) ClearMetdataAttribute(sk StoreKey, attribute string) (attri
 	return
 }
 
-// Discards all metdata on the specific key
-func (ts *TreeStore) ClearKeyMetdata(sk StoreKey) {
+// Discards all metadata on the specific key
+func (ts *TreeStore) ClearKeyMetadata(sk StoreKey) {
 	// the key node linkage will not change
 	ts.keyNodeMu.RLock()
 	defer ts.keyNodeMu.RUnlock()
