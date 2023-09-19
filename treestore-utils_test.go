@@ -296,3 +296,39 @@ func TestIsPattern(t *testing.T) {
 		t.Error("exact match plus extra is mismatch")
 	}
 }
+
+func TestAppendStoreKeySegments(t *testing.T) {
+	sk := MakeStoreKey("test")
+	sk2 := AppendStoreKeySegments(sk)
+	if sk.Path != sk2.Path {
+		t.Error("empty fail")
+	}
+
+	sk2 = AppendStoreKeySegments(sk, TokenSegment([]byte("fox")))
+	if sk2.Path != "/test/fox" {
+		t.Error("one fail")
+	}
+
+	sk2 = AppendStoreKeySegments(sk, TokenSegment([]byte("fox")), TokenSegment([]byte("cow")))
+	if sk2.Path != "/test/fox/cow" {
+		t.Error("two fail")
+	}
+}
+
+func TestAppendStoreKeySegmentStrings(t *testing.T) {
+	sk := MakeStoreKey("test")
+	sk2 := AppendStoreKeySegmentStrings(sk)
+	if sk.Path != sk2.Path {
+		t.Error("empty fail")
+	}
+
+	sk2 = AppendStoreKeySegmentStrings(sk, "fox")
+	if sk2.Path != "/test/fox" {
+		t.Error("one fail")
+	}
+
+	sk2 = AppendStoreKeySegmentStrings(sk, "fox", "cow")
+	if sk2.Path != "/test/fox/cow" {
+		t.Error("two fail")
+	}
+}
