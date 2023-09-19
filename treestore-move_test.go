@@ -742,3 +742,90 @@ func TestMoveIndexPartial(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestMoveIndexSelf(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	rsk := MakeStoreKey("index1")
+
+	addr, _ := ts.SetKey(ssk)
+	if addr == 0 {
+		t.Error("first set")
+	}
+
+	raddr, _, _ := ts.SetKeyValueEx(rsk, nil, SetExNoValueUpdate, 0, []StoreAddress{addr})
+	if raddr == 0 {
+		t.Error("raddr set")
+	}
+
+	dsk := MakeStoreKey("target")
+
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk}, []StoreKey{rsk})
+	if !exists || !moved {
+		t.Error("not moved")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if !hasLink || rv.Sk.Path != "/target" {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveIndexSelf2(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	rsk := MakeStoreKey("index1")
+
+	addr, _ := ts.SetKey(ssk)
+	if addr == 0 {
+		t.Error("first set")
+	}
+
+	raddr, _, _ := ts.SetKeyValueEx(rsk, nil, SetExNoValueUpdate, 0, []StoreAddress{addr})
+	if raddr == 0 {
+		t.Error("raddr set")
+	}
+
+	exists, moved := ts.MoveReferencedKey(ssk, ssk, true, -1, []StoreKey{rsk}, []StoreKey{rsk})
+	if !exists || !moved {
+		t.Error("not moved")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if !hasLink || rv.Sk.Path != "/test" {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveIndexSelf3(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	rsk := MakeStoreKey("index1")
+
+	addr, _ := ts.SetKey(ssk)
+	if addr == 0 {
+		t.Error("first set")
+	}
+
+	exists, moved := ts.MoveReferencedKey(ssk, ssk, true, -1, []StoreKey{rsk}, []StoreKey{rsk})
+	if !exists || !moved {
+		t.Error("not moved")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if !hasLink || rv.Sk.Path != "/test" {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
