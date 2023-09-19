@@ -398,7 +398,7 @@ func TestMoveKeyReferenced(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("target")
-	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk})
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk}, nil)
 	if !exists || !moved {
 		t.Error("not moved")
 	}
@@ -424,7 +424,7 @@ func TestMoveKeyTempTtl(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("target")
-	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, 0, nil)
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, 0, nil, nil)
 	if !exists || !moved {
 		t.Error("not moved")
 	}
@@ -450,7 +450,7 @@ func TestMoveKeyTempTtl2(t *testing.T) {
 
 	expiration := time.Now().Add(-time.Minute).UnixNano()
 	dsk := MakeStoreKey("target")
-	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, expiration, nil)
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, expiration, nil, nil)
 	if !exists || !moved {
 		t.Error("not moved")
 	}
@@ -478,7 +478,7 @@ func TestMoveKeyTempTtl3(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("target")
-	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, 0, []StoreKey{rsk1, rsk2})
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, 0, []StoreKey{rsk1, rsk2}, nil)
 	if !exists || !moved {
 		t.Error("not moved")
 	}
@@ -517,7 +517,7 @@ func TestMoveKeyTempTtl4(t *testing.T) {
 	dsk := MakeStoreKey("target")
 
 	expiration := time.Now().Add(time.Minute).UnixNano()
-	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, expiration, []StoreKey{rsk1, rsk2})
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, expiration, []StoreKey{rsk1, rsk2}, nil)
 	if !exists || !moved {
 		t.Error("not moved")
 	}
@@ -566,7 +566,7 @@ func TestMoveKeyTempTtl5(t *testing.T) {
 	dsk := MakeStoreKey("target")
 
 	expiration := time.Now().Add(time.Minute).UnixNano()
-	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, expiration, []StoreKey{rsk1, rsk2})
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, expiration, []StoreKey{rsk1, rsk2}, nil)
 	if !exists || !moved {
 		t.Error("not moved")
 	}
@@ -619,7 +619,7 @@ func TestMoveKeyTempTtl6(t *testing.T) {
 		t.Error("raddr1 set")
 	}
 
-	raddr2, _, _ := ts.SetKeyValueEx(rsk1, nil, SetExNoValueUpdate, expiration, nil)
+	raddr2, _, _ := ts.SetKeyValueEx(rsk2, nil, SetExNoValueUpdate, expiration, []StoreAddress{address})
 	if raddr2 == 0 {
 		t.Error("raddr2 set")
 	}
@@ -627,7 +627,7 @@ func TestMoveKeyTempTtl6(t *testing.T) {
 	dsk := MakeStoreKey("target")
 
 	exp2 := expiration + time.Minute.Nanoseconds()
-	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, exp2, []StoreKey{rsk1, rsk2})
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, exp2, []StoreKey{rsk1, rsk2}, nil)
 	if !exists || !moved {
 		t.Error("not moved")
 	}
@@ -645,6 +645,44 @@ func TestMoveKeyTempTtl6(t *testing.T) {
 	ttl = ts.GetKeyTtl(rsk2)
 	if ttl != exp2 {
 		t.Error("rsk2 ttl not set")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk1, 0)
+	if hasLink || rv != nil {
+		t.Error("relationship 1 wrong")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(rsk2, 0)
+	if !hasLink || rv.Sk.Path != "/target" {
+		t.Error("relationship 2 wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveIndex(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	rsk1 := MakeStoreKey("index1")
+	rsk2 := MakeStoreKey("index2")
+
+	address, _ := ts.SetKey(ssk)
+	if address == 0 {
+		t.Error("first set")
+	}
+
+	raddr1, _, _ := ts.SetKeyValueEx(rsk1, nil, SetExNoValueUpdate, 0, []StoreAddress{address})
+	if raddr1 == 0 {
+		t.Error("raddr1 set")
+	}
+
+	dsk := MakeStoreKey("target")
+
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk2}, []StoreKey{rsk1})
+	if !exists || !moved {
+		t.Error("not moved")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(rsk1, 0)

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"strings"
 	"sync"
+	"time"
 )
 
 type (
@@ -53,6 +54,8 @@ func (ts *TreeStore) Export(sk StoreKey) (jsonData []byte, err error) {
 
 // worker that serializes the key node and its children
 func (ts *TreeStore) exportNode(rootSk StoreKey, kn *keyNode) (en *exportedNode, err error) {
+	now := time.Now().UnixNano()
+
 	en = &exportedNode{
 		Metadata: kn.metadata,
 	}
@@ -91,6 +94,11 @@ func (ts *TreeStore) exportNode(rootSk StoreKey, kn *keyNode) (en *exportedNode,
 		en.Children = make(map[string]*exportedNode, kn.nextLevel.tree.nodes)
 
 		kn.nextLevel.tree.Iterate(func(node *avlNode[*keyNode]) bool {
+			// don't export expired nodes
+			if node.value.expiration > 0 && node.value.expiration < now {
+				return true
+			}
+
 			var childEn *exportedNode
 			if childEn, err = ts.exportNode(rootSk, node.value); err != nil {
 				return false

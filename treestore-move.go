@@ -2,7 +2,7 @@ package treestore
 
 // Moves a key tree to a new location, optionally overwriting an existing tree.
 func (ts *TreeStore) MoveKey(srcSk, destSk StoreKey, overwrite bool) (exists, moved bool) {
-	return ts.MoveReferencedKey(srcSk, destSk, overwrite, -1, []StoreKey{})
+	return ts.MoveReferencedKey(srcSk, destSk, overwrite, -1, []StoreKey{}, []StoreKey{})
 }
 
 // worker that removes the indexed key paths from a tree, but does not
@@ -63,11 +63,15 @@ func (ts *TreeStore) indexMovedNodesLocked(sk StoreKey, kn *keyNode, oldAddress,
 // N.B., the address of a child source node does not change when the parent
 // key is moved. Also expiration is not altered for child keys.
 //
+// The caller can specify keys to unreference upon the move. This supports
+// the scenario where an index key is moving also. The old index key is
+// specified in unrefs, and the new index key is specified in refs.
+//
 // This move operation can be used to make a temporary key permanent, with
 // overwrite false for create, or true for update. It can also be used for
 // delete by making source and destination the same and specifying an already
 // expired ttl.
-func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, ttl int64, refs []StoreKey) (exists, moved bool) {
+func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, ttl int64, refs []StoreKey, unrefs []StoreKey) (exists, moved bool) {
 	// the entire database is locked for implementation simplicity
 	ts.acquireExclusiveLock()
 	defer ts.releaseExclusiveLock()
@@ -145,6 +149,13 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 
 		if ttl >= 0 {
 			kn.expiration = ttl
+		}
+	}
+
+	for _, unrefSk := range unrefs {
+		_, tokenIndex, kn, expired := ts.locateKeyNodeForLock(unrefSk)
+		if tokenIndex >= len(unrefSk.Tokens) && !expired {
+			kn.expiration = 1
 		}
 	}
 

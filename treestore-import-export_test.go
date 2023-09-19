@@ -28,6 +28,35 @@ func TestImportExportEmpty(t *testing.T) {
 	}
 }
 
+func TestImportExportExpired(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	addr, _, _ := ts.SetKeyValueEx(MakeStoreKey("dead"), nil, SetExNoValueUpdate, 1, nil)
+	if addr != 2 {
+		t.Error("create expired")
+	}
+
+	data, err := ts.Export(MakeStoreKey())
+	if data == nil || err != nil {
+		t.Fatal("export expired")
+	}
+
+	err = ts2.Import(MakeStoreKey(), data)
+	if err != nil {
+		t.Error("import expired")
+	}
+
+	addr, _, _ = ts2.SetKeyValueEx(MakeStoreKey("dead"), nil, SetExNoValueUpdate, 1, nil)
+	if addr != 2 {
+		t.Error("create again")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
 func TestImportExportSentinelValue(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
