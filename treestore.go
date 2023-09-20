@@ -406,6 +406,31 @@ func (ts *TreeStore) SetKey(sk StoreKey) (address StoreAddress, exists bool) {
 	return
 }
 
+// If the test key exists, set a key without a value and without an expiration,
+// doing nothing if the test key does not exist or if the key already exists.
+// The key index is not altered.
+//
+// If the test key does not exist, address will be returned as 0.
+// The return value 'exists' is true if the target sk exists.
+func (ts *TreeStore) SetKeyIfExists(testKey, sk StoreKey) (address StoreAddress, exists bool) {
+	// the key node linkage may change
+	ts.keyNodeMu.Lock()
+	defer ts.keyNodeMu.Unlock()
+
+	testLevel, tokenIndex, _, expired := ts.locateKeyNodeForReadLocked(testKey)
+	ts.completeKeyNodeRead(testLevel)
+
+	if tokenIndex >= len(testKey.Tokens) && !expired {
+		kn, ll, created := ts.ensureKey(sk)
+		defer ts.completeKeyNodeWrite(ll)
+
+		address = kn.address
+		exists = !created
+	}
+
+	return
+}
+
 // Set a key with a value, without an expiration, adding to value history if the
 // key already exists.
 func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, firstValue bool) {

@@ -46,6 +46,56 @@ func TestSetKeyOne(t *testing.T) {
 	}
 }
 
+func TestSetKeyIfExistsOne(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	sk := MakeStoreKey("test")
+	testSk := MakeStoreKey("other")
+
+	testAddr, exists := ts.SetKey(testSk)
+	if testAddr == 0 || exists {
+		t.Error("test key exists")
+	}
+
+	address, exists := ts.SetKeyIfExists(testSk, sk)
+	if address == 0 || exists {
+		t.Error("set")
+	}
+
+	verifyAddr, exists := ts.LocateKey(sk)
+	if address != verifyAddr || !exists {
+		t.Error("locate set")
+	}
+
+	verifyAddr, exists = ts.IsKeyIndexed(sk)
+	if verifyAddr != 0 || exists {
+		t.Error("set indexed")
+	}
+
+	address2, exists := ts.SetKeyIfExists(testSk, sk)
+	if address2 != address || !exists {
+		t.Error("set2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSetKeyDoesntExistOne(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	sk := MakeStoreKey("test")
+	testSk := MakeStoreKey("other")
+
+	address, exists := ts.SetKeyIfExists(testSk, sk)
+	if address != 0 || exists {
+		t.Error("set")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
 func TestSetKeyOneTwoLevels(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 	sk := MakeStoreKey("test", "abc")
