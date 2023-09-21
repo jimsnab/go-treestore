@@ -3,7 +3,10 @@ package treestore
 import (
 	"encoding/binary"
 	"encoding/json"
+	"errors"
+	"fmt"
 	"sync/atomic"
+	"time"
 )
 
 type (
@@ -148,6 +151,50 @@ func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions) 
 
 	ts.assignJsonKey(sk, kn, newKn)
 	address = kn.address
+	return
+}
+
+// Saves a json object under a temporary name. A one minute expiration is set.
+// This is used in the case where the caller has multiple operations to perform
+// to stage data, and then atomically commits it with MoveKey or MoveReferencedKey.
+// If the caller happens to abort, the staged data expires.
+//
+// The caller provides a staging key, and the json data is stored under a subkey
+// with a unique identifier.
+func (ts *TreeStore) StageKeyJson(stagingSk StoreKey, jsonData []byte, opts JsonOptions) (tempSk StoreKey, address StoreAddress, err error) {
+	// build up the new node before locking
+	newKn, err := ts.newJsonKey(jsonData, opts)
+	if err != nil {
+		return
+	}
+
+	// node linkage will change
+	ts.keyNodeMu.Lock()
+	defer ts.keyNodeMu.Unlock()
+
+	// temp key segment name matches the address of the key for convenience
+	// ensure the base key exists
+	_, baseLevel, _ := ts.ensureKey(stagingSk)
+	ts.completeKeyNodeWrite(baseLevel)
+
+	address = ts.nextAddress + 1
+	tempSk = AppendStoreKeySegmentStrings(stagingSk, fmt.Sprintf("%d", address))
+
+	kn, level, created := ts.ensureKey(tempSk)
+	defer ts.completeKeyNodeWrite(level)
+
+	if !created {
+		err = errors.New("temporary key collision")
+		return
+	}
+
+	kn.expiration = time.Now().Add(time.Minute).UnixNano()
+
+	// the newKn's address is the temp key unique value
+	ts.assignJsonKey(tempSk, kn, newKn)
+	if address != kn.address {
+		panic("unexpected address")
+	}
 	return
 }
 

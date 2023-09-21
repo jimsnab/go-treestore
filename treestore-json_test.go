@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"testing"
 	"time"
 
@@ -837,6 +838,62 @@ func TestJsonRetrieveLeafs(t *testing.T) {
 
 	if cat["sound"].(string) != "meow" || dog["sound"].(string) != "bark" || dog["breeds"].(float64) != 360 {
 		t.Error("details")
+	}
+
+	if !ts.DiagDump() {
+		t.Fatal("dump error")
+	}
+}
+
+func TestSetJsonStagedSimple(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	stageSk := MakeStoreKey("staging")
+	sk := MakeStoreKey("test")
+
+	jsonData := []byte(`{"pet": "cat"}`)
+
+	tempSk, addr, err := ts.StageKeyJson(stageSk, jsonData, 0)
+	expectedPath := fmt.Sprintf("%s/%d", stageSk.Path, addr)
+	if tempSk.Path != TokenPath(expectedPath) || err != nil {
+		t.Error("stage")
+	}
+
+	exists, moved := ts.MoveKey(tempSk, sk, false)
+	if !exists || !moved {
+		t.Error("move fail")
+	}
+
+	val, ke, ve := ts.GetKeyValue(MakeStoreKey("test", "pet"))
+	if !ke || !ve || val != "cat" {
+		t.Error("val verify")
+	}
+
+	if !ts.DiagDump() {
+		t.Fatal("dump error")
+	}
+}
+
+func TestSetJsonStagedSimpleStrAsKey(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	stageSk := MakeStoreKey("staging")
+	sk := MakeStoreKey("test")
+
+	jsonData := []byte(`{"pet": "cat"}`)
+
+	tempSk, addr, err := ts.StageKeyJson(stageSk, jsonData, JsonStringValuesAsKeys)
+	expectedPath := fmt.Sprintf("%s/%d", stageSk.Path, addr)
+	if tempSk.Path != TokenPath(expectedPath) || err != nil {
+		t.Error("stage")
+	}
+
+	exists, moved := ts.MoveKey(tempSk, sk, false)
+	if !exists || !moved {
+		t.Error("move fail")
+	}
+
+	ttl := ts.GetKeyTtl(MakeStoreKey("test", "pet", "cat"))
+	if ttl != 0 {
+		t.Error("val verify")
 	}
 
 	if !ts.DiagDump() {
