@@ -82,6 +82,28 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 	}
 	exists = true
 
+	// if not overwriting, ensure refs do not exist
+	if !overwrite {
+		for _, ref := range refs {
+			inUnrefs := false
+			for _, unref := range unrefs {
+				if ref.Path == unref.Path {
+					inUnrefs = true
+					break
+				}
+			}
+			if !inUnrefs {
+				_, refTokenIndex, rkn, refExpired := ts.locateKeyNodeForLock(ref)
+				if refTokenIndex >= len(ref.Tokens) && !refExpired && rkn.current != nil && len(rkn.current.relationships) > 0 {
+					if rkn.current.relationships[0] > 0 && rkn.current.relationships[0] != skn.address {
+						// ref exists and points to something other than the source - do not move
+						return
+					}
+				}
+			}
+		}
+	}
+
 	_, tokenIndex, _, expired = ts.locateKeyNodeForLock(destSk)
 	if tokenIndex >= len(destSk.Tokens) {
 		if !expired && !overwrite {

@@ -829,3 +829,122 @@ func TestMoveIndexSelf3(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestMoveEnsureNewRef(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	dsk := MakeStoreKey("test2")
+	rsk := MakeStoreKey("index1")
+
+	addr, _ := ts.SetKey(ssk)
+	if addr == 0 {
+		t.Error("first set")
+	}
+
+	raddr, _, _ := ts.SetKeyValueEx(rsk, nil, SetExNoValueUpdate, -1, []StoreAddress{500})
+	if raddr == 0 {
+		t.Error("ref set")
+	}
+
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk}, nil)
+	if !exists || moved {
+		t.Error("moved on top of existing ref")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if !hasLink || rv != nil {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveEnsureNewRefMissing1(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	dsk := MakeStoreKey("test2")
+	rsk := MakeStoreKey("index1")
+
+	raddr, _, _ := ts.SetKeyValueEx(rsk, nil, SetExNoValueUpdate, -1, []StoreAddress{0})
+	if raddr == 0 {
+		t.Error("ref set")
+	}
+
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk}, nil)
+	if exists || moved {
+		t.Error("moved on top of existing ref")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if hasLink || rv != nil {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveEnsureNewRefMissing2(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	dsk := MakeStoreKey("test2")
+	rsk := MakeStoreKey("index1")
+
+	addr, _ := ts.SetKey(ssk)
+	if addr == 0 {
+		t.Error("first set")
+	}
+
+	raddr, _, _ := ts.SetKeyValueEx(rsk, nil, SetExNoValueUpdate, -1, []StoreAddress{0})
+	if raddr == 0 {
+		t.Error("ref set")
+	}
+
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk}, nil)
+	if !exists || !moved {
+		t.Error("not moved")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if hasLink || rv != nil {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveEnsureNewRefNoRelationship(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("test")
+	dsk := MakeStoreKey("test2")
+	rsk := MakeStoreKey("index1")
+
+	addr, _ := ts.SetKey(ssk)
+	if addr == 0 {
+		t.Error("first set")
+	}
+
+	raddr, _ := ts.SetKey(rsk)
+	if raddr == 0 {
+		t.Error("ref set")
+	}
+
+	exists, moved := ts.MoveReferencedKey(ssk, dsk, false, -1, []StoreKey{rsk}, nil)
+	if !exists || !moved {
+		t.Error("not moved")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if hasLink || rv != nil {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
