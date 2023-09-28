@@ -140,6 +140,64 @@ func TestSetKeyExpireZero(t *testing.T) {
 	}
 }
 
+func TestSetKeyExpireNegative(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+
+	sk := MakeStoreKey("test")
+
+	expireNs := int64(-1)
+
+	ts.SetKey(sk)
+
+	exists := ts.SetKeyTtl(sk, expireNs)
+	if !exists {
+		t.Error("key ttl set")
+	}
+
+	ttl := ts.GetKeyTtl(sk)
+	if ttl != 0 {
+		t.Error("no ttl should be set")
+	}
+
+	expireNs = int64(-100)
+
+	exists = ts.SetKeyTtl(sk, expireNs)
+	if !exists {
+		t.Error("key ttl set")
+	}
+
+	ttl = ts.GetKeyTtl(sk)
+	if ttl != 0 {
+		t.Error("no ttl should be set")
+	}
+
+	expireNs = int64(0x7FFFFFFFFFFFFFFF)
+
+	exists = ts.SetKeyTtl(sk, expireNs)
+	if !exists {
+		t.Error("key ttl set")
+	}
+
+	ttl = ts.GetKeyTtl(sk)
+	if ttl != expireNs {
+		t.Error("ttl should be set")
+	}
+
+	exists = ts.SetKeyTtl(sk, -100)
+	if !exists {
+		t.Error("key ttl set")
+	}
+
+	ttl = ts.GetKeyTtl(sk)
+	if ttl != expireNs {
+		t.Error("ttl should not have changed")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
 func TestSetKeyValueExpireLong(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
 
