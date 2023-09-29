@@ -78,7 +78,7 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 
 	isArrayElem := false
 	if level.parent != nil {
-		flag, _ := level.parent.metadata["array"]
+		flag := level.parent.metadata["array"]
 		if flag == "true" {
 			isArrayElem = true
 		}
