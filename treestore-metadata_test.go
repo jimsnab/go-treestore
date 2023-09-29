@@ -8,7 +8,7 @@ import (
 )
 
 func TestMetadataSet(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -45,7 +45,7 @@ func TestMetadataSet(t *testing.T) {
 }
 
 func TestMetadataClear(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -121,7 +121,7 @@ func TestMetadataClear(t *testing.T) {
 }
 
 func TestMetadataMissing(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("missing")
 
@@ -142,7 +142,7 @@ func TestMetadataMissing(t *testing.T) {
 }
 
 func TestMetadataSentinel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 

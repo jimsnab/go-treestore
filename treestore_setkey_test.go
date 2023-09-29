@@ -8,7 +8,7 @@ import (
 )
 
 func TestSetKeyOne(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	address, exists := ts.SetKey(sk)
@@ -47,7 +47,7 @@ func TestSetKeyOne(t *testing.T) {
 }
 
 func TestSetKeyIfExistsOne(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 	testSk := MakeStoreKey("other")
 
@@ -82,7 +82,7 @@ func TestSetKeyIfExistsOne(t *testing.T) {
 }
 
 func TestSetKeyDoesntExistOne(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 	testSk := MakeStoreKey("other")
 
@@ -97,7 +97,7 @@ func TestSetKeyDoesntExistOne(t *testing.T) {
 }
 
 func TestSetKeyOneTwoLevels(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test", "abc")
 
 	address, exists := ts.SetKey(sk)
@@ -136,7 +136,7 @@ func TestSetKeyOneTwoLevels(t *testing.T) {
 }
 
 func TestSetKeyOneThreeLevels(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test", "abc", "def")
 
 	address, exists := ts.SetKey(sk)
@@ -175,7 +175,7 @@ func TestSetKeyOneThreeLevels(t *testing.T) {
 }
 
 func TestSetKeyTwoTwoLevels(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 	sk2 := MakeStoreKey("test", "abc")
 
@@ -225,7 +225,7 @@ func TestSetKeyTwoTwoLevels(t *testing.T) {
 }
 
 func TestSetKeyTwoTwoLevelsFlip(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test", "abc")
 	sk2 := MakeStoreKey("test")
 
@@ -275,7 +275,7 @@ func TestSetKeyTwoTwoLevelsFlip(t *testing.T) {
 }
 
 func TestSetNotExist(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	address, exists, orgVal := ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, nil)
@@ -294,7 +294,7 @@ func TestSetNotExist(t *testing.T) {
 }
 
 func TestSetNotExistValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	address, exists, orgVal := ts.SetKeyValueEx(sk, 400, SetExMustNotExist, 0, nil)
@@ -313,7 +313,7 @@ func TestSetNotExistValue(t *testing.T) {
 }
 
 func TestSetMustExist(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	address, exists, orgVal := ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate|SetExMustExist, 0, nil)
@@ -337,7 +337,7 @@ func TestSetMustExist(t *testing.T) {
 }
 
 func TestSetMustExistValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	address, exists, orgVal := ts.SetKeyValueEx(sk, 400, SetExMustExist, 0, nil)
@@ -361,7 +361,7 @@ func TestSetMustExistValue(t *testing.T) {
 }
 
 func TestSetDbValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	address, exists := ts.SetKey(sk)
@@ -395,7 +395,7 @@ func TestSetDbValue(t *testing.T) {
 }
 
 func TestSetExNoValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	address, exists, orgVal := ts.SetKeyValueEx(sk, nil, SetExNoValueUpdate, 0, nil)
@@ -434,7 +434,7 @@ func TestSetExNoValue(t *testing.T) {
 }
 
 func TestSetRelationship(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("pet", "cat")
 	sk2 := MakeStoreKey("sound", "meow")
 	sk3 := MakeStoreKey("color", "multi")
@@ -477,7 +477,7 @@ func TestSetRelationship(t *testing.T) {
 }
 
 func TestSetKeyOneRelationship(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("index", "1")
 	sk2 := MakeStoreKey("data", "sample")
@@ -508,7 +508,7 @@ func TestSetKeyOneRelationship(t *testing.T) {
 }
 
 func TestSetKeyOneRelationshipWithValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("index", "1")
 	sk2 := MakeStoreKey("data", "sample")
@@ -539,7 +539,7 @@ func TestSetKeyOneRelationshipWithValue(t *testing.T) {
 }
 
 func TestSetKeyOddRelationships(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("index", "1")
 	sk2 := MakeStoreKey("index", "2")
@@ -580,7 +580,7 @@ func TestSetKeyOddRelationships(t *testing.T) {
 }
 
 func TestSetKeyNoValueRelationship(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("a")
 	sk2 := MakeStoreKey("b")
@@ -610,7 +610,7 @@ func TestSetKeyNoValueRelationship(t *testing.T) {
 }
 
 func TestGetKeyByAddress(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("fox", "mouse", "chicken")
 
@@ -650,7 +650,7 @@ func TestGetKeyByAddress(t *testing.T) {
 }
 
 func TestGetValueKeyByAddress(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("fox", "mouse", "chicken")
 
@@ -705,7 +705,7 @@ func TestGetValueKeyByAddress(t *testing.T) {
 }
 
 func TestGetSentinelValueByAddress(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 

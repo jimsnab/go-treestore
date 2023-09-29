@@ -12,6 +12,7 @@ import (
 type (
 	TreeStore struct {
 		l            lane.Lane
+		appVersion   int
 		keyNodeMu    sync.RWMutex
 		dbNode       keyNode
 		dbNodeLevel  *keyTree
@@ -67,9 +68,10 @@ const (
 	SetExNoValueUpdate
 )
 
-func NewTreeStore(l lane.Lane) *TreeStore {
+func NewTreeStore(l lane.Lane, appVersion int) *TreeStore {
 	ts := TreeStore{
 		l:           l,
+		appVersion:  appVersion,
 		nextAddress: 1,
 		keys:        map[TokenPath]StoreAddress{},
 		cas:         map[StoreAddress]uint64{},

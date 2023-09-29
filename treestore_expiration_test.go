@@ -9,7 +9,7 @@ import (
 )
 
 func TestExpireKeyLong(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -46,7 +46,7 @@ func TestExpireKeyLong(t *testing.T) {
 }
 
 func TestExpireKeyValueLong(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -73,7 +73,7 @@ func TestExpireKeyValueLong(t *testing.T) {
 }
 
 func TestSetKeyExpireLong(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -117,7 +117,7 @@ func TestSetKeyExpireLong(t *testing.T) {
 }
 
 func TestSetKeyExpireZero(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -141,7 +141,7 @@ func TestSetKeyExpireZero(t *testing.T) {
 }
 
 func TestSetKeyExpireNegative(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -199,7 +199,7 @@ func TestSetKeyExpireNegative(t *testing.T) {
 }
 
 func TestSetKeyValueExpireLong(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -253,7 +253,7 @@ func TestSetKeyValueExpireLong(t *testing.T) {
 }
 
 func TestExpireKeyShort(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -295,7 +295,7 @@ func TestExpireKeyShort(t *testing.T) {
 }
 
 func TestExpireKeyInstant(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -337,7 +337,7 @@ func TestExpireKeyInstant(t *testing.T) {
 }
 
 func TestExpireKeyValueShort(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -394,7 +394,7 @@ func TestExpireKeyValueShort(t *testing.T) {
 }
 
 func TestExpireKeyValueInstant(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -451,7 +451,7 @@ func TestExpireKeyValueInstant(t *testing.T) {
 }
 
 func TestExpireSetTtlNoOp(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -479,7 +479,7 @@ func TestExpireSetTtlNoOp(t *testing.T) {
 }
 
 func TestSetExOnExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -506,7 +506,7 @@ func TestSetExOnExpired(t *testing.T) {
 }
 
 func TestSetKeyOnExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -540,7 +540,7 @@ func TestSetKeyOnExpired(t *testing.T) {
 }
 
 func TestSetKeyValueOnExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -574,7 +574,7 @@ func TestSetKeyValueOnExpired(t *testing.T) {
 }
 
 func TestSetMetadataOnExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -603,7 +603,7 @@ func TestSetMetadataOnExpired(t *testing.T) {
 }
 
 func TestIterateLevelExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 	root := MakeStoreKey()
@@ -637,7 +637,7 @@ func TestIterateLevelExpired(t *testing.T) {
 }
 
 func TestMatchingKeysExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 	pattern := MakeStoreKey("**")
@@ -667,7 +667,7 @@ func TestMatchingKeysExpired(t *testing.T) {
 }
 
 func TestMatchingKeyValuesExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 	pattern := MakeStoreKey("**")

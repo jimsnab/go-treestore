@@ -12,7 +12,7 @@ import (
 )
 
 func TestIterateLevelEmpty(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	keys := ts.GetLevelKeys(MakeStoreKey(), "*", 0, 100)
 	if keys == nil || len(keys) != 0 {
@@ -40,7 +40,7 @@ func TestIterateLevelEmpty(t *testing.T) {
 }
 
 func TestIterateLevelRoot(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("a")
 
@@ -71,7 +71,7 @@ func TestIterateLevelRoot(t *testing.T) {
 }
 
 func TestIterateLevelNoBase(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("a", "b", "c")
 
@@ -84,7 +84,7 @@ func TestIterateLevelNoBase(t *testing.T) {
 }
 
 func TestIterateSecondLevel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("a")
 
@@ -162,7 +162,7 @@ func TestIterateSecondLevel(t *testing.T) {
 }
 
 func TestIterateThirdLevel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("data", "test")
 
@@ -240,7 +240,7 @@ func TestIterateThirdLevel(t *testing.T) {
 }
 
 func TestIterateLevelPages(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	taken := map[int]struct{}{}
 	values := make([]string, 0, 250)
@@ -326,7 +326,7 @@ func TestIterateLevelPages(t *testing.T) {
 }
 
 func TestIterateLevelPattern(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	taken := map[int]struct{}{}
 	values := make([]string, 0, 250)
@@ -372,7 +372,7 @@ func TestIterateLevelPattern(t *testing.T) {
 }
 
 func TestFullIterateSentinel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	keys := ts.GetMatchingKeys(MakeStoreKey(), 0, 100)
 	if keys == nil || len(keys) != 1 {
@@ -400,7 +400,7 @@ func TestFullIterateSentinel(t *testing.T) {
 }
 
 func TestFullIterateOneKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -467,7 +467,7 @@ func TestFullIterateOneKey(t *testing.T) {
 }
 
 func TestFullIterateOneValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -534,7 +534,7 @@ func TestFullIterateOneValue(t *testing.T) {
 }
 
 func TestFullIterateTwoLevel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test", "cat")
 
@@ -617,7 +617,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 }
 
 func TestFullIterateMidLevel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test", "cat", "calico")
 	ts.SetKey(sk)
@@ -727,7 +727,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 }
 
 func TestFullIterateRanges(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("test", "cat", "ragdoll")
 	sk2 := MakeStoreKey("test", "cat", "maine coon")
@@ -803,7 +803,7 @@ func TestFullIterateRanges(t *testing.T) {
 }
 
 func TestValueIterateSentinel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	values := ts.GetMatchingKeyValues(MakeStoreKey(), 0, 100)
 	if values == nil || len(values) != 0 {
@@ -827,7 +827,7 @@ func TestValueIterateSentinel(t *testing.T) {
 }
 
 func TestValueIterate(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("test", "cat", "ragdoll")
 	sk2 := MakeStoreKey("test", "cat", "maine coon")

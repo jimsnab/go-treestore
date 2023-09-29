@@ -9,7 +9,7 @@ import (
 )
 
 func TestMathOneValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk, "1")
@@ -28,7 +28,7 @@ func TestMathOneValue(t *testing.T) {
 }
 
 func TestMathIncrement(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk, "self+1")
@@ -62,7 +62,7 @@ func TestMathIncrement(t *testing.T) {
 }
 
 func TestMathIncrementShortcut(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk, "i+1")
@@ -121,7 +121,7 @@ func TestMathIncrementShortcut(t *testing.T) {
 }
 
 func TestMathTime(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk, "utc()")
@@ -160,7 +160,7 @@ func TestMathTime(t *testing.T) {
 }
 
 func TestMathTimeNs(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	nowNs := time.Now().UTC().UnixNano()
@@ -181,7 +181,7 @@ func TestMathTimeNs(t *testing.T) {
 }
 
 func TestMathLookup(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test1")
 	sk2 := MakeStoreKey("test2")
 
@@ -203,7 +203,7 @@ func TestMathLookup(t *testing.T) {
 }
 
 func TestMathLookupMissing(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test1")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `i + lookup("/test2")`)
@@ -217,7 +217,7 @@ func TestMathLookupMissing(t *testing.T) {
 }
 
 func TestMathLookupRelative(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 	sk2 := MakeStoreKey("test", "data")
 
@@ -239,7 +239,7 @@ func TestMathLookupRelative(t *testing.T) {
 }
 
 func TestMathLookupSentinel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 	sk2 := MakeStoreKey()
 
@@ -261,7 +261,7 @@ func TestMathLookupSentinel(t *testing.T) {
 }
 
 func TestMathLookupInvalid(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 	sk2 := MakeStoreKey()
 
@@ -278,7 +278,7 @@ func TestMathLookupInvalid(t *testing.T) {
 }
 
 func TestMathCastInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `int(-2.5)`)
@@ -297,7 +297,7 @@ func TestMathCastInt(t *testing.T) {
 }
 
 func TestMathCastUint(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `uint(-2.5)`)
@@ -316,7 +316,7 @@ func TestMathCastUint(t *testing.T) {
 }
 
 func TestMathCastFloat(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `float(uint(-2.5))`)
@@ -335,7 +335,7 @@ func TestMathCastFloat(t *testing.T) {
 }
 
 func TestMathCastStringInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `int("-2")`)
@@ -359,7 +359,7 @@ func TestMathCastStringInt(t *testing.T) {
 }
 
 func TestMathCastStringUint(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `uint("2")`)
@@ -383,7 +383,7 @@ func TestMathCastStringUint(t *testing.T) {
 }
 
 func TestMathCastStringFloat(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `float("-2.2")`)
@@ -407,7 +407,7 @@ func TestMathCastStringFloat(t *testing.T) {
 }
 
 func TestMathCrossCastFloatInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `int(float(-2.2))`)
@@ -426,7 +426,7 @@ func TestMathCrossCastFloatInt(t *testing.T) {
 }
 
 func TestMathCrossCastFloatUint(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `uint(float(-2.2))`)
@@ -445,7 +445,7 @@ func TestMathCrossCastFloatUint(t *testing.T) {
 }
 
 func TestMathCrossCastUintInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `int(uint(-2))`)
@@ -464,7 +464,7 @@ func TestMathCrossCastUintInt(t *testing.T) {
 }
 
 func TestMathCrossCastTimeInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `int(utc())`)
@@ -483,7 +483,7 @@ func TestMathCrossCastTimeInt(t *testing.T) {
 }
 
 func TestMathCrossCastTimeUint(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `uint(utc())`)
@@ -502,7 +502,7 @@ func TestMathCrossCastTimeUint(t *testing.T) {
 }
 
 func TestMathCrossCastUintFloat(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `float(uint(-2))`)
@@ -521,7 +521,7 @@ func TestMathCrossCastUintFloat(t *testing.T) {
 }
 
 func TestMathCrossCastIntUint(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `uint(int(-2))`)
@@ -540,7 +540,7 @@ func TestMathCrossCastIntUint(t *testing.T) {
 }
 
 func TestMathCrossCastIntFloat(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `float(int(-2))`)
@@ -559,7 +559,7 @@ func TestMathCrossCastIntFloat(t *testing.T) {
 }
 
 func TestMathCrossCastIntInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `int(int(-2))`)
@@ -578,7 +578,7 @@ func TestMathCrossCastIntInt(t *testing.T) {
 }
 
 func TestMathCrossCastUintUint(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `uint(uint(2))`)
@@ -597,7 +597,7 @@ func TestMathCrossCastUintUint(t *testing.T) {
 }
 
 func TestMathCrossCastFloatFloat(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `float(float(-2))`)
@@ -616,7 +616,7 @@ func TestMathCrossCastFloatFloat(t *testing.T) {
 }
 
 func TestMathCrossCastBool(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `int(true))`)
@@ -640,7 +640,7 @@ func TestMathCrossCastBool(t *testing.T) {
 }
 
 func TestMathCrossCastCustom(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 	m := map[string]string{}
 
@@ -667,7 +667,7 @@ func TestMathCrossCastCustom(t *testing.T) {
 }
 
 func TestMathBadCast(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `float(1, 2)`)
@@ -691,7 +691,7 @@ func TestMathBadCast(t *testing.T) {
 }
 
 func TestMathZeroCast(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("test")
 	addr, newVal := ts.CalculateKeyValue(sk1, `int()`)
@@ -717,7 +717,7 @@ func TestMathZeroCast(t *testing.T) {
 }
 
 func TestMathBadExpression(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `self+`)
@@ -731,7 +731,7 @@ func TestMathBadExpression(t *testing.T) {
 }
 
 func TestMathBadLookup(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `lookup()`)
@@ -745,7 +745,7 @@ func TestMathBadLookup(t *testing.T) {
 }
 
 func TestMathBadFail(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `fail(true)`)
@@ -774,7 +774,7 @@ func TestMathBadFail(t *testing.T) {
 }
 
 func TestMathBadTime(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 
 	addr, newVal := ts.CalculateKeyValue(sk1, `utc(10)`)

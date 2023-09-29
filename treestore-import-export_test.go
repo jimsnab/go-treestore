@@ -10,8 +10,8 @@ import (
 )
 
 func TestImportExportEmpty(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	data, err := ts.Export(MakeStoreKey())
 	if data == nil || err != nil {
@@ -29,8 +29,8 @@ func TestImportExportEmpty(t *testing.T) {
 }
 
 func TestImportExportExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	addr, _, _ := ts.SetKeyValueEx(MakeStoreKey("dead"), nil, SetExNoValueUpdate, 1, nil)
 	if addr != 2 {
@@ -58,8 +58,8 @@ func TestImportExportExpired(t *testing.T) {
 }
 
 func TestImportExportSentinelValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -86,8 +86,8 @@ func TestImportExportSentinelValue(t *testing.T) {
 }
 
 func TestImportExportSentinelValueBytes(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -114,8 +114,8 @@ func TestImportExportSentinelValueBytes(t *testing.T) {
 }
 
 func TestImportExportSentinelValueJson(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -144,8 +144,8 @@ func TestImportExportSentinelValueJson(t *testing.T) {
 }
 
 func TestImportExportSentinelValueBase64(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -174,8 +174,8 @@ func TestImportExportSentinelValueBase64(t *testing.T) {
 }
 
 func TestImportExportSentinelValueInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -204,8 +204,8 @@ func TestImportExportSentinelValueInt(t *testing.T) {
 }
 
 func TestImportExportSentinelValueInt64(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -234,8 +234,8 @@ func TestImportExportSentinelValueInt64(t *testing.T) {
 }
 
 func TestImportExportSentinelValueUint64(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -264,8 +264,8 @@ func TestImportExportSentinelValueUint64(t *testing.T) {
 }
 
 func TestImportExportSentinelValueBool(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -294,8 +294,8 @@ func TestImportExportSentinelValueBool(t *testing.T) {
 }
 
 func TestImportExportSentinelValueFloat64(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -324,8 +324,8 @@ func TestImportExportSentinelValueFloat64(t *testing.T) {
 }
 
 func TestImportExportSentinelRelationship(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -352,8 +352,8 @@ func TestImportExportSentinelRelationship(t *testing.T) {
 }
 
 func TestImportExportSentinelExpiration(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -382,8 +382,8 @@ func TestImportExportSentinelExpiration(t *testing.T) {
 }
 
 func TestImportExportRootValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat")
 
@@ -406,8 +406,8 @@ func TestImportExportRootValue(t *testing.T) {
 }
 
 func TestImportExportRootValueImportChild(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat")
 	sk2 := MakeStoreKey("feline")
@@ -435,8 +435,8 @@ func TestImportExportRootValueImportChild(t *testing.T) {
 }
 
 func TestImportExportRootValueImportChild2(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	oldRoot := MakeStoreKey()
 	sk := MakeStoreKey("cat")
@@ -466,8 +466,8 @@ func TestImportExportRootValueImportChild2(t *testing.T) {
 }
 
 func TestImportExportRootValueImportChild3(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	oldRoot := MakeStoreKey()
 	sk := MakeStoreKey("cat")
@@ -499,8 +499,8 @@ func TestImportExportRootValueImportChild3(t *testing.T) {
 }
 
 func TestImportExportRootValueImportChild4(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	oldRoot := MakeStoreKey()
 	sk := MakeStoreKey("cat")
@@ -538,8 +538,8 @@ func TestImportExportRootValueImportChild4(t *testing.T) {
 }
 
 func TestImportExportInvalidRelationship(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 
@@ -566,8 +566,8 @@ func TestImportExportInvalidRelationship(t *testing.T) {
 }
 
 func TestImportExportReferenceSelf(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("testing")
 
@@ -595,8 +595,8 @@ func TestImportExportReferenceSelf(t *testing.T) {
 }
 
 func TestImportExportReferenceRelativeInvalid(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("farm", "animals", "pig")
 	sk2 := MakeStoreKey("farm", "animals", "horse")
@@ -630,8 +630,8 @@ func TestImportExportReferenceRelativeInvalid(t *testing.T) {
 }
 
 func TestImportExportReferenceRelative(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("farm", "animals", "pig")
 	sk2 := MakeStoreKey("farm", "animals", "horse")
@@ -675,8 +675,8 @@ func TestImportExportReferenceAbs(t *testing.T) {
 	}()
 	invalidAddrHook = func() { panic("invalid relationship address") }
 
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("farm", "animals", "pig")
 	sk2 := MakeStoreKey("farm", "animals", "horse")
@@ -752,7 +752,7 @@ func TestImportExportReferenceAbs(t *testing.T) {
 }
 
 func TestImportExportSaveRecoverInt(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 

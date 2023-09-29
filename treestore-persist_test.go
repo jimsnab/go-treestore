@@ -11,14 +11,14 @@ import (
 
 func TestSaveLoadEmpty(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	err := ts.Save(ts.l, "/test/empty.db")
 	if err != nil {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test/empty.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -31,7 +31,7 @@ func TestSaveLoadEmpty(t *testing.T) {
 
 func TestSaveLoadOneKey(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat")
 	addr, _ := ts.SetKey(sk)
@@ -41,7 +41,7 @@ func TestSaveLoadOneKey(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -64,7 +64,7 @@ func TestSaveLoadOneKey(t *testing.T) {
 
 func TestSaveLoadOneValue(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat")
 
@@ -75,7 +75,7 @@ func TestSaveLoadOneValue(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -103,7 +103,7 @@ func TestSaveLoadOneValue(t *testing.T) {
 
 func TestSaveLoadTwoLevels(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("cat")
 	sk2 := MakeStoreKey("cat", "test")
@@ -116,7 +116,7 @@ func TestSaveLoadTwoLevels(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -154,7 +154,7 @@ func TestSaveLoadTwoLevels(t *testing.T) {
 
 func TestSaveLoadExpired(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat")
 
@@ -165,7 +165,7 @@ func TestSaveLoadExpired(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -188,7 +188,7 @@ func TestSaveLoadExpired(t *testing.T) {
 
 func TestSaveLoadNotExpired(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat")
 
@@ -201,7 +201,7 @@ func TestSaveLoadNotExpired(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -224,7 +224,7 @@ func TestSaveLoadNotExpired(t *testing.T) {
 
 func TestSaveLoadRelationships(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk1 := MakeStoreKey("cat")
 	sk2 := MakeStoreKey("pet")
@@ -237,7 +237,7 @@ func TestSaveLoadRelationships(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -263,7 +263,7 @@ func TestSaveLoadRelationships(t *testing.T) {
 
 func TestSaveLoadHistory(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("testing")
 
@@ -278,7 +278,7 @@ func TestSaveLoadHistory(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -316,7 +316,7 @@ func TestSaveLoadHistory(t *testing.T) {
 
 func TestSaveLoadMetadata(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat")
 	ts.SetKey(sk)
@@ -327,7 +327,7 @@ func TestSaveLoadMetadata(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -355,7 +355,7 @@ func TestSaveLoadMetadata(t *testing.T) {
 
 func TestSaveLoadTwoLevelValue(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("cat", "test")
 
@@ -366,7 +366,7 @@ func TestSaveLoadTwoLevelValue(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -394,7 +394,7 @@ func TestSaveLoadTwoLevelValue(t *testing.T) {
 
 func TestSaveLoadSentinel(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 	sk2 := MakeStoreKey("foo")
@@ -415,7 +415,7 @@ func TestSaveLoadSentinel(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -453,7 +453,7 @@ func TestSaveLoadSentinel(t *testing.T) {
 
 func TestSaveLoadThreeLevels(t *testing.T) {
 	fs = afero.NewMemMapFs()
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("first", "second", "third")
 	sk2 := MakeStoreKey("foo", "bar")
@@ -474,7 +474,7 @@ func TestSaveLoadThreeLevels(t *testing.T) {
 		t.Errorf("save error %s", err.Error())
 	}
 
-	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	err = ts2.Load(ts2.l, "/test.db")
 	if err != nil {
 		t.Errorf("load error %s", err.Error())
@@ -503,6 +503,26 @@ func TestSaveLoadThreeLevels(t *testing.T) {
 	hasLink, rv := ts2.GetRelationshipValue(sk, 0)
 	if !hasLink || rv == nil || rv.CurrentValue != nil || rv.Sk.Path != "/foo/bar" {
 		t.Error("follow relationship")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSaveLoadAppVersionChange(t *testing.T) {
+	fs = afero.NewMemMapFs()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	err := ts.Save(ts.l, "/test/empty.db")
+	if err != nil {
+		t.Errorf("save error %s", err.Error())
+	}
+
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 1)
+	err = ts2.Load(ts2.l, "/test/empty.db")
+	if err == nil {
+		t.Errorf("expected load error")
 	}
 
 	if !ts2.DiagDump() {

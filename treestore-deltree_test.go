@@ -8,7 +8,7 @@ import (
 )
 
 func TestDeleteKeyTreeOne(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	address, isFirst := ts.SetKeyValue(sk, 100)
@@ -32,7 +32,7 @@ func TestDeleteKeyTreeOne(t *testing.T) {
 }
 
 func TestDeleteTreeUnindexedKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test", "abc")
 	sk2 := MakeStoreKey("test")
 
@@ -57,7 +57,7 @@ func TestDeleteTreeUnindexedKey(t *testing.T) {
 }
 
 func TestDeleteTreeBaseKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("test")
 	sk2 := MakeStoreKey("test", "abc")
 
@@ -103,7 +103,7 @@ func TestDeleteTreeBaseKey(t *testing.T) {
 }
 
 func TestDeleteTreeWithMiddleTwoNodes(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("a", "b1", "c")
 	sk2 := MakeStoreKey("a", "b2", "c")
 	sk3 := MakeStoreKey("a", "b2")
@@ -144,7 +144,7 @@ func TestDeleteTreeWithMiddleTwoNodes(t *testing.T) {
 }
 
 func TestDeleteTreeWithMiddleTwoNodes2(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("a", "b1", "c")
 	sk2 := MakeStoreKey("a", "b2", "c")
 	sk3 := MakeStoreKey("a", "b2")
@@ -185,7 +185,7 @@ func TestDeleteTreeWithMiddleTwoNodes2(t *testing.T) {
 }
 
 func TestDeleteTreeWithMiddleTwoNodes3(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("a", "b1", "c")
 	sk2 := MakeStoreKey("a", "b2", "c")
 	sk3 := MakeStoreKey("a")
@@ -226,7 +226,7 @@ func TestDeleteTreeWithMiddleTwoNodes3(t *testing.T) {
 }
 
 func TestDeleteTreeEmpty(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("a")
 	sk2 := MakeStoreKey("a", "b")
 	sk3 := MakeStoreKey("a", "b", "c")
@@ -257,7 +257,7 @@ func TestDeleteTreeEmpty(t *testing.T) {
 }
 
 func TestDeleteTreeNull(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("")
 
 	removed := ts.DeleteKeyTree(sk1)
@@ -276,7 +276,7 @@ func TestDeleteTreeNull(t *testing.T) {
 }
 
 func TestDeleteTreeDbSentinel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey()
 
 	removed := ts.DeleteKeyTree(sk1)
@@ -295,7 +295,7 @@ func TestDeleteTreeDbSentinel(t *testing.T) {
 }
 
 func TestDeleteTreeNullPopulated(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk1 := MakeStoreKey("")
 
 	a := MakeStoreKey("a")
@@ -322,7 +322,7 @@ func TestDeleteTreeNullPopulated(t *testing.T) {
 }
 
 func TestDeleteTreeSecondLevelWithChildren(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	a := MakeStoreKey("base", "a")
 	b := MakeStoreKey("base", "b")
@@ -374,7 +374,7 @@ func TestDeleteTreeSecondLevelWithChildren(t *testing.T) {
 }
 
 func TestDeleteTreeDbValueEmpty(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	removed := ts.DeleteKeyTree(sk)
@@ -388,7 +388,7 @@ func TestDeleteTreeDbValueEmpty(t *testing.T) {
 }
 
 func TestDeleteTreeSentinel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	removed := ts.DeleteKeyTree(sk)
@@ -424,7 +424,7 @@ func TestDeleteTreeSentinel(t *testing.T) {
 }
 
 func TestSetDelTree(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("client", "test", "key")
 

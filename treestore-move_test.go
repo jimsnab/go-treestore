@@ -10,7 +10,7 @@ import (
 )
 
 func TestMoveKeyBasic(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -30,7 +30,7 @@ func TestMoveKeyBasic(t *testing.T) {
 }
 
 func TestMoveKeyCrossTree(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("tree1", "source")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -50,7 +50,7 @@ func TestMoveKeyCrossTree(t *testing.T) {
 }
 
 func TestMoveKeySelf(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("tree1", "source")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -70,7 +70,7 @@ func TestMoveKeySelf(t *testing.T) {
 }
 
 func TestMoveKeySelfOverwrite(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("tree1", "source")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -90,7 +90,7 @@ func TestMoveKeySelfOverwrite(t *testing.T) {
 }
 
 func TestMoveKeyDestExists(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -115,7 +115,7 @@ func TestMoveKeyDestExists(t *testing.T) {
 }
 
 func TestMoveKeyDestExistsOverwrite(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -140,7 +140,7 @@ func TestMoveKeyDestExistsOverwrite(t *testing.T) {
 }
 
 func TestMoveKeyDestExistsDiscard(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -176,7 +176,7 @@ func TestMoveKeyDestExistsDiscard(t *testing.T) {
 }
 
 func TestMoveKeyDestNested(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -196,7 +196,7 @@ func TestMoveKeyDestNested(t *testing.T) {
 }
 
 func TestMoveKeyDestNestedOverwite(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -228,7 +228,7 @@ func TestMoveKeyDestNestedOverwite(t *testing.T) {
 }
 
 func TestMoveKeySentinelIn(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("staged")
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -253,7 +253,7 @@ func TestMoveKeySentinelIn(t *testing.T) {
 }
 
 func TestMoveKeySentinelIn2(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("staged")
 
 	address, exists, ov := ts.SetKeyValueEx(ssk, 123, 0, time.Now().Add(time.Millisecond*30).UnixNano(), []StoreAddress{1, 2})
@@ -301,7 +301,7 @@ func TestMoveKeySentinelIn2(t *testing.T) {
 }
 
 func TestMoveKeySentinelOut(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey()
 
 	address, firstValue := ts.SetKeyValue(ssk, 123)
@@ -321,7 +321,7 @@ func TestMoveKeySentinelOut(t *testing.T) {
 }
 
 func TestMoveKeyExtended(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test", "staged")
 
 	address, exists, ov := ts.SetKeyValueEx(ssk, 123, 0, time.Now().Add(time.Millisecond*30).UnixNano(), []StoreAddress{1, 3})
@@ -364,7 +364,7 @@ func TestMoveKeyExtended(t *testing.T) {
 }
 
 func TestMoveKeyExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, exists, _ := ts.SetKeyValueEx(ssk, 123, 0, 1, nil)
@@ -384,7 +384,7 @@ func TestMoveKeyExpired(t *testing.T) {
 }
 
 func TestMoveKeyReferenced(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk := MakeStoreKey("index")
 
@@ -415,7 +415,7 @@ func TestMoveKeyReferenced(t *testing.T) {
 }
 
 func TestMoveKeyTempTtl(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	expiration := time.Now().Add(time.Minute).UnixNano()
@@ -441,7 +441,7 @@ func TestMoveKeyTempTtl(t *testing.T) {
 }
 
 func TestMoveKeyTempTtl2(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 
 	address, _, _ := ts.SetKeyValueEx(ssk, 123, 0, 0, nil)
@@ -467,7 +467,7 @@ func TestMoveKeyTempTtl2(t *testing.T) {
 }
 
 func TestMoveKeyTempTtl3(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk1 := MakeStoreKey("index1")
 	rsk2 := MakeStoreKey("index2")
@@ -505,7 +505,7 @@ func TestMoveKeyTempTtl3(t *testing.T) {
 }
 
 func TestMoveKeyTempTtl4(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk1 := MakeStoreKey("index1")
 	rsk2 := MakeStoreKey("index2")
@@ -544,7 +544,7 @@ func TestMoveKeyTempTtl4(t *testing.T) {
 }
 
 func TestMoveKeyTempTtl5(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk1 := MakeStoreKey("index1")
 	rsk2 := MakeStoreKey("index2")
@@ -603,7 +603,7 @@ func TestMoveKeyTempTtl5(t *testing.T) {
 }
 
 func TestMoveKeyTempTtl6(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk1 := MakeStoreKey("index1")
 	rsk2 := MakeStoreKey("index2")
@@ -664,7 +664,7 @@ func TestMoveKeyTempTtl6(t *testing.T) {
 }
 
 func TestMoveIndex(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk1 := MakeStoreKey("index1")
 	rsk2 := MakeStoreKey("index2")
@@ -702,7 +702,7 @@ func TestMoveIndex(t *testing.T) {
 }
 
 func TestMoveIndexPartial(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk1 := MakeStoreKey("cat")
 	ssk2 := MakeStoreKey("dog")
 	rsk := MakeStoreKey("index1")
@@ -745,7 +745,7 @@ func TestMoveIndexPartial(t *testing.T) {
 }
 
 func TestMoveIndexSelf(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk := MakeStoreKey("index1")
 
@@ -777,7 +777,7 @@ func TestMoveIndexSelf(t *testing.T) {
 }
 
 func TestMoveIndexSelf2(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk := MakeStoreKey("index1")
 
@@ -807,7 +807,7 @@ func TestMoveIndexSelf2(t *testing.T) {
 }
 
 func TestMoveIndexSelf3(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	rsk := MakeStoreKey("index1")
 
@@ -832,7 +832,7 @@ func TestMoveIndexSelf3(t *testing.T) {
 }
 
 func TestMoveEnsureNewRef(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	dsk := MakeStoreKey("test2")
 	rsk := MakeStoreKey("index1")
@@ -863,7 +863,7 @@ func TestMoveEnsureNewRef(t *testing.T) {
 }
 
 func TestMoveEnsureNewRefMissing1(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	dsk := MakeStoreKey("test2")
 	rsk := MakeStoreKey("index1")
@@ -889,7 +889,7 @@ func TestMoveEnsureNewRefMissing1(t *testing.T) {
 }
 
 func TestMoveEnsureNewRefMissing2(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	dsk := MakeStoreKey("test2")
 	rsk := MakeStoreKey("index1")
@@ -920,7 +920,7 @@ func TestMoveEnsureNewRefMissing2(t *testing.T) {
 }
 
 func TestMoveEnsureNewRefNoRelationship(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("test")
 	dsk := MakeStoreKey("test2")
 	rsk := MakeStoreKey("index1")
@@ -951,7 +951,7 @@ func TestMoveEnsureNewRefNoRelationship(t *testing.T) {
 }
 
 func TestMoveResave(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	ssk := MakeStoreKey("staged")
 	dsk := MakeStoreKey("target")
 	rsk := MakeStoreKey("index")

@@ -9,7 +9,7 @@ import (
 )
 
 func TestGetHistory(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey("test")
 
@@ -50,7 +50,7 @@ func TestGetHistory(t *testing.T) {
 }
 
 func TestGetHistorySentinel(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	sk := MakeStoreKey()
 

@@ -26,6 +26,7 @@ type (
 	}
 	diskHeader struct {
 		Version            int
+		AppVersion         int
 		NextAddress        uint64
 		SentinelValues     []diskValue
 		SentinelMetadata   map[string]string
@@ -156,6 +157,7 @@ func (ts *TreeStore) Save(l lane.Lane, fileName string) (err error) {
 
 	hdr := diskHeader{
 		Version:            1,
+		AppVersion:         ts.appVersion,
 		NextAddress:        uint64(ts.nextAddress),
 		SentinelValues:     saveKeyValues(&ts.dbNode),
 		SentinelMetadata:   ts.dbNode.metadata,
@@ -240,6 +242,12 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 
 	if hdr.Version != 1 {
 		err = fmt.Errorf("unsupported version %d", hdr.Version)
+		l.Errorf("failed to load %s: %s", fileName, err.Error())
+		return
+	}
+
+	if hdr.AppVersion != ts.appVersion {
+		err = fmt.Errorf("unsupported app version %d (expected %d)", hdr.AppVersion, ts.appVersion)
 		l.Errorf("failed to load %s: %s", fileName, err.Error())
 		return
 	}

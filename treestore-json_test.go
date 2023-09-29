@@ -12,7 +12,7 @@ import (
 )
 
 func TestSetJsonSimple(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -45,7 +45,7 @@ func TestSetJsonSimple(t *testing.T) {
 }
 
 func TestSetJsonSimpleStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -78,7 +78,7 @@ func TestSetJsonSimpleStrAsKey(t *testing.T) {
 }
 
 func TestMergeJsonSimpleStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -116,7 +116,7 @@ func TestMergeJsonSimpleStrAsKey(t *testing.T) {
 }
 
 func TestSetJsonValueTypes(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": 123}`)
@@ -161,7 +161,7 @@ func TestSetJsonValueTypes(t *testing.T) {
 }
 
 func TestSetJsonValueTypesMerge(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": 123}`)
@@ -206,7 +206,7 @@ func TestSetJsonValueTypesMerge(t *testing.T) {
 }
 
 func TestSetJsonValueTypesMergeOverwrite(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 	sk2 := MakeStoreKey("test", "pet")
 
@@ -252,7 +252,7 @@ func TestSetJsonValueTypesMergeOverwrite(t *testing.T) {
 }
 
 func TestMergeTwoJsons(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -273,7 +273,7 @@ func TestMergeTwoJsons(t *testing.T) {
 }
 
 func TestMergeTwoJsonsStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -294,7 +294,7 @@ func TestMergeTwoJsonsStrAsKey(t *testing.T) {
 }
 
 func TestMergeSentinelValue(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`100`)
@@ -337,7 +337,7 @@ func TestMergeSentinelValue(t *testing.T) {
 }
 
 func TestMergeSentinelValueStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	jsonData := `"text"`
@@ -363,7 +363,7 @@ func TestMergeSentinelValueStrAsKey(t *testing.T) {
 }
 
 func TestMergeSentinelArray(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`["test", "123"]`)
@@ -394,7 +394,7 @@ func TestMergeSentinelArray(t *testing.T) {
 }
 
 func TestJsonSetTree(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey()
 
 	jsonData := []byte(`{"test":{"animals":[{"type":"cat"},{"type":"dog","food":"purina"}]}}`)
@@ -425,7 +425,7 @@ func TestJsonSetTree(t *testing.T) {
 }
 
 func TestMergeTwoArrays(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`["cow", "pig"]`)
@@ -461,7 +461,7 @@ func TestMergeTwoArrays(t *testing.T) {
 }
 
 func TestMergeTwoArrays2(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`["cow", "pig"]`)
@@ -493,7 +493,7 @@ func TestMergeTwoArrays2(t *testing.T) {
 }
 
 func TestMergeTwoArrays3(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`[{"animals": {"cow": true, "pig": true}}]`)
@@ -525,7 +525,7 @@ func TestMergeTwoArrays3(t *testing.T) {
 }
 
 func TestMergeTwoArraysStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`["cow", "pig"]`)
@@ -561,7 +561,7 @@ func TestMergeTwoArraysStrAsKey(t *testing.T) {
 }
 
 func TestMergeTwoMaps(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test", "farm")
 
 	jsonData := []byte(`{"animals": {"cow": true, "pig": true}}`)
@@ -595,7 +595,7 @@ func TestMergeTwoMaps(t *testing.T) {
 }
 
 func TestReplaceJsonSimple(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -628,7 +628,7 @@ func TestReplaceJsonSimple(t *testing.T) {
 }
 
 func TestReplaceJsonSimpleStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -666,7 +666,7 @@ func TestReplaceJsonSimpleStrAsKey(t *testing.T) {
 }
 
 func TestCreateJsonSimple(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -692,7 +692,7 @@ func TestCreateJsonSimple(t *testing.T) {
 }
 
 func TestCreateJsonSimpleStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": "cat"}`)
@@ -718,7 +718,7 @@ func TestCreateJsonSimpleStrAsKey(t *testing.T) {
 }
 
 func TestCreateJsonExpired(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 	sk2 := MakeStoreKey("test", "pet")
 
@@ -754,7 +754,7 @@ func TestCreateJsonExpired(t *testing.T) {
 }
 
 func TestJsonIndexUseCase(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"pet": {"1": {"type": "cat", "sound": "meow"}, "2": {"type": "dog", "sound": "bark"} }}`)
@@ -796,7 +796,7 @@ func TestJsonIndexUseCase(t *testing.T) {
 }
 
 func TestJsonRetrieveLeafs(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	sk := MakeStoreKey("test")
 
 	jsonData := []byte(`{"animals": {"cat": {"sound": "meow"}, "dog": {"sound": "bark", "breeds": 360}}}`)
@@ -846,7 +846,7 @@ func TestJsonRetrieveLeafs(t *testing.T) {
 }
 
 func TestSetJsonStagedSimple(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	stageSk := MakeStoreKey("staging")
 	sk := MakeStoreKey("test")
 
@@ -874,7 +874,7 @@ func TestSetJsonStagedSimple(t *testing.T) {
 }
 
 func TestSetJsonStagedSimpleStrAsKey(t *testing.T) {
-	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	stageSk := MakeStoreKey("staging")
 	sk := MakeStoreKey("test")
 
