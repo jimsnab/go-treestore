@@ -21,13 +21,13 @@ func (ts *TreeStore) unindexNodesLocked(sk StoreKey, kn *keyNode) {
 }
 
 // worker that adds all key nodes having values to the key index
-func (ts *TreeStore) indexMovedNodesLocked(sk StoreKey, kn *keyNode, oldAddress, newAddress StoreAddress) {
+func (ts *TreeStore) indexMovedNodesLocked(sk StoreKey, kn *keyNode, oldSrcAddress, oldDestAddress, newAddress StoreAddress) {
 	if kn.current != nil {
 		ts.keys[sk.Path] = kn.address
 
 		if kn.current.relationships != nil {
 			for i, v := range kn.current.relationships {
-				if v == oldAddress {
+				if v != 0 && (v == oldSrcAddress || v == oldDestAddress) {
 					kn.current.relationships[i] = newAddress
 				}
 			}
@@ -36,7 +36,7 @@ func (ts *TreeStore) indexMovedNodesLocked(sk StoreKey, kn *keyNode, oldAddress,
 	if kn.nextLevel != nil {
 		kn.nextLevel.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 			childSk := AppendStoreKeySegments(sk, node.key)
-			ts.indexMovedNodesLocked(childSk, node.value, oldAddress, newAddress)
+			ts.indexMovedNodesLocked(childSk, node.value, oldSrcAddress, oldDestAddress, newAddress)
 			return true
 		})
 	}
@@ -104,11 +104,16 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 		}
 	}
 
-	_, tokenIndex, _, expired = ts.locateKeyNodeForLock(destSk)
+	var oldDestAddress StoreAddress
+	_, tokenIndex, odkn, expired := ts.locateKeyNodeForLock(destSk)
 	if tokenIndex >= len(destSk.Tokens) {
-		if !expired && !overwrite {
-			// destination exists and not overwriting
-			return
+		if !expired {
+			if !overwrite {
+				// destination exists and not overwriting
+				return
+			}
+
+			oldDestAddress = odkn.address
 		}
 
 		if len(destSk.Tokens) > 0 {
@@ -149,7 +154,7 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 		dkn.nextLevel.parent = dkn
 	}
 
-	ts.indexMovedNodesLocked(destSk, dkn, skn.address, dkn.address)
+	ts.indexMovedNodesLocked(destSk, dkn, skn.address, oldDestAddress, dkn.address)
 
 	for _, unrefSk := range unrefs {
 		_, tokenIndex, kn, expired := ts.locateKeyNodeForLock(unrefSk)
@@ -178,7 +183,7 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 			ts.keys[refSk.Path] = kn.address
 		} else if kn.current != nil {
 			for i, addr := range kn.current.relationships {
-				if addr == skn.address {
+				if addr == skn.address || (addr != 0 && addr == oldDestAddress) {
 					kn.current.relationships[i] = dkn.address
 				}
 			}

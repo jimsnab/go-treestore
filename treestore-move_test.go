@@ -2,6 +2,7 @@ package treestore
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
 	"time"
 
@@ -941,6 +942,60 @@ func TestMoveEnsureNewRefNoRelationship(t *testing.T) {
 
 	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
 	if hasLink || rv != nil {
+		t.Error("relationship wrong")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestMoveResave(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()))
+	ssk := MakeStoreKey("staged")
+	dsk := MakeStoreKey("target")
+	rsk := MakeStoreKey("index")
+	data := map[string]any{"animal": "cat"}
+
+	serialized, err := json.Marshal(data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	tsk, addr, err := ts.StageKeyJson(ssk, serialized, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if addr == 0 {
+		t.Error("staging 1")
+	}
+
+	exists, moved := ts.MoveReferencedKey(tsk, dsk, true, -1, []StoreKey{rsk}, nil)
+	if !exists || !moved {
+		t.Error("new move expected")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(rsk, 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/target" {
+		t.Error("relationship wrong")
+	}
+
+	tsk2, addr, err := ts.StageKeyJson(ssk, serialized, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if addr == 0 || tsk2.Path == tsk.Path {
+		t.Error("staging 2")
+	}
+
+	exists, moved = ts.MoveReferencedKey(tsk2, dsk, true, -1, []StoreKey{rsk}, nil)
+	if !exists || !moved {
+		t.Error("new move expected")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(rsk, 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/target" {
 		t.Error("relationship wrong")
 	}
 
