@@ -1,5 +1,6 @@
 package treestore
 
+// Discards all data, completely resetting the treestore instance.
 func (ts *TreeStore) Purge() {
 	ts2 := NewTreeStore(ts.l, ts.appVersion)
 
