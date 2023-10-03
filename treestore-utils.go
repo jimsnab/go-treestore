@@ -20,6 +20,15 @@ type (
 
 const nsPerSec = (1 /*sec*/ * 1000 /*ms*/ * 1000 /*us*/ * 1000 /*ns*/)
 
+func (sk *StoreKey) LeafSegment() TokenSegment {
+	end := len(sk.Tokens) - 1
+	if end >= 0 {
+		return sk.Tokens[end]
+	} else {
+		return nil
+	}
+}
+
 func hexDigit(ch rune) (digit int) {
 	if ch >= '0' && ch <= '9' {
 		return int(ch - '0')
