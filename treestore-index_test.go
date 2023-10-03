@@ -701,7 +701,6 @@ func TestIndexJsonStagedDeep(t *testing.T) {
 	}
 }
 
-
 func TestIndexLate(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
@@ -985,6 +984,55 @@ func TestIndexTakeRecordAway2(t *testing.T) {
 
 	if countSubKeys(ts, isk) != 0 {
 		t.Error("index key count 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestIndexGet(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+	isk2 := MakeStoreKey("tree1-index2")
+
+	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+
+	id := ts.GetIndex(MakeStoreKey())
+	if id != nil {
+		t.Error("expected no index")
+	}
+
+	id = ts.GetIndex(dsk)
+	if len(id) != 1 {
+		t.Error("expected index")
+	}
+	if id[0].IndexSk.Path != isk.Path || len(id[0].Fields) != 1 {
+		t.Error("bad index response 1")
+	}
+
+	re, ic = ts.CreateIndex(dsk, isk2, []RecordSubPath{MakeRecordSubPath("test"), MakeRecordSubPath("index", "deeper")})
+	if !re || !ic {
+		t.Errorf("not created 2")
+	}
+
+	id = ts.GetIndex(dsk)
+	if len(id) != 2 {
+		t.Error("expected index")
+	}
+	if id[0].IndexSk.Path != isk.Path || len(id[0].Fields) != 1 {
+		t.Error("bad index response 2a")
+	}
+	if id[1].IndexSk.Path != isk2.Path || len(id[1].Fields) != 2 {
+		t.Error("bad index response 2b")
 	}
 
 	if !ts.DiagDump() {

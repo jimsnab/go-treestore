@@ -16,6 +16,11 @@ type (
 	recordDataCallback func(seg TokenSegment)
 	indexKeyCallback   func(ip IndexPath)
 	indexSkCallback    func(sk StoreKey, kn *keyNode)
+
+	IndexDefinition struct {
+		IndexSk StoreKey
+		Fields  []RecordSubPath
+	}
 )
 
 // Makes an index definition.
@@ -309,4 +314,26 @@ func MakeRecordSubPathFromSegments(args ...TokenSegment) RecordSubPath {
 		subPath = append(subPath, arg)
 	}
 	return subPath
+}
+
+// Returns all indexes defined for the specified data key, or nil if none.
+func (ts *TreeStore) GetIndex(dataParentSk StoreKey) (id []IndexDefinition) {
+	level, index, kn, expired := ts.locateKeyNodeForRead(dataParentSk)
+	defer ts.completeKeyNodeRead(level)
+
+	if index < len(dataParentSk.Tokens) || expired {
+		return
+	}
+
+	if kn.indicies != nil && len(kn.indicies.indexMap) > 0 {
+		id = make([]IndexDefinition, 0, len(kn.indicies.indexMap))
+		for _, kid := range kn.indicies.indexMap {
+			elem := IndexDefinition{
+				IndexSk: kid.indexSk,
+				Fields:  kid.fields,
+			}
+			id = append(id, elem)
+		}
+	}
+	return
 }
