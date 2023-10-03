@@ -782,3 +782,107 @@ func TestImportExportSaveRecoverInt(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestImportExportIndexedValue(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	sk := MakeStoreKey()
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+	vsk := MakeStoreKey("tree1", "source", "123")
+
+	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	ts.SetKey(vsk)
+
+	data, err := ts.Export(sk)
+	if data == nil || err != nil {
+		t.Fatal("export root")
+	}
+
+	err = ts2.Import(sk, data)
+	if err != nil {
+		t.Error("import root")
+	}
+
+	if countSubKeys(ts2, isk) != 1 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv := ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/123" {
+		t.Error("link verify")
+	}
+
+	vsk2 := MakeStoreKey("tree1", "source", "552")
+	ts2.SetKey(vsk2)
+
+	if countSubKeys(ts2, isk) != 2 {
+		t.Error("index key count 2")
+	}
+
+	hasLink, rv = ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "552"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/552" {
+		t.Error("link verify 2")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestImportExportIndexedValue2(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	sk := MakeStoreKey()
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+	vsk := MakeStoreKey("tree1", "source", "123", "user", "Joe")
+
+	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	ts.SetKey(vsk)
+
+	data, err := ts.Export(sk)
+	if data == nil || err != nil {
+		t.Fatal("export root")
+	}
+
+	err = ts2.Import(sk, data)
+	if err != nil {
+		t.Error("import root")
+	}
+
+	if countSubKeys(ts2, isk) != 1 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv := ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Joe"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/123" {
+		t.Error("link verify")
+	}
+
+	vsk2 := MakeStoreKey("tree1", "source", "552", "user", "Mary")
+	ts2.SetKey(vsk2)
+
+	if countSubKeys(ts2, isk) != 2 {
+		t.Error("index key count 2")
+	}
+
+	hasLink, rv = ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Mary"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/552" {
+		t.Error("link verify 2")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}

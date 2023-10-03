@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"strings"
-	"sync"
 	"time"
 )
 
@@ -15,6 +14,7 @@ type (
 		Metadata   map[string]string        `json:"metadata,omitempty"`
 		Expiration *int64                   `json:"expiration,omitempty"`
 		Children   map[string]*exportedNode `json:"children,omitempty"`
+		Ki         []*exportedKid           `json:"ki,omitempty"`
 	}
 
 	exportedValue struct {
@@ -24,10 +24,14 @@ type (
 		Relationships []string `json:"relationships,omitempty"`
 	}
 
+	exportedKid struct {
+		IndexKey string   `json:"index_key"`
+		Fields   []string `json:"fields"`
+	}
+
 	testHook func()
 )
 
-var addrHookMu sync.Mutex
 var invalidAddrHook testHook = func() {}
 
 // Serialize the tree store into a single JSON doc.
@@ -58,6 +62,7 @@ func (ts *TreeStore) exportNode(rootSk StoreKey, kn *keyNode) (en *exportedNode,
 
 	en = &exportedNode{
 		Metadata: kn.metadata,
+		Ki:       ts.exportKi(kn.indicies),
 	}
 
 	if kn.expiration != 0 {
@@ -182,4 +187,24 @@ func (ts *TreeStore) exportValue(rootSk StoreKey, vi *valueInstance, timestamp i
 	}
 
 	return ev, nil
+}
+
+func (ts *TreeStore) exportKi(ki *keyIndicies) []*exportedKid {
+	if ki == nil {
+		return nil
+	}
+
+	eki := make([]*exportedKid, 0, len(ki.indexMap))
+	for _, kid := range ki.indexMap {
+		ekid := exportedKid{
+			IndexKey: string(kid.indexSk.Path),
+			Fields:   make([]string, 0, len(kid.fields)),
+		}
+		for _, field := range kid.fields {
+			ekid.Fields = append(ekid.Fields, string(TokenSetToTokenPath(TokenSet(field))))
+		}
+
+		eki = append(eki, &ekid)
+	}
+	return eki
 }

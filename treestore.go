@@ -41,6 +41,7 @@ type (
 		history    *avlTree[*valueInstance]
 		expiration int64
 		metadata   map[string]string
+		indicies   *keyIndicies
 	}
 
 	valueInstance struct {
@@ -60,6 +61,8 @@ type (
 		vi     *valueInstance
 		index  int
 	}
+
+	keyNodeCallback func(level *keyTree, kn *keyNode)
 )
 
 const (
@@ -196,6 +199,46 @@ func (ts *TreeStore) locateKeyNodeForLock(sk StoreKey) (level *keyTree, tokenInd
 	return
 }
 
+// Worker that traverses the levels according to the key path. If a
+// segment in sk is nil, the level is iterated.
+//
+// The caller must have a lock on ts.keyNodeMu.
+func (ts *TreeStore) locateKeyNodesLocked(sk StoreKey, callback keyNodeCallback) {
+	// can traverse levels freely thanks to keyNodeMu
+	ts.locateKeyNodesWorker(sk.Tokens, ts.dbNodeLevel, &ts.dbNode, callback)
+}
+
+// recursive worker
+func (ts *TreeStore) locateKeyNodesWorker(tokens TokenSet, level *keyTree, kn *keyNode, callback keyNodeCallback) {
+	if len(tokens) == 0 {
+		if !kn.isExpired() {
+			callback(level, kn)
+		}
+		return
+	}
+	token := tokens[0]
+
+	level = kn.nextLevel
+	if level == nil {
+		return
+	}
+	subTokens := tokens[1:]
+
+	if token != nil {
+		avlNode := level.tree.Find(token)
+		if avlNode == nil {
+			return
+		}
+
+		ts.locateKeyNodesWorker(subTokens, level, avlNode.value, callback)
+	} else {
+		level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
+			ts.locateKeyNodesWorker(subTokens, level, node.value, callback)
+			return true
+		})
+	}
+}
+
 // Wrapper that ensures keyNodeMu is locked - see locateKeyNodeForReadLocked for details.
 func (ts *TreeStore) locateKeyNodeForRead(sk StoreKey) (level *keyTree, tokenIndex int, kn *keyNode, expired bool) {
 	// ensure the linkage between keynodes remains stable
@@ -293,6 +336,7 @@ func (ts *TreeStore) createRestOfKey(sk StoreKey, parentLevel *keyTree, index in
 		kn = ts.appendKeyNode(lockedLevel, sk.Tokens[index])
 	}
 
+	ts.addToIndicies(sk.Tokens, kn)
 	return
 }
 
@@ -312,6 +356,7 @@ func (ts *TreeStore) createRestOfKeyExclusive(sk StoreKey, parentLevel *keyTree,
 		kn = ts.appendKeyNode(level, sk.Tokens[index])
 	}
 
+	ts.addToIndicies(sk.Tokens, kn)
 	return
 }
 
@@ -327,12 +372,15 @@ func (ts *TreeStore) removeKeyFromIndexLocked(sk StoreKey) (removed bool) {
 func (ts *TreeStore) repurposeExpiredKn(sk StoreKey, kn *keyNode) {
 	delete(ts.keys, sk.Path)
 	delete(ts.addresses, kn.address)
+	ts.purgeIndicies(kn)
 	kn.address = StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1))
 	ts.addresses[kn.address] = kn
 	kn.current = nil
 	kn.expiration = 0
 	kn.history = nil
 	kn.metadata = nil
+
+	ts.addToIndicies(sk.Tokens, kn)
 }
 
 // Worker to make sure a key exists, and returns the valueInstance key node and a write lock on
@@ -481,6 +529,11 @@ func (ts *TreeStore) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, exp
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
 	defer ts.keyNodeMu.Unlock()
+
+	return ts.setKeyValueExLocked(sk, value, flags, expireNs, relationships)
+}
+
+func (ts *TreeStore) setKeyValueExLocked(sk StoreKey, value any, flags SetExFlags, expireNs int64, relationships []StoreAddress) (address StoreAddress, exists bool, originalValue any) {
 
 	level, index, kn, expired := ts.locateKeyNodeForWriteLocked(sk)
 
@@ -727,6 +780,8 @@ func (ts *TreeStore) deleteKeyWithValueLocked(sk StoreKey, clean bool) (removed 
 	ts.activeLocks.Add(1)
 
 	if ts.removeKeyFromIndexLocked(sk) || expired {
+		ts.removeFromIndicies(sk.Tokens, kn)
+
 		if kn.current != nil {
 			originalValue = kn.current.value
 			kn.current = nil
@@ -740,6 +795,7 @@ func (ts *TreeStore) deleteKeyWithValueLocked(sk StoreKey, clean bool) (removed 
 				delete(ts.addresses, kn.address)
 				level.tree.Delete(kn.key)
 				kn.ownerTree = nil
+				ts.purgeIndicies(kn)
 
 				// stop if this level contains siblings
 				if level.tree.nodes > 0 {
@@ -837,14 +893,16 @@ func (ts *TreeStore) deleteKeyLocked(sk StoreKey) (keyRemoved, valueRemoved bool
 	kn.metadata = nil
 
 	if kn.nextLevel == nil {
-		ts.deleteKeyNodeLocked(level, kn)
+		ts.deleteKeyNodeLocked(sk, level, kn)
 		keyRemoved = true
 	}
 
 	return
 }
 
-func (ts *TreeStore) deleteKeyNodeLocked(level *keyTree, kn *keyNode) {
+func (ts *TreeStore) deleteKeyNodeLocked(sk StoreKey, level *keyTree, kn *keyNode) {
+	ts.removeFromIndicies(sk.Tokens, kn)
+
 	// permanently delete the node
 	delete(ts.addresses, kn.address)
 	level.tree.Delete(kn.key)
@@ -858,6 +916,8 @@ func (ts *TreeStore) deleteKeyNodeLocked(level *keyTree, kn *keyNode) {
 			level.parent = nil
 		}
 	}
+
+	ts.purgeIndicies(kn)
 }
 
 // Sets a metadata attribute on a key, returning the original value (if any)

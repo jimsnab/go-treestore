@@ -122,8 +122,8 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 	}
 
 	ts.unindexNodesLocked(srcSk, skn)
-	if len(srcSk.Tokens) > 0 {
-		ts.deleteKeyNodeLocked(slevel, skn)
+	if len(srcSk.Tokens) > 0 && oldDestAddress != skn.address {
+		ts.deleteKeyNodeLocked(srcSk, slevel, skn)
 	}
 
 	dkn, ll, _ := ts.ensureKey(destSk)
@@ -155,6 +155,7 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 	}
 
 	ts.indexMovedNodesLocked(destSk, dkn, skn.address, oldDestAddress, dkn.address)
+	ts.addToIndicies(destSk.Tokens, dkn)
 
 	for _, unrefSk := range unrefs {
 		_, tokenIndex, kn, expired := ts.locateKeyNodeForLock(unrefSk)

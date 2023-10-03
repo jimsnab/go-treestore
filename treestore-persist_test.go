@@ -529,3 +529,123 @@ func TestSaveLoadAppVersionChange(t *testing.T) {
 		t.Error("final diag dump")
 	}
 }
+
+func TestSaveLoadIndexedValue(t *testing.T) {
+	fs = afero.NewMemMapFs()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 1)
+
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+	vsk := MakeStoreKey("tree1", "source", "123")
+
+	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	ts.SetKey(vsk)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("index key count before")
+	}
+
+	err := ts.Save(ts.l, "/test/empty.db")
+	if err != nil {
+		t.Errorf("save error %s", err.Error())
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 1)
+	err = ts2.Load(ts2.l, "/test/empty.db")
+	if err != nil {
+		t.Errorf("unexpected load error")
+	}
+
+	if countSubKeys(ts2, isk) != 1 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv := ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/123" {
+		t.Error("link verify")
+	}
+
+	vsk2 := MakeStoreKey("tree1", "source", "552")
+	ts2.SetKey(vsk2)
+
+	if countSubKeys(ts2, isk) != 2 {
+		t.Error("index key count 2")
+	}
+
+	hasLink, rv = ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "552"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/552" {
+		t.Error("link verify 2")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestSaveLoadIndexedValue2(t *testing.T) {
+	fs = afero.NewMemMapFs()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 1)
+
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-index")
+	vsk := MakeStoreKey("tree1", "source", "123", "user", "Joe")
+
+	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	ts.SetKey(vsk)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("index key count before")
+	}
+
+	err := ts.Save(ts.l, "/test/empty.db")
+	if err != nil {
+		t.Errorf("save error %s", err.Error())
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 1)
+	err = ts2.Load(ts2.l, "/test/empty.db")
+	if err != nil {
+		t.Errorf("unexpected load error")
+	}
+
+	if countSubKeys(ts2, isk) != 1 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv := ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Joe"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/123" {
+		t.Error("link verify")
+	}
+
+	vsk2 := MakeStoreKey("tree1", "source", "552", "user", "Mary")
+	ts2.SetKey(vsk2)
+
+	if countSubKeys(ts2, isk) != 2 {
+		t.Error("index key count 2")
+	}
+
+	hasLink, rv = ts2.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Mary"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/552" {
+		t.Error("link verify 2")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}

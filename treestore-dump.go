@@ -127,6 +127,10 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 			tsd.used[sk.Path] = kn.address
 		}
 
+		if kn.indicies != nil {
+			keyText += " [INDEXED]"
+		}
+
 		fmt.Printf("%s%04X %s\n", indent, kn.address, keyText)
 		tsd.addresses[kn.address] = kn
 

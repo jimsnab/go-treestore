@@ -23,3 +23,10 @@ func (kn *keyNode) hasChild() (found bool) {
 	}
 	return
 }
+
+func (kn *keyNode) getParent() (pkn *keyNode) {
+	if kn.ownerTree != nil {
+		pkn = kn.ownerTree.parent
+	}
+	return
+}

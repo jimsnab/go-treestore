@@ -23,6 +23,7 @@ type (
 		Values        []diskValue
 		Expiration    int64
 		Metadata      map[string]string
+		Indicies      []diskKid
 	}
 	diskHeader struct {
 		Version            int
@@ -33,6 +34,10 @@ type (
 		SentinelExpiration int64
 		Cas                map[StoreAddress]uint64
 		// variable number of diskKeyNode structs follow, terminated by a diskKeyNode that has Address of 0
+	}
+	diskKid struct {
+		IndexKey string
+		Fields   []string
 	}
 )
 
@@ -97,6 +102,50 @@ func saveKeyValues(kn *keyNode) (values []diskValue) {
 	return
 }
 
+func kiToDiskKi(ki *keyIndicies) []diskKid {
+	if ki == nil {
+		return nil
+	}
+
+	dki := make([]diskKid, 0, len(ki.indexMap))
+	for _, kid := range ki.indexMap {
+		dkid := diskKid{
+			IndexKey: string(kid.indexSk.Path),
+			Fields:   make([]string, 0, len(kid.fields)),
+		}
+		for _, field := range kid.fields {
+			dkid.Fields = append(dkid.Fields, string(TokenSetToTokenPath(TokenSet(field))))
+		}
+		dki = append(dki, dkid)
+	}
+
+	return dki
+}
+
+func diskKiToKi(dki []diskKid) *keyIndicies {
+	if dki == nil {
+		return nil
+	}
+
+	ki := keyIndicies{
+		indexMap: make(map[TokenPath]*keyIndexDefinition, len(dki)),
+	}
+
+	for _, dkid := range dki {
+		kid := keyIndexDefinition{
+			indexSk: MakeStoreKeyFromPath(TokenPath(dkid.IndexKey)),
+			fields:  make([]RecordSubPath, 0, len(dkid.Fields)),
+		}
+		for _, field := range dkid.Fields {
+			kid.fields = append(kid.fields, RecordSubPath(TokenPathToTokenSet(TokenPath(field))))
+		}
+
+		ki.indexMap[kid.indexSk.Path] = &kid
+	}
+
+	return &ki
+}
+
 func saveChildren(parent *keyNode, enc *gob.Encoder) (err error) {
 	level := parent.nextLevel
 	if level != nil {
@@ -109,6 +158,7 @@ func saveChildren(parent *keyNode, enc *gob.Encoder) (err error) {
 				Values:        saveKeyValues(kn),
 				Expiration:    kn.expiration,
 				Metadata:      kn.metadata,
+				Indicies:      kiToDiskKi(kn.indicies),
 			}
 
 			if err = enc.Encode(dkn); err != nil {
@@ -295,6 +345,7 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 			ownerTree:  level,
 			expiration: dkn.Expiration,
 			metadata:   dkn.Metadata,
+			indicies:   diskKiToKi(dkn.Indicies),
 		}
 
 		current, history := loadValues(dkn.Values)

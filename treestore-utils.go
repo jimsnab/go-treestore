@@ -263,16 +263,6 @@ func timestampFromUnixNs(tick int64) time.Time {
 	return time.Unix(tick/nsPerSec, tick%nsPerSec)
 }
 
-// Constrains the length of a string
-func stringTruncate(str string, maxChars int) string {
-	runes := []rune(str)
-	if len(runes) <= maxChars {
-		return str
-	}
-
-	return string(runes[0:maxChars])
-}
-
 // Constrains the length of a string and cuts at a linebreak
 func cleanString(str string, maxChars int) string {
 	clean := strings.ReplaceAll(str, "\r", "")

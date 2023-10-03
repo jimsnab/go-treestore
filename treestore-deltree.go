@@ -30,13 +30,6 @@ func (ts *TreeStore) deleteKeyTreeLocked(sk StoreKey) (removed bool) {
 		removed = true
 	}
 
-	level.lock.Lock() // ensure any pending operations on the keynode complete
-	ts.activeLocks.Add(1)
-	defer func() {
-		level.lock.Unlock()
-		ts.activeLocks.Add(-1)
-	}()
-
 	ts.discardChildren(sk, kn)
 
 	if ts.removeKeyFromIndexLocked(sk) || expired {
@@ -45,6 +38,7 @@ func (ts *TreeStore) deleteKeyTreeLocked(sk StoreKey) (removed bool) {
 	kn.history = nil
 	kn.metadata = nil
 
+	ts.removeFromIndicies(sk.Tokens, kn)
 	if kn.nextLevel == nil {
 		// permanently delete the node
 		delete(ts.addresses, kn.address)
@@ -59,6 +53,7 @@ func (ts *TreeStore) deleteKeyTreeLocked(sk StoreKey) (removed bool) {
 				level.parent = nil
 			}
 		}
+		ts.purgeIndicies(kn)
 	}
 
 	return

@@ -87,6 +87,10 @@ func (ts *TreeStore) restoreKey(rootPath TokenPath, sk StoreKey, kn *keyNode, en
 				}
 			}
 		}
+
+		if en.Ki != nil {
+			kn.indicies = ts.importKi(en.Ki)
+		}
 	}
 
 	return
@@ -161,5 +165,28 @@ func (ts *TreeStore) importValue(rootPath TokenPath, selfAddr StoreAddress, ev *
 		json.Unmarshal(v, &vi.value)
 	}
 
+	return
+}
+
+func (ts *TreeStore) importKi(eki []*exportedKid) (ki *keyIndicies) {
+	if eki == nil {
+		return nil
+	}
+
+	ki = &keyIndicies{
+		indexMap: make(map[TokenPath]*keyIndexDefinition, len(eki)),
+	}
+
+	for _, ekid := range eki {
+		kid := keyIndexDefinition{
+			indexSk: MakeStoreKeyFromPath(TokenPath(ekid.IndexKey)),
+			fields:  make([]RecordSubPath, 0, len(ekid.Fields)),
+		}
+		for _, field := range ekid.Fields {
+			kid.fields = append(kid.fields, RecordSubPath(TokenPathToTokenSet(TokenPath(field))))
+		}
+
+		ki.indexMap[kid.indexSk.Path] = &kid
+	}
 	return
 }

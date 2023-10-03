@@ -468,6 +468,7 @@ func (ts *TreeStore) assignJsonKey(sk StoreKey, baseKn *keyNode, jsonKn *keyNode
 	}
 
 	ts.assignJsonKeyIndex(sk, baseKn)
+	ts.addToIndicies(sk.Tokens, baseKn)
 }
 
 // Worker that iterates the newly assigned nodes and ensures they are indexed
