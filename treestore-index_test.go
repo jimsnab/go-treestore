@@ -622,6 +622,86 @@ func TestIndexJsonStaged(t *testing.T) {
 	}
 }
 
+func TestIndexJsonStagedDeep(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	data1 := map[string]any{
+		"pet":   "cat",
+		"sound": "meow",
+		"toys": map[string]any{
+			"string": []string{"zebra rope", "wand"},
+		},
+		"names": []string{"mittens"},
+	}
+	data2 := map[string]any{
+		"pet":   "dog",
+		"sound": "woof",
+		"names": []string{"fido", "rover"},
+	}
+
+	stagingSk := MakeStoreKey("staging")
+	dataSk := MakeStoreKey("v1", "data")
+	isk1 := MakeStoreKey("v1", "index-pet-types")
+	isk2 := MakeStoreKey("v1", "index-names")
+
+	re, ic := ts.CreateIndex(dataSk, isk1, []RecordSubPath{MakeRecordSubPath("pet"), MakeRecordSubPath("sound")})
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	re, ic = ts.CreateIndex(dataSk, isk2, []RecordSubPath{MakeRecordSubPathFromSegments(TokenSegment("names"), nil)})
+	if !re || !ic {
+		t.Error("not created 2")
+	}
+
+	tempSk1, _, _ := ts.StageKeyJson(stagingSk, toJson(data1), JsonStringValuesAsKeys)
+	tempSk2, _, _ := ts.StageKeyJson(stagingSk, toJson(data2), JsonStringValuesAsKeys)
+
+	dsk1 := AppendStoreKeySegmentStrings(dataSk, "1")
+	dsk2 := AppendStoreKeySegmentStrings(dataSk, "2")
+
+	ts.MoveReferencedKey(tempSk1, dsk1, false, 0, nil, nil)
+	ts.MoveReferencedKey(tempSk2, dsk2, false, 0, nil, nil)
+
+	if countSubKeys(ts, isk1) != 4 {
+		t.Error("index key count 1")
+	}
+
+	if countSubKeys(ts, isk2) != 3 {
+		t.Error("index key count 2")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "cat", "meow"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/v1/data/1" {
+		t.Error("link verify 1")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "dog", "woof"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/v1/data/2" {
+		t.Error("link verify 2")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk2, "fido"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/v1/data/2" {
+		t.Error("link verify 3")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk2, "rover"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/v1/data/2" {
+		t.Error("link verify 4")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk2, "mittens"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/v1/data/1" {
+		t.Error("link verify 5")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+
 func TestIndexLate(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
