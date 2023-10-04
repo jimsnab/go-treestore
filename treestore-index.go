@@ -1,12 +1,11 @@
 package treestore
 
 type (
-	IndexPath     TokenSet
-	RecordSubPath TokenSet
+	IndexPath TokenSet
 
 	keyIndexDefinition struct {
 		indexSk StoreKey
-		fields  []RecordSubPath
+		fields  []SubPath
 	}
 
 	keyIndicies struct {
@@ -19,7 +18,7 @@ type (
 
 	IndexDefinition struct {
 		IndexSk StoreKey
-		Fields  []RecordSubPath
+		Fields  []SubPath
 	}
 )
 
@@ -64,7 +63,7 @@ type (
 // If one of the `fields` can contain multiple children, it is important to
 // include the record ID at the tail, to avoid overlapping index keys (which
 // result in incorrect indexing).
-func (ts *TreeStore) CreateIndex(dataParentSk, indexSk StoreKey, fields []RecordSubPath) (recordKeyExists, indexCreated bool) {
+func (ts *TreeStore) CreateIndex(dataParentSk, indexSk StoreKey, fields []SubPath) (recordKeyExists, indexCreated bool) {
 	ts.acquireExclusiveLock()
 	defer ts.releaseExclusiveLock()
 
@@ -166,7 +165,7 @@ func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode,
 // N.B., The subPath array can be empty; this will incorporate the record unique ID in the index path.
 //
 //	A subPath can contain nil array elements. Those will match any record key segment.
-func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath RecordSubPath, callback recordDataCallback) {
+func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath SubPath, callback recordDataCallback) {
 	// if subPath is empty, return the record unique ID
 	if len(subPath) == 0 {
 		callback(recordSk.Tokens[len(recordSk.Tokens)-1])
@@ -174,7 +173,7 @@ func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath RecordS
 	}
 
 	// iterate the keys within the record that match the specified subpath
-	fieldSk := AppendStoreKeySegments(recordSk, subPath...)
+	fieldSk := JoinSubPath(recordSk, subPath)
 	ts.locateKeyNodesLocked(fieldSk, func(level *keyTree, recordKn *keyNode) {
 		if recordKn.nextLevel == nil {
 			return
@@ -220,7 +219,7 @@ func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath RecordS
 //
 //		    -> callback(["Joe", "active"])
 //		    -> callback(["Mary", "active"])
-func (ts *TreeStore) iterateIndexPathWorker(recordSk StoreKey, subPaths []RecordSubPath, parent IndexPath, callback indexKeyCallback) {
+func (ts *TreeStore) iterateIndexPathWorker(recordSk StoreKey, subPaths []SubPath, parent IndexPath, callback indexKeyCallback) {
 	leaf := len(subPaths) == 1
 
 	ts.iterateRecordFieldWorker(recordSk, subPaths[0], func(seg TokenSegment) {
@@ -296,24 +295,6 @@ func (ts *TreeStore) purgeIndicies(kn *keyNode) {
 		}
 		kn.indicies = nil
 	}
-}
-
-// Convenience utility that makes a data record subpath.
-func MakeRecordSubPath(args ...string) RecordSubPath {
-	subPath := make(RecordSubPath, 0, len(args))
-	for _, arg := range args {
-		subPath = append(subPath, TokenSegment(arg))
-	}
-	return subPath
-}
-
-// Convenience utility that makes a data record subpath from segments.
-func MakeRecordSubPathFromSegments(args ...TokenSegment) RecordSubPath {
-	subPath := make(RecordSubPath, 0, len(args))
-	for _, arg := range args {
-		subPath = append(subPath, arg)
-	}
-	return subPath
 }
 
 // Returns all indexes defined for the specified data key, or nil if none.

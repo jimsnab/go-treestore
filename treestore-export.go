@@ -201,7 +201,7 @@ func (ts *TreeStore) exportKi(ki *keyIndicies) []*exportedKid {
 			Fields:   make([]string, 0, len(kid.fields)),
 		}
 		for _, field := range kid.fields {
-			ekid.Fields = append(ekid.Fields, string(TokenSetToTokenPath(TokenSet(field))))
+			ekid.Fields = append(ekid.Fields, string(EscapeSubPath(field)))
 		}
 
 		eki = append(eki, &ekid)

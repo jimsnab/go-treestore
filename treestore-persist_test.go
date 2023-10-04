@@ -538,7 +538,7 @@ func TestSaveLoadIndexedValue(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -598,7 +598,7 @@ func TestSaveLoadIndexedValue2(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123", "user", "Joe")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}

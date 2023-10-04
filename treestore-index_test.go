@@ -36,7 +36,7 @@ func TestIndexEmpty2(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -58,7 +58,7 @@ func TestIndexSimple(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -86,7 +86,7 @@ func TestIndexUserNameSingle(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -120,7 +120,7 @@ func TestIndexUserNameMulti(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "1", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -154,7 +154,7 @@ func TestIndexUserNameDelete(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -191,7 +191,7 @@ func TestIndexTwoValues(t *testing.T) {
 	usk2a := MakeStoreKey("records", "2", "user", "Mary")
 	usk2b := MakeStoreKey("records", "2", "status", "suspended")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user"), MakeRecordSubPath("status")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -230,7 +230,7 @@ func TestIndexTwoValuesMove(t *testing.T) {
 	usk2b1 := MakeStoreKey("records", "2", "status", "suspended")
 	usk2b2 := MakeStoreKey("records", "2", "status", "active")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user"), MakeRecordSubPath("status")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -275,12 +275,12 @@ func TestIndexTwoValuesTwoIndexes(t *testing.T) {
 	usk2a := MakeStoreKey("records", "2", "user", "Mary")
 	usk2b := MakeStoreKey("records", "2", "status", "active")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []RecordSubPath{MakeRecordSubPath("user")})
+	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created 1")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []RecordSubPath{MakeRecordSubPath("status"), MakeRecordSubPath()})
+	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("status"), MakeSubPath()})
 	if !re || !ic {
 		t.Errorf("created 2")
 	}
@@ -328,7 +328,7 @@ func TestIndexRepeat(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -366,7 +366,7 @@ func TestIndexRepeat2(t *testing.T) {
 	vsk1 := MakeStoreKey("tree1", "source", "123")
 	vsk2 := MakeStoreKey("tree1", "source", "123", "more")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -396,12 +396,12 @@ func TestIndexRepeat3(t *testing.T) {
 	vsk1 := MakeStoreKey("tree1", "source", "123")
 	vsk2 := MakeStoreKey("tree1", "source", "123", "more")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []RecordSubPath{{}})
+	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{{}})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []RecordSubPath{{}})
+	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{{}})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -451,7 +451,7 @@ func TestIndexJsonArray(t *testing.T) {
 	isk := MakeStoreKey("index-names")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPathFromSegments(TokenSegment("names"), nil)})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -497,12 +497,12 @@ func TestIndexJsonMixed(t *testing.T) {
 	isk1 := MakeStoreKey("index-pet-types")
 	isk2 := MakeStoreKey("index-names")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []RecordSubPath{MakeRecordSubPath("pet")})
+	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []RecordSubPath{MakeRecordSubPathFromSegments(TokenSegment("names"), nil)})
+	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -565,12 +565,12 @@ func TestIndexJsonStaged(t *testing.T) {
 	isk1 := MakeStoreKey("index-pet-types")
 	isk2 := MakeStoreKey("index-names")
 
-	re, ic := ts.CreateIndex(dataSk, isk1, []RecordSubPath{MakeRecordSubPath("pet")})
+	re, ic := ts.CreateIndex(dataSk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dataSk, isk2, []RecordSubPath{MakeRecordSubPathFromSegments(TokenSegment("names"), nil)})
+	re, ic = ts.CreateIndex(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -644,12 +644,12 @@ func TestIndexJsonStagedDeep(t *testing.T) {
 	isk1 := MakeStoreKey("v1", "index-pet-types")
 	isk2 := MakeStoreKey("v1", "index-names")
 
-	re, ic := ts.CreateIndex(dataSk, isk1, []RecordSubPath{MakeRecordSubPath("pet"), MakeRecordSubPath("sound")})
+	re, ic := ts.CreateIndex(dataSk, isk1, []SubPath{MakeSubPath("pet"), MakeSubPath("sound")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dataSk, isk2, []RecordSubPath{MakeRecordSubPathFromSegments(TokenSegment("names"), nil)})
+	re, ic = ts.CreateIndex(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -724,12 +724,12 @@ func TestIndexLate(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "1"), toJson(data1), JsonStringValuesAsKeys)
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "2"), toJson(data2), JsonStringValuesAsKeys)
 
-	re, ic := ts.CreateIndex(dsk, isk1, []RecordSubPath{MakeRecordSubPath("pet")})
+	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if !re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []RecordSubPath{MakeRecordSubPathFromSegments(TokenSegment("names"), nil)})
+	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -787,12 +787,12 @@ func TestIndexAddDeleteAdd(t *testing.T) {
 	isk1 := MakeStoreKey("index-pet-types")
 	isk2 := MakeStoreKey("index-names")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []RecordSubPath{MakeRecordSubPath("pet")})
+	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []RecordSubPath{MakeRecordSubPathFromSegments(TokenSegment("names"), nil)})
+	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -814,7 +814,7 @@ func TestIndexAddDeleteAdd(t *testing.T) {
 		t.Error("index key count 1")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk1, []RecordSubPath{MakeRecordSubPath("pet")})
+	re, ic = ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if !re || !ic {
 		t.Error("not created again")
 	}
@@ -851,7 +851,7 @@ func TestIndexAddDeleteAdd(t *testing.T) {
 		t.Error("link verify 4")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk1, []RecordSubPath{MakeRecordSubPath("pet")})
+	re, ic = ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || ic {
 		t.Error("create overwite not blocked")
 	}
@@ -866,12 +866,12 @@ func TestIndexRedefineIndex(t *testing.T) {
 	dsk := MakeStoreKey("tree1", "source")
 	isk := MakeStoreKey("tree1-index")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("test")})
+	re, ic = ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("test")})
 	if !re || ic {
 		t.Errorf("created")
 	}
@@ -888,7 +888,7 @@ func TestIndexIndexMissingValues(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("function")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("function")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -912,7 +912,7 @@ func TestIndexIndexMissingValues2(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "function")
 	usk2 := MakeStoreKey("records", "2", "user", "service")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user", "function")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user", "function")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -936,7 +936,7 @@ func TestIndexTakeRecordAway(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -966,7 +966,7 @@ func TestIndexTakeRecordAway2(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{MakeRecordSubPath("user")})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -997,7 +997,7 @@ func TestIndexGet(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	isk2 := MakeStoreKey("tree1-index2")
 
-	re, ic := ts.CreateIndex(dsk, isk, []RecordSubPath{{}})
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -1019,7 +1019,7 @@ func TestIndexGet(t *testing.T) {
 		t.Error("bad index response 1")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []RecordSubPath{MakeRecordSubPath("test"), MakeRecordSubPath("index", "deeper")})
+	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("test"), MakeSubPath("index", "deeper")})
 	if !re || !ic {
 		t.Errorf("not created 2")
 	}

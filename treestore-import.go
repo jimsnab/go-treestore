@@ -180,10 +180,10 @@ func (ts *TreeStore) importKi(eki []*exportedKid) (ki *keyIndicies) {
 	for _, ekid := range eki {
 		kid := keyIndexDefinition{
 			indexSk: MakeStoreKeyFromPath(TokenPath(ekid.IndexKey)),
-			fields:  make([]RecordSubPath, 0, len(ekid.Fields)),
+			fields:  make([]SubPath, 0, len(ekid.Fields)),
 		}
 		for _, field := range ekid.Fields {
-			kid.fields = append(kid.fields, RecordSubPath(TokenPathToTokenSet(TokenPath(field))))
+			kid.fields = append(kid.fields, UnescapeSubPath(EscapedSubPath(field)))
 		}
 
 		ki.indexMap[kid.indexSk.Path] = &kid

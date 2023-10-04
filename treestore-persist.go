@@ -114,7 +114,7 @@ func kiToDiskKi(ki *keyIndicies) []diskKid {
 			Fields:   make([]string, 0, len(kid.fields)),
 		}
 		for _, field := range kid.fields {
-			dkid.Fields = append(dkid.Fields, string(TokenSetToTokenPath(TokenSet(field))))
+			dkid.Fields = append(dkid.Fields, string(EscapeSubPath(field)))
 		}
 		dki = append(dki, dkid)
 	}
@@ -134,10 +134,10 @@ func diskKiToKi(dki []diskKid) *keyIndicies {
 	for _, dkid := range dki {
 		kid := keyIndexDefinition{
 			indexSk: MakeStoreKeyFromPath(TokenPath(dkid.IndexKey)),
-			fields:  make([]RecordSubPath, 0, len(dkid.Fields)),
+			fields:  make([]SubPath, 0, len(dkid.Fields)),
 		}
 		for _, field := range dkid.Fields {
-			kid.fields = append(kid.fields, RecordSubPath(TokenPathToTokenSet(TokenPath(field))))
+			kid.fields = append(kid.fields, UnescapeSubPath(EscapedSubPath(field)))
 		}
 
 		ki.indexMap[kid.indexSk.Path] = &kid
