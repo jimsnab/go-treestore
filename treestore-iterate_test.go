@@ -819,6 +819,22 @@ func TestFullIterateMidLevelLeaves(t *testing.T) {
 		t.Error("test/cat/calico match test/**/dog")
 	}
 
+	keys = ts.GetMatchingKeys(MakeStoreKey("test"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Error("test/cat/calico match test")
+	}
+	if keys[0].Key != "/test" || keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify test")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "*"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Error("test/cat/calico match test")
+	}
+	if keys[0].Key != "/test/cat" || keys[0].CurrentValue != nil || !keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify test")
+	}
+
 	if !ts.DiagDump() {
 		t.Error("final diag dump")
 	}

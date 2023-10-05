@@ -29,7 +29,7 @@ type (
 		Relationships []StoreAddress    `json:"relationships,omitempty"`
 	}
 
-	iterateFullCallback func(km *KeyMatch) bool
+	iterateFullCallback func(km *KeyMatch, patternEnd bool) bool
 )
 
 // Navigates to the specified store key and returns all of the key segments
@@ -108,7 +108,7 @@ func (ts *TreeStore) GetLevelKeys(sk StoreKey, pattern string, startAt, limit in
 }
 
 // worker that calls the full iterator callback
-func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyNode, callback iterateFullCallback) (stopped bool) {
+func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyNode, patternEnd bool, callback iterateFullCallback) (stopped bool) {
 	if kn.isExpired() {
 		return
 	}
@@ -126,7 +126,7 @@ func (ts *TreeStore) iterateFullInvokeCallback(segments []TokenSegment, kn *keyN
 		km.Relationships = kn.current.relationships
 	}
 
-	stopped = !callback(&km)
+	stopped = !callback(&km, patternEnd)
 	return
 }
 
@@ -211,7 +211,7 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 			patternIndex++
 			if patternIndex >= len(patternSegs) {
 				// valueInstance match
-				stopped = ts.iterateFullInvokeCallback(segments, kn, callback)
+				stopped = ts.iterateFullInvokeCallback(segments, kn, true, callback)
 				break
 			}
 
@@ -230,7 +230,7 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 				kn := node.value
 
 				if ts.iterateFullWorkerIsMatch(patternSegs, subSegments) {
-					if ts.iterateFullInvokeCallback(subSegments, kn, callback) {
+					if ts.iterateFullInvokeCallback(subSegments, kn, false, callback) {
 						return false
 					}
 				}
@@ -255,7 +255,7 @@ func (ts *TreeStore) iterateFullWorker(patternSegs []TokenSegment, patternIndex 
 				kn := node.value
 
 				if ts.iterateFullWorkerIsMatch(patternSegs, subSegments) {
-					if ts.iterateFullInvokeCallback(subSegments, kn, callback) {
+					if ts.iterateFullInvokeCallback(subSegments, kn, end, callback) {
 						return false
 					}
 				}
@@ -303,8 +303,8 @@ func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int, lea
 			ts.activeLocks.Add(-1)
 		}()
 
-		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, func(km *KeyMatch) bool {
-			if leaves && km.HasChildren {
+		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, true, func(km *KeyMatch, patternEnd bool) bool {
+			if leaves && km.HasChildren && !patternEnd {
 				return true
 			}
 			keys = append(keys, km)
@@ -315,8 +315,8 @@ func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int, lea
 	}
 
 	n := 0
-	ts.iterateFull(skPattern, func(km *KeyMatch) bool {
-		if leaves && km.HasChildren {
+	ts.iterateFull(skPattern, func(km *KeyMatch, patternEnd bool) bool {
+		if leaves && km.HasChildren && !patternEnd {
 			return true
 		}
 		if n >= startAt {
@@ -351,7 +351,7 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 			ts.activeLocks.Add(-1)
 		}()
 
-		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, func(km *KeyMatch) bool {
+		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, true, func(km *KeyMatch, patternEnd bool) bool {
 			if n >= startAt {
 				if km.HasValue {
 					kvm := &KeyValueMatch{
@@ -374,7 +374,7 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		return
 	}
 
-	ts.iterateFull(skPattern, func(km *KeyMatch) bool {
+	ts.iterateFull(skPattern, func(km *KeyMatch, patternEnd bool) bool {
 		if km.HasValue {
 			if n >= startAt {
 				kvm := &KeyValueMatch{
