@@ -371,6 +371,6 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 	ts.keys = keys
 	ts.cas = hdr.Cas
 
-	l.Trace("treestore: load: keys:%d values:%d appversion:%d", keyCount, valueCount, ts.appVersion)
+	l.Tracef("treestore: load: keys:%d values:%d appversion:%d", keyCount, valueCount, ts.appVersion)
 	return
 }
