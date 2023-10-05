@@ -315,6 +315,8 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 		ts.addKeyToValueIndex(dbNode, keys)
 	}
 
+	keyCount := 0
+	valueCount := 0
 	for {
 		dkn := diskKeyNode{}
 		if err = dec.Decode(&dkn); err != nil {
@@ -354,9 +356,11 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 
 		addresses[kn.address] = &kn
 		level.tree.Set(kn.key, &kn)
+		keyCount++
 
 		if kn.current != nil {
 			ts.addKeyToValueIndex(&kn, keys)
+			valueCount++
 		}
 	}
 
@@ -367,5 +371,6 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 	ts.keys = keys
 	ts.cas = hdr.Cas
 
+	l.Trace("treestore: load: keys:%d values:%d appversion:%d", keyCount, valueCount, ts.appVersion)
 	return
 }
