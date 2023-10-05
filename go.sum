@@ -120,6 +120,8 @@ github.com/ianlancetaylor/demangle v0.0.0-20181102032728-5e5cf60278f6/go.mod h1:
 github.com/ianlancetaylor/demangle v0.0.0-20200824232613-28f6c0f3b639/go.mod h1:aSSvb/t6k1mPoxDqO4vJh6VOCGPwU4O0C2/Eqndh1Sc=
 github.com/jimsnab/go-lane v1.5.0 h1:CvUkmwSvud/ch+1uxeMeyfdigtLyYuLTNsP+S3gYoCA=
 github.com/jimsnab/go-lane v1.5.0/go.mod h1:gQZM3DYgcOvGY9GM0XqNYAdKPKHn87gAsQcCGxsf8fA=
+github.com/jimsnab/go-lane v1.6.0 h1:1Q+8J4aImm8bdVVv+CcZm6sS/grY0YqVjqjz6kkMhiY=
+github.com/jimsnab/go-lane v1.6.0/go.mod h1:DUz/mJoDc5crV0AfC5Ya8J3769+MCpTsLDNQEeRR5hw=
 github.com/jstemmer/go-junit-report v0.0.0-20190106144839-af01ea7f8024/go.mod h1:6v2b51hI/fHJwM22ozAgKL4VKDeJcHhJFhtBdhmNjmU=
 github.com/jstemmer/go-junit-report v0.9.1/go.mod h1:Brl9GWCQeLvo8nXZwPNNblvFj/XSXhF0NWZEnDohbsk=
 github.com/kisielk/gotool v1.0.0/go.mod h1:XhKaO+MFFWcvkIS/tQcRk01m1F5IRFswLeQ+oQHNcck=
