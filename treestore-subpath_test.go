@@ -10,7 +10,7 @@ func compareSubPath(t *testing.T, sp1, sp2 SubPath) {
 		t.Error("length mismatch")
 	}
 
-	for i,seg := range sp1 {
+	for i, seg := range sp1 {
 		seg2 := sp2[i]
 		if !bytes.Equal(seg, seg2) {
 			t.Error("segments don't agree")

@@ -287,7 +287,7 @@ func (ts *TreeStore) iterateFull(skPattern StoreKey, callback iterateFullCallbac
 
 // Full iteration function walks each tree store level according to skPattern and returns every
 // detail of matching keys.
-func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (keys []*KeyMatch) {
+func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int, leaves bool) (keys []*KeyMatch) {
 	keys = []*KeyMatch{}
 
 	if limit == 0 {
@@ -304,6 +304,9 @@ func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 		}()
 
 		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, func(km *KeyMatch) bool {
+			if leaves && km.HasChildren {
+				return true
+			}
 			keys = append(keys, km)
 			return true
 		})
@@ -313,6 +316,9 @@ func (ts *TreeStore) GetMatchingKeys(skPattern StoreKey, startAt, limit int) (ke
 
 	n := 0
 	ts.iterateFull(skPattern, func(km *KeyMatch) bool {
+		if leaves && km.HasChildren {
+			return true
+		}
 		if n >= startAt {
 			keys = append(keys, km)
 			if len(keys) >= limit {
@@ -335,6 +341,7 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		return
 	}
 
+	n := 0
 	if len(skPattern.Tokens) == 0 {
 		// sentinel special case
 		ts.dbNode.ownerTree.lock.RLock()
@@ -345,23 +352,28 @@ func (ts *TreeStore) GetMatchingKeyValues(skPattern StoreKey, startAt, limit int
 		}()
 
 		ts.iterateFullInvokeCallback(skPattern.Tokens, &ts.dbNode, func(km *KeyMatch) bool {
-			if km.HasValue {
-				kvm := &KeyValueMatch{
-					Key:           km.Key,
-					Metadata:      km.Metadata,
-					HasChildren:   km.HasChildren,
-					CurrentValue:  km.CurrentValue,
-					Relationships: km.Relationships,
+			if n >= startAt {
+				if km.HasValue {
+					kvm := &KeyValueMatch{
+						Key:           km.Key,
+						Metadata:      km.Metadata,
+						HasChildren:   km.HasChildren,
+						CurrentValue:  km.CurrentValue,
+						Relationships: km.Relationships,
+					}
+					values = append(values, kvm)
+					if len(values) >= limit {
+						return false
+					}
 				}
-				values = append(values, kvm)
 			}
+			n++
 			return true
 		})
 
 		return
 	}
 
-	n := 0
 	ts.iterateFull(skPattern, func(km *KeyMatch) bool {
 		if km.HasValue {
 			if n >= startAt {

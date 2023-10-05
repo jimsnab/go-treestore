@@ -374,7 +374,7 @@ func TestIterateLevelPattern(t *testing.T) {
 func TestFullIterateSentinel(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
-	keys := ts.GetMatchingKeys(MakeStoreKey(), 0, 100)
+	keys := ts.GetMatchingKeys(MakeStoreKey(), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("sentinel match")
 	}
@@ -385,7 +385,7 @@ func TestFullIterateSentinel(t *testing.T) {
 
 	ts.SetKeyValue(MakeStoreKey(), 320)
 
-	keys = ts.GetMatchingKeys(MakeStoreKey(), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey(), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("sentinel match")
 	}
@@ -404,14 +404,14 @@ func TestFullIterateOneKey(t *testing.T) {
 
 	sk := MakeStoreKey("test")
 
-	keys := ts.GetMatchingKeys(sk, 0, 100)
+	keys := ts.GetMatchingKeys(sk, 0, 100, false)
 	if keys == nil || len(keys) != 0 {
 		t.Error("empty match")
 	}
 
 	ts.SetKey(sk)
 
-	keys = ts.GetMatchingKeys(sk, 0, 100)
+	keys = ts.GetMatchingKeys(sk, 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test key match")
 	}
@@ -420,7 +420,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Error("test key")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("*"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("*"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test key match *")
 	}
@@ -429,7 +429,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Error("test key *")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("t*"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("t*"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test key match t*")
 	}
@@ -438,7 +438,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Error("test key t*")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test key match **")
 	}
@@ -447,7 +447,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Error("test key **")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**", "**"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test key match **/**")
 	}
@@ -456,7 +456,7 @@ func TestFullIterateOneKey(t *testing.T) {
 		t.Error("test key **/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**"), 0, 100, false)
 	if keys == nil || len(keys) != 0 {
 		t.Fatal("test key match test/**")
 	}
@@ -471,14 +471,14 @@ func TestFullIterateOneValue(t *testing.T) {
 
 	sk := MakeStoreKey("test")
 
-	keys := ts.GetMatchingKeys(sk, 0, 100)
+	keys := ts.GetMatchingKeys(sk, 0, 100, false)
 	if keys == nil || len(keys) != 0 {
 		t.Error("empty match")
 	}
 
 	ts.SetKeyValue(sk, 330)
 
-	keys = ts.GetMatchingKeys(sk, 0, 100)
+	keys = ts.GetMatchingKeys(sk, 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test value match")
 	}
@@ -487,7 +487,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Error("test value")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("*"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("*"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test value match *")
 	}
@@ -496,7 +496,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Error("test value *")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("t*"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("t*"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test value match t*")
 	}
@@ -505,7 +505,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Error("test value t*")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test value match **")
 	}
@@ -514,7 +514,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Error("test value **")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**", "**"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test value match **/**")
 	}
@@ -523,7 +523,7 @@ func TestFullIterateOneValue(t *testing.T) {
 		t.Error("test value **/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**"), 0, 100, false)
 	if keys == nil || len(keys) != 0 {
 		t.Fatal("test value match test/**")
 	}
@@ -538,14 +538,14 @@ func TestFullIterateTwoLevel(t *testing.T) {
 
 	sk := MakeStoreKey("test", "cat")
 
-	keys := ts.GetMatchingKeys(sk, 0, 100)
+	keys := ts.GetMatchingKeys(sk, 0, 100, false)
 	if keys == nil || len(keys) != 0 {
 		t.Error("empty match")
 	}
 
 	ts.SetKey(sk)
 
-	keys = ts.GetMatchingKeys(sk, 0, 100)
+	keys = ts.GetMatchingKeys(sk, 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test/cat match")
 	}
@@ -554,7 +554,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Error("test/cat")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("*"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("*"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test match *")
 	}
@@ -563,7 +563,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Error("test *")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("t*"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("t*"), 0, 100, false)
 	if keys == nil || len(keys) != 1 {
 		t.Fatal("test match t*")
 	}
@@ -572,7 +572,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Error("test t*")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100, false)
 	if len(keys) != 2 {
 		t.Fatal("test/cat match **")
 	}
@@ -585,7 +585,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Error("test/cat **")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**", "**"), 0, 100, false)
 	if len(keys) != 2 {
 		t.Fatal("test/cat match **/**")
 	}
@@ -598,7 +598,7 @@ func TestFullIterateTwoLevel(t *testing.T) {
 		t.Error("test/cat **/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("test/cat match test/**")
 	}
@@ -622,7 +622,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 	sk := MakeStoreKey("test", "cat", "calico")
 	ts.SetKey(sk)
 
-	keys := ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100)
+	keys := ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100, false)
 	if len(keys) != 3 {
 		t.Fatal("test/cat/calico match **")
 	}
@@ -639,7 +639,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("test/cat/calico **")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**", "calico"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**", "calico"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("test/cat/calico match **/calico")
 	}
@@ -648,7 +648,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("test/cat **/calico")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "calico"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "calico"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("test/cat/calico match test/**/calico")
 	}
@@ -657,7 +657,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("verify test/**/calico")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "calico"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "calico"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("test/cat/calico match test/**/cat/calico")
 	}
@@ -666,7 +666,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("verify test/**/cat/calico")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "**"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("test/cat/calico match test/**/cat/**")
 	}
@@ -675,12 +675,12 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("verify test/**/cat/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "**", "calico", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "**", "calico", "**"), 0, 100, false)
 	if len(keys) != 0 {
 		t.Fatal("test/cat/calico match test/**/cat/**/calico/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "c*", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "c*", "**"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("test/cat/calico match test/c*/**")
 	}
@@ -689,7 +689,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("verify test/c*/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "*", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "*", "**"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("test/cat/calico match test/*/**")
 	}
@@ -698,7 +698,7 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("verify test/*/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("**", "*", "**"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("**", "*", "**"), 0, 100, false)
 	if len(keys) != 2 {
 		t.Fatal("test/cat/calico match **/*/**")
 	}
@@ -711,12 +711,110 @@ func TestFullIterateMidLevel(t *testing.T) {
 		t.Error("verify **/*/**")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "*", "dog"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "*", "dog"), 0, 100, false)
 	if len(keys) != 0 {
 		t.Error("test/cat/calico match test/*/dog")
 	}
 
-	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "dog"), 0, 100)
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "dog"), 0, 100, false)
+	if len(keys) != 0 {
+		t.Error("test/cat/calico match test/**/dog")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
+func TestFullIterateMidLevelLeaves(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	sk := MakeStoreKey("test", "cat", "calico")
+	ts.SetKey(sk)
+
+	keys := ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match **")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("test/cat/calico **")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("**", "calico"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match **/calico")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("test/cat **/calico")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "calico"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match test/**/calico")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify test/**/calico")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "calico"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match test/**/cat/calico")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify test/**/cat/calico")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "**"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match test/**/cat/**")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify test/**/cat/**")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "cat", "**", "calico", "**"), 0, 100, true)
+	if len(keys) != 0 {
+		t.Fatal("test/cat/calico match test/**/cat/**/calico/**")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "c*", "**"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match test/c*/**")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify test/c*/**")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "*", "**"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match test/*/**")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify test/*/**")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("**", "*", "**"), 0, 100, true)
+	if len(keys) != 1 {
+		t.Fatal("test/cat/calico match **/*/**")
+	}
+
+	if keys[0].Key != "/test/cat/calico" || keys[0].CurrentValue != nil || keys[0].HasChildren || keys[0].HasValue || keys[0].Metadata != nil || keys[0].Relationships != nil {
+		t.Error("verify **/*/**")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "*", "dog"), 0, 100, true)
+	if len(keys) != 0 {
+		t.Error("test/cat/calico match test/*/dog")
+	}
+
+	keys = ts.GetMatchingKeys(MakeStoreKey("test", "**", "dog"), 0, 100, true)
 	if len(keys) != 0 {
 		t.Error("test/cat/calico match test/**/dog")
 	}
@@ -743,56 +841,56 @@ func TestFullIterateRanges(t *testing.T) {
 
 	pattern := MakeStoreKey("test", "*", "**")
 
-	keys := ts.GetMatchingKeys(pattern, 0, 0)
+	keys := ts.GetMatchingKeys(pattern, 0, 0, false)
 	if keys == nil || len(keys) != 0 {
 		t.Error("limit 0")
 	}
 
-	keys = ts.GetMatchingKeys(pattern, 0, 1)
+	keys = ts.GetMatchingKeys(pattern, 0, 1, false)
 	if len(keys) != 1 || keys[0].Key != "/test/cat/maine coon" {
 		t.Error("limit 1")
 	}
 
-	keys = ts.GetMatchingKeys(pattern, 1, 1)
+	keys = ts.GetMatchingKeys(pattern, 1, 1, false)
 	if len(keys) != 1 || keys[0].Key != "/test/cat/ragdoll" {
 		t.Error("limit 1 second")
 	}
 
-	keys = ts.GetMatchingKeys(pattern, 2, 2)
+	keys = ts.GetMatchingKeys(pattern, 2, 2, false)
 	if len(keys) != 2 || keys[0].Key != "/test/cat/siberian" || keys[1].Key != "/test/dog/brittany" {
 		t.Error("limit 2 at 2")
 	}
 
 	pattern2 := MakeStoreKey("test", "**", "*n")
 
-	keys = ts.GetMatchingKeys(pattern2, 0, 1)
+	keys = ts.GetMatchingKeys(pattern2, 0, 1, false)
 	if len(keys) != 1 || keys[0].Key != "/test/cat/maine coon" {
 		t.Error("test/**/*n limit 1")
 	}
 
-	keys = ts.GetMatchingKeys(pattern2, 1, 1)
+	keys = ts.GetMatchingKeys(pattern2, 1, 1, false)
 	if len(keys) != 1 || keys[0].Key != "/test/cat/siberian" {
 		t.Error("test/**/*n limit 1 at 1")
 	}
 
-	keys = ts.GetMatchingKeys(pattern2, 2, 1)
+	keys = ts.GetMatchingKeys(pattern2, 2, 1, false)
 	if len(keys) != 0 {
 		t.Error("test/**/*n start 2")
 	}
 
 	pattern3 := MakeStoreKey("test", "*", "*n")
 
-	keys = ts.GetMatchingKeys(pattern3, 0, 1)
+	keys = ts.GetMatchingKeys(pattern3, 0, 1, false)
 	if len(keys) != 1 || keys[0].Key != "/test/cat/maine coon" {
 		t.Error("test/*/*n limit 1")
 	}
 
-	keys = ts.GetMatchingKeys(pattern3, 1, 1)
+	keys = ts.GetMatchingKeys(pattern3, 1, 1, false)
 	if len(keys) != 1 || keys[0].Key != "/test/cat/siberian" {
 		t.Error("test/*/*n limit 1 at 1")
 	}
 
-	keys = ts.GetMatchingKeys(pattern3, 2, 1)
+	keys = ts.GetMatchingKeys(pattern3, 2, 1, false)
 	if len(keys) != 0 {
 		t.Error("test/*/*n start 2")
 	}
@@ -819,6 +917,20 @@ func TestValueIterateSentinel(t *testing.T) {
 
 	if values[0].CurrentValue != 320 || values[0].HasChildren || values[0].Metadata != nil || values[0].Relationships != nil {
 		t.Error("sentinel has value")
+	}
+
+	values = ts.GetMatchingKeyValues(MakeStoreKey(), 0, 1)
+	if values == nil || len(values) != 1 {
+		t.Fatal("sentinel range match")
+	}
+
+	if values[0].CurrentValue != 320 || values[0].HasChildren || values[0].Metadata != nil || values[0].Relationships != nil {
+		t.Error("sentinel has value")
+	}
+
+	values = ts.GetMatchingKeyValues(MakeStoreKey(), 1, 2)
+	if values == nil || len(values) != 0 {
+		t.Fatal("sentinel out of range match")
 	}
 
 	if !ts.DiagDump() {

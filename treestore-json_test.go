@@ -765,7 +765,7 @@ func TestJsonIndexUseCase(t *testing.T) {
 	}
 
 	// find the id of cat
-	keys := ts.GetMatchingKeys(MakeStoreKeyFromPath("/test/pet/*/type/cat"), 0, 100)
+	keys := ts.GetMatchingKeys(MakeStoreKeyFromPath("/test/pet/*/type/cat"), 0, 100, false)
 
 	if len(keys) != 1 || keys[0].Key != "/test/pet/1/type/cat" {
 		t.Error("find cat index")

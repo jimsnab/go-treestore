@@ -243,7 +243,7 @@ func TestSaveLoadRelationships(t *testing.T) {
 		t.Errorf("load error %s", err.Error())
 	}
 
-	keys := ts2.GetMatchingKeys(MakeStoreKey("**"), 0, 100)
+	keys := ts2.GetMatchingKeys(MakeStoreKey("**"), 0, 100, false)
 	if len(keys) != 2 {
 		t.Error("get both keys")
 	}
@@ -333,7 +333,7 @@ func TestSaveLoadMetadata(t *testing.T) {
 		t.Errorf("load error %s", err.Error())
 	}
 
-	keys := ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100)
+	keys := ts.GetMatchingKeys(MakeStoreKey("**"), 0, 100, false)
 	if len(keys) != 1 {
 		t.Fatal("key loaded")
 	}

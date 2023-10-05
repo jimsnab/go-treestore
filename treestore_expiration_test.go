@@ -644,7 +644,7 @@ func TestMatchingKeysExpired(t *testing.T) {
 
 	ts.SetKeyValue(sk, 40)
 
-	keys := ts.GetMatchingKeys(pattern, 0, 10)
+	keys := ts.GetMatchingKeys(pattern, 0, 10, false)
 	if keys == nil || len(keys) != 1 {
 		t.Error("before ttl")
 	}
@@ -656,7 +656,7 @@ func TestMatchingKeysExpired(t *testing.T) {
 		t.Error("set ttl")
 	}
 
-	keys = ts.GetMatchingKeys(pattern, 0, 10)
+	keys = ts.GetMatchingKeys(pattern, 0, 10, false)
 	if keys == nil || len(keys) != 0 {
 		t.Error("after ttl")
 	}
