@@ -186,6 +186,7 @@ func (ts *TreeStore) acquireExclusiveLock() {
 		ts.keyNodeMu.Unlock()
 		ts.activeLocks.Add(-1)
 		time.Sleep(time.Millisecond)
+		ts.keyNodeMu.Lock()
 	}
 }
 
