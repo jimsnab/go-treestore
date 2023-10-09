@@ -72,6 +72,11 @@ func TestSetJsonSimpleStrAsKey(t *testing.T) {
 		t.Error("second addr verify")
 	}
 
+	addr, ke = ts.LocateKey(MakeStoreKey("test", "pet", "cat"))
+	if ke || addr != 0 {
+		t.Error("old val verify")
+	}
+
 	if !ts.DiagDump() {
 		t.Fatal("dump error")
 	}
