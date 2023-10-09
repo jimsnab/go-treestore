@@ -1058,7 +1058,7 @@ func (ts *TreeStore) KeyFromAddress(addr StoreAddress) (sk StoreKey, exists bool
 
 func (ts *TreeStore) keyFromAddressLocked(addr StoreAddress) (sk StoreKey, exists bool) {
 	kn, tokens := ts.getTokenSetForAddressLocked(addr)
-	if kn != nil {
+	if kn != nil && !kn.isExpired() {
 		exists = true
 		sk = MakeStoreKeyFromTokenSegments(tokens...)
 	}
