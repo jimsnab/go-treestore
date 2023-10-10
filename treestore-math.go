@@ -221,6 +221,7 @@ func (ts *TreeStore) CalculateKeyValue(sk StoreKey, expression string) (address 
 
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	params := map[string]any{}

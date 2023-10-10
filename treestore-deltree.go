@@ -9,6 +9,7 @@ package treestore
 func (ts *TreeStore) DeleteKeyTree(sk StoreKey) (removed bool) {
 	// likely to modify the linkage of keynodes
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	return ts.deleteKeyTreeLocked(sk)

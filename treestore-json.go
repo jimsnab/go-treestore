@@ -139,6 +139,7 @@ func (ts *TreeStore) SetKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions) 
 
 	// node linkage will change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	kn, level, created := ts.ensureKey(sk)
@@ -170,6 +171,7 @@ func (ts *TreeStore) StageKeyJson(stagingSk StoreKey, jsonData []byte, opts Json
 
 	// node linkage will change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	// temp key segment name matches the address of the key for convenience
@@ -210,6 +212,7 @@ func (ts *TreeStore) ReplaceKeyJson(sk StoreKey, jsonData []byte, opts JsonOptio
 
 	// node linkage will change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	level, tokenIndex, kn, expired := ts.locateKeyNodeForWriteLocked(sk)
@@ -238,6 +241,7 @@ func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte, opts JsonOption
 
 	// node linkage will change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	level, tokenIndex, kn, expired := ts.locateKeyNodeForLock(sk)
@@ -266,6 +270,7 @@ func (ts *TreeStore) CreateKeyJson(sk StoreKey, jsonData []byte, opts JsonOption
 // write lock is required across the whole operation.
 func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions) (address StoreAddress, err error) {
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	var data any

@@ -1,6 +1,7 @@
 package treestore
 
 import (
+	"fmt"
 	"sort"
 	"sync"
 	"sync/atomic"
@@ -121,7 +122,7 @@ func (ts *TreeStore) getKeyNodeForValueRead(sk StoreKey) (kn *keyNode, lockedLev
 	address := ts.keys[sk.Path]
 	if address != 0 {
 		kn = ts.addresses[address]
-		if kn.expiration > 0 && kn.expiration < time.Now().UTC().UnixNano() {
+		if /*kn == nil ||*/ kn.expiration > 0 && kn.expiration < time.Now().UTC().UnixNano() {
 			// not found because it is expired
 			kn = nil
 			ts.keyNodeMu.RUnlock()
@@ -154,7 +155,7 @@ func (ts *TreeStore) getKeyNodeForWrite(sk StoreKey) (kn *keyNode, lockedLevel *
 	address := ts.keys[sk.Path]
 	if address != 0 {
 		kn = ts.addresses[address]
-		if kn.expiration > 0 && kn.expiration < time.Now().UTC().UnixNano() {
+		if kn == nil || kn.expiration > 0 && kn.expiration < time.Now().UTC().UnixNano() {
 			// not found because it is expired
 			kn = nil
 			ts.keyNodeMu.RUnlock()
@@ -295,6 +296,7 @@ func (ts *TreeStore) completeKeyNodeRead(level *keyTree) {
 
 // Unlocks a valueInstance key node accessed for write
 func (ts *TreeStore) completeKeyNodeWrite(level *keyTree) {
+	ts.sanityCheck()
 	level.lock.Unlock()
 	ts.activeLocks.Add(-1)
 }
@@ -446,6 +448,7 @@ func (ts *TreeStore) ensureKeyWithValue(sk StoreKey) (kn *keyNode, lockedLevel *
 func (ts *TreeStore) SetKey(sk StoreKey) (address StoreAddress, exists bool) {
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	kn, ll, created := ts.ensureKey(sk)
@@ -465,6 +468,7 @@ func (ts *TreeStore) SetKey(sk StoreKey) (address StoreAddress, exists bool) {
 func (ts *TreeStore) SetKeyIfExists(testKey, sk StoreKey) (address StoreAddress, exists bool) {
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	testLevel, tokenIndex, _, expired := ts.locateKeyNodeForReadLocked(testKey)
@@ -492,6 +496,7 @@ func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	kn, ll, created := ts.ensureKeyWithValue(sk)
@@ -528,6 +533,7 @@ func (ts *TreeStore) SetKeyValue(sk StoreKey, value any) (address StoreAddress, 
 func (ts *TreeStore) SetKeyValueEx(sk StoreKey, value any, flags SetExFlags, expireNs int64, relationships []StoreAddress) (address StoreAddress, exists bool, originalValue any) {
 	// the key node linkage may change
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	return ts.setKeyValueExLocked(sk, value, flags, expireNs, relationships)
@@ -748,6 +754,7 @@ func (ts *TreeStore) GetKeyValueAtTime(sk StoreKey, tickNs int64) (value any, ex
 func (ts *TreeStore) DeleteKeyWithValue(sk StoreKey, clean bool) (removed bool, originalValue any) {
 	// acquire right to change the key node linkage
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	return ts.deleteKeyWithValueLocked(sk, clean)
@@ -837,6 +844,7 @@ func (ts *TreeStore) deleteKeyWithValueLocked(sk StoreKey, clean bool) (removed 
 		removed = !expired
 	}
 
+	ts.sanityCheck()
 	level.lock.Unlock()
 	ts.activeLocks.Add(-1)
 
@@ -858,6 +866,7 @@ func (ts *TreeStore) deleteKeyWithValueLocked(sk StoreKey, clean bool) (removed 
 func (ts *TreeStore) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any) {
 	// likely to modify the linkage of keynodes
 	ts.keyNodeMu.Lock()
+	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
 	return ts.deleteKeyLocked(sk)
@@ -1154,4 +1163,13 @@ func (ts *TreeStore) resetNode(sk StoreKey, kn *keyNode) {
 	kn.metadata = nil
 	kn.expiration = 0
 	delete(ts.keys, sk.Path)
+}
+
+func (ts *TreeStore) sanityCheck() {
+	for sk,addr := range ts.keys {
+		_, found := ts.addresses[addr]
+		if !found {
+			panic(fmt.Sprintf("key %s refers to missing address %d", sk, addr))
+		}
+	}
 }
