@@ -1158,6 +1158,8 @@ func (ts *TreeStore) discardChildren(sk StoreKey, kn *keyNode) {
 // worker - removes the node's value (if any) as well as all child keys
 // the caller must hold a write lock on ts.keyNodeMu
 func (ts *TreeStore) resetNode(sk StoreKey, kn *keyNode) {
+	ts.removeFromIndicies(sk.Tokens, kn)
+
 	ts.discardChildren(sk, kn)
 	kn.current = nil
 	kn.metadata = nil
@@ -1166,7 +1168,7 @@ func (ts *TreeStore) resetNode(sk StoreKey, kn *keyNode) {
 }
 
 func (ts *TreeStore) sanityCheck() {
-	for sk,addr := range ts.keys {
+	for sk, addr := range ts.keys {
 		_, found := ts.addresses[addr]
 		if !found {
 			panic(fmt.Sprintf("key %s refers to missing address %d", sk, addr))

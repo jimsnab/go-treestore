@@ -1039,3 +1039,85 @@ func TestIndexGet(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestIndexJsonUpdateArray(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store names under /names, and index them under /index-names
+	//
+	// - add one name
+	// - verify
+	// - add a second name
+	// - verify
+	// - remove the first name
+	// - verify
+	// - remove the second name
+	// - verify
+	//
+
+	data := map[string]any{
+		"names": []string{"fido"},
+	}
+
+	dsk := MakeStoreKey("source")
+	isk := MakeStoreKey("index-names")
+	id := "ID1"
+
+	// second token is nil for the array index
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1")
+	}
+
+	// add the second name
+	data["names"] = []string{"fido", "rover"}
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 2 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1 again")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "rover"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 2")
+	}
+
+	// remove the first name
+	data["names"] = []string{"rover"}
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
+	if hasLink || rv != nil {
+		t.Error("link verify deletion")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "rover"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 2 again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
