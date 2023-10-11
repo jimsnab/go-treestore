@@ -1121,3 +1121,67 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestIndexJsonDelTree(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store names under /names, and index them under /index-names
+	//
+	// - store some data
+	// - verify
+	// - deltree the data
+	// - verify
+	//
+
+	data := map[string]any{
+		"names": []string{"fido", "rover"},
+	}
+
+	dsk := MakeStoreKey("source")
+	isk := MakeStoreKey("index-names")
+	id := "ID1"
+
+	// second token is nil for the array index
+	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 2 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "rover"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 2")
+	}
+
+	// deltree the data
+	ts.DeleteKeyTree(AppendStoreKeySegmentStrings(dsk, id))
+
+	if countSubKeys(ts, isk) != 0 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
+	if hasLink || rv != nil {
+		t.Error("link verify 1 again")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "rover"), 0)
+	if hasLink || rv != nil {
+		t.Error("link verify 2 again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}

@@ -204,15 +204,15 @@ func (ts *TreeStore) locateKeyNodeForLock(sk StoreKey) (level *keyTree, tokenInd
 // segment in sk is nil, the level is iterated.
 //
 // The caller must have a lock on ts.keyNodeMu.
-func (ts *TreeStore) locateKeyNodesLocked(sk StoreKey, callback keyNodeCallback) {
+func (ts *TreeStore) locateKeyNodesLocked(sk StoreKey, includeExpired bool, callback keyNodeCallback) {
 	// can traverse levels freely thanks to keyNodeMu
-	ts.locateKeyNodesWorker(sk.Tokens, ts.dbNodeLevel, &ts.dbNode, callback)
+	ts.locateKeyNodesWorker(sk.Tokens, ts.dbNodeLevel, &ts.dbNode, includeExpired, callback)
 }
 
 // recursive worker
-func (ts *TreeStore) locateKeyNodesWorker(tokens TokenSet, level *keyTree, kn *keyNode, callback keyNodeCallback) {
+func (ts *TreeStore) locateKeyNodesWorker(tokens TokenSet, level *keyTree, kn *keyNode, includeExpired bool, callback keyNodeCallback) {
 	if len(tokens) == 0 {
-		if !kn.isExpired() {
+		if includeExpired || !kn.isExpired() {
 			callback(level, kn)
 		}
 		return
@@ -231,10 +231,10 @@ func (ts *TreeStore) locateKeyNodesWorker(tokens TokenSet, level *keyTree, kn *k
 			return
 		}
 
-		ts.locateKeyNodesWorker(subTokens, level, avlNode.value, callback)
+		ts.locateKeyNodesWorker(subTokens, level, avlNode.value, includeExpired, callback)
 	} else {
 		level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
-			ts.locateKeyNodesWorker(subTokens, level, node.value, callback)
+			ts.locateKeyNodesWorker(subTokens, level, node.value, includeExpired, callback)
 			return true
 		})
 	}
