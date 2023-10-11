@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"sync/atomic"
 	"time"
 )
 
@@ -179,8 +178,8 @@ func (ts *TreeStore) StageKeyJson(stagingSk StoreKey, jsonData []byte, opts Json
 	_, baseLevel, _ := ts.ensureKey(stagingSk)
 	ts.completeKeyNodeWrite(baseLevel)
 
-	address = ts.nextAddress + 1
-	tempSk = AppendStoreKeySegmentStrings(stagingSk, fmt.Sprintf("%d", address))
+	addr := StoreAddress(ts.nextAddress.Load() + 1)
+	tempSk = AppendStoreKeySegmentStrings(stagingSk, fmt.Sprintf("%d", addr))
 
 	kn, level, created := ts.ensureKey(tempSk)
 	defer ts.completeKeyNodeWrite(level)
@@ -194,9 +193,10 @@ func (ts *TreeStore) StageKeyJson(stagingSk StoreKey, jsonData []byte, opts Json
 
 	// the newKn's address is the temp key unique value
 	ts.assignJsonKey(tempSk, kn, newKn)
-	if address != kn.address {
+	if addr != kn.address {
 		panic("unexpected address")
 	}
+	address = addr
 	return
 }
 
@@ -362,7 +362,7 @@ func (ts *TreeStore) ensureMergeChild(parentKn *keyNode, key []byte) (kn *keyNod
 	} else {
 		kn = &keyNode{
 			key:       key,
-			address:   StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1)),
+			address:   StoreAddress(ts.nextAddress.Add(1)),
 			ownerTree: lockedLevel,
 		}
 		ts.addresses[kn.address] = kn
@@ -399,7 +399,7 @@ func (ts *TreeStore) nextJsonKeyLevel(kn *keyNode, data any, opts JsonOptions) {
 			key := []byte(s)
 			childKn := &keyNode{
 				key:       key,
-				address:   StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1)),
+				address:   StoreAddress(ts.nextAddress.Add(1)),
 				ownerTree: level,
 			}
 
@@ -437,7 +437,7 @@ func (ts *TreeStore) nextJsonKeyValueLevel(kn *keyNode, data any, opts JsonOptio
 
 			childKn := &keyNode{
 				key:       key,
-				address:   StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1)),
+				address:   StoreAddress(ts.nextAddress.Add(1)),
 				ownerTree: level,
 			}
 
@@ -452,7 +452,7 @@ func (ts *TreeStore) nextJsonKeyValueLevel(kn *keyNode, data any, opts JsonOptio
 			key := TokenStringToSegment(k)
 			childKn := &keyNode{
 				key:       key,
-				address:   StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1)),
+				address:   StoreAddress(ts.nextAddress.Add(1)),
 				ownerTree: level,
 			}
 

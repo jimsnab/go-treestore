@@ -210,7 +210,7 @@ func (ts *TreeStore) Save(l lane.Lane, fileName string) (err error) {
 	hdr := diskHeader{
 		Version:            1,
 		AppVersion:         ts.appVersion,
-		NextAddress:        uint64(ts.nextAddress),
+		NextAddress:        ts.nextAddress.Load(),
 		SentinelValues:     saveKeyValues(&ts.dbNode),
 		SentinelMetadata:   ts.dbNode.metadata,
 		SentinelExpiration: ts.dbNode.expiration,

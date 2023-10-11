@@ -1185,3 +1185,78 @@ func TestIndexJsonDelTree(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestIndexJsonDeepReplace(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store names under /source/ID/records/names, and index them under /index-names,
+	// place index on /source
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+
+	data := map[string]any{
+		"records": map[string]any{
+			"names": []string{"fido", "rover"},
+		},
+	}
+
+	ssk := MakeStoreKey("source")
+	isk := MakeStoreKey("index-names")
+	id := "ID1"
+	dsk := MakeStoreKey("source", id, "records", "names")
+
+	// second token is nil for the array index
+	re, ic := ts.CreateIndex(ssk, isk, []SubPath{MakeSubPath("records", "names", `\N`)})
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 2 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "rover"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 2")
+	}
+
+	// deltree the names
+	ts.DeleteKeyTree(dsk)
+
+	if countSubKeys(ts, isk) != 0 {
+		t.Error("index key count")
+	}
+
+	// store new data
+	data = map[string]any{
+		"names": []string{"mittens"},
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id, "records"), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("index key count")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "mittens"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1 again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}

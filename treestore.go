@@ -17,7 +17,7 @@ type (
 		keyNodeMu    sync.RWMutex
 		dbNode       keyNode
 		dbNodeLevel  *keyTree
-		nextAddress  StoreAddress
+		nextAddress  atomic.Uint64
 		addresses    map[StoreAddress]*keyNode
 		keys         map[TokenPath]StoreAddress
 		cas          map[StoreAddress]uint64
@@ -74,12 +74,12 @@ const (
 
 func NewTreeStore(l lane.Lane, appVersion int) *TreeStore {
 	ts := TreeStore{
-		l:           l,
-		appVersion:  appVersion,
-		nextAddress: 1,
-		keys:        map[TokenPath]StoreAddress{},
-		cas:         map[StoreAddress]uint64{},
+		l:          l,
+		appVersion: appVersion,
+		keys:       map[TokenPath]StoreAddress{},
+		cas:        map[StoreAddress]uint64{},
 	}
+	ts.nextAddress.Store(1)
 
 	ts.dbNodeLevel = newKeyTree(&ts.dbNode)
 
@@ -305,7 +305,7 @@ func (ts *TreeStore) completeKeyNodeWrite(level *keyTree) {
 func (ts *TreeStore) appendKeyNode(lockedLevel *keyTree, token TokenSegment) (kn *keyNode) {
 	kn = &keyNode{
 		key:       token,
-		address:   StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1)),
+		address:   StoreAddress(ts.nextAddress.Add(1)),
 		ownerTree: lockedLevel,
 	}
 
@@ -375,7 +375,7 @@ func (ts *TreeStore) repurposeExpiredKn(sk StoreKey, kn *keyNode) {
 	delete(ts.keys, sk.Path)
 	delete(ts.addresses, kn.address)
 	ts.purgeIndicies(kn)
-	kn.address = StoreAddress(atomic.AddUint64((*uint64)(&ts.nextAddress), 1))
+	kn.address = StoreAddress(ts.nextAddress.Add(1))
 	ts.addresses[kn.address] = kn
 	kn.current = nil
 	kn.expiration = 0
