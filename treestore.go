@@ -915,19 +915,19 @@ func (ts *TreeStore) deleteKeyLocked(sk StoreKey) (keyRemoved, valueRemoved bool
 	return
 }
 
+// Removes the key, and every empty parent key, stopping at (and not deleting) the root key.
 func (ts *TreeStore) deleteKeyUpToLocked(rootSk, deleteSk StoreKey) (keyRemoved, valueRemoved bool, originalValue any) {
-	sk := MakeStoreKeyFromTokenSegments(deleteSk.Tokens...)
-	keyRemoved, valueRemoved, originalValue, parent := ts.deleteKeyLocked(sk)
+	tokens := deleteSk.Tokens
+	for len(rootSk.Tokens) < len(tokens) {
+		sk := MakeStoreKeyFromTokenSegments(tokens...)
+		var parent *keyNode
+		keyRemoved, valueRemoved, originalValue, parent = ts.deleteKeyLocked(sk)
 
-	for parent != nil && len(rootSk.Tokens) < len(sk.Tokens) {
-		if parent.nextLevel != nil && parent.nextLevel.tree.nodes > 0 {
+		if parent == nil || (parent.nextLevel != nil && parent.nextLevel.tree.nodes > 0) {
 			break
 		}
 
-		sk.Tokens = sk.Tokens[:len(sk.Tokens)-1]
-		sk.Path = TokenSetToTokenPath(sk.Tokens)
-
-		_, _, _, parent = ts.deleteKeyLocked(sk)
+		tokens = tokens[:len(tokens)-1]
 	}
 
 	return

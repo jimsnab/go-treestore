@@ -70,7 +70,7 @@ type (
 // If one of the `fields` can contain multiple children, it is important to
 // include the record ID at the tail of the field subpath, to avoid overlapping
 // auto-link keys (which results in loss of links).
-func (ts *TreeStore) CreateAutoLink(dataParentSk, autoLinkSk StoreKey, fields []SubPath) (recordKeyExists, autoLinkCreated bool) {
+func (ts *TreeStore) DefineAutoLinkKey(dataParentSk, autoLinkSk StoreKey, fields []SubPath) (recordKeyExists, autoLinkCreated bool) {
 	ts.acquireExclusiveLock()
 	defer ts.releaseExclusiveLock()
 
@@ -112,11 +112,11 @@ func (ts *TreeStore) CreateAutoLink(dataParentSk, autoLinkSk StoreKey, fields []
 
 // Removes an auto-link definition from a store key.
 //
-// See CreateAutoLink for details on treestore auto-links.
+// See DefineAutoLinkKey for details on treestore auto-links.
 //
 // An exclusive lock is held during the removal of the auto-link definition. If the
 // number of links are high, the operation may take some time to delete.
-func (ts *TreeStore) DeleteAutoLink(dataParentSk, autoLinkSk StoreKey) (recordKeyExists, autoLinkRemoved bool) {
+func (ts *TreeStore) RemoveAutoLinkKey(dataParentSk, autoLinkSk StoreKey) (recordKeyExists, autoLinkRemoved bool) {
 	ts.acquireExclusiveLock()
 	defer ts.releaseExclusiveLock()
 
@@ -179,7 +179,7 @@ func (ts *TreeStore) iterateRecordFieldWorker(crs *changedRecordState, subPath S
 	// if subPath is empty, return the record unique ID
 	if len(subPath) == 0 {
 		// only affected when added; the id does not change for removal
-		callback(crs.recordKn.key, !crs.removal)
+		callback(crs.recordKn.key, true)
 		return
 	}
 

@@ -15,7 +15,7 @@ func TestAutoLinkEmpty(t *testing.T) {
 	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, nil)
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, nil)
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -37,7 +37,7 @@ func TestAutoLinkEmpty2(t *testing.T) {
 	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -59,7 +59,7 @@ func TestAutoLinkSimple(t *testing.T) {
 	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -87,7 +87,7 @@ func TestAutoLinkUserNameSingle(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -121,7 +121,7 @@ func TestAutoLinkUserNameMulti(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "1", "user", "Mary")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -155,7 +155,7 @@ func TestAutoLinkUserNameDelete(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -192,7 +192,7 @@ func TestAutoLinkTwoValues(t *testing.T) {
 	usk2a := MakeStoreKey("records", "2", "user", "Mary")
 	usk2b := MakeStoreKey("records", "2", "status", "suspended")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -231,7 +231,7 @@ func TestAutoLinkTwoValuesMove(t *testing.T) {
 	usk2b1 := MakeStoreKey("records", "2", "status", "suspended")
 	usk2b2 := MakeStoreKey("records", "2", "status", "active")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -276,12 +276,12 @@ func TestAutoLinkTwoValuesTwoAlKeys(t *testing.T) {
 	usk2a := MakeStoreKey("records", "2", "user", "Mary")
 	usk2b := MakeStoreKey("records", "2", "status", "active")
 
-	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("user")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk1, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created 1")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("status"), MakeSubPath()})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk2, []SubPath{MakeSubPath("status"), MakeSubPath()})
 	if !re || !ic {
 		t.Errorf("created 2")
 	}
@@ -329,7 +329,7 @@ func TestAutoLinkRepeat(t *testing.T) {
 	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -367,7 +367,7 @@ func TestAutoLinkRepeat2(t *testing.T) {
 	vsk1 := MakeStoreKey("tree1", "source", "123")
 	vsk2 := MakeStoreKey("tree1", "source", "123", "more")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -397,12 +397,12 @@ func TestAutoLinkRepeat3(t *testing.T) {
 	vsk1 := MakeStoreKey("tree1", "source", "123")
 	vsk2 := MakeStoreKey("tree1", "source", "123", "more")
 
-	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{{}})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk1, []SubPath{{}})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{{}})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk2, []SubPath{{}})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -452,7 +452,7 @@ func TestAutoLinkJsonArray(t *testing.T) {
 	isk := MakeStoreKey("link-names")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -498,12 +498,12 @@ func TestAutoLinkJsonMixed(t *testing.T) {
 	isk1 := MakeStoreKey("link-pet-types")
 	isk2 := MakeStoreKey("link-names")
 
-	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -566,12 +566,12 @@ func TestAutoLinkJsonStaged(t *testing.T) {
 	isk1 := MakeStoreKey("link-pet-types")
 	isk2 := MakeStoreKey("link-names")
 
-	re, ic := ts.CreateAutoLink(dataSk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.DefineAutoLinkKey(dataSk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateAutoLink(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.DefineAutoLinkKey(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -645,12 +645,12 @@ func TestAutoLinkJsonStagedDeep(t *testing.T) {
 	isk1 := MakeStoreKey("v1", "link-pet-types")
 	isk2 := MakeStoreKey("v1", "link-names")
 
-	re, ic := ts.CreateAutoLink(dataSk, isk1, []SubPath{MakeSubPath("pet"), MakeSubPath("sound")})
+	re, ic := ts.DefineAutoLinkKey(dataSk, isk1, []SubPath{MakeSubPath("pet"), MakeSubPath("sound")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateAutoLink(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.DefineAutoLinkKey(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -725,12 +725,12 @@ func TestAutoLinkLate(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "1"), toJson(data1), JsonStringValuesAsKeys)
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "2"), toJson(data2), JsonStringValuesAsKeys)
 
-	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if !re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -788,12 +788,12 @@ func TestAutoLinkAddDeleteAdd(t *testing.T) {
 	isk1 := MakeStoreKey("link-pet-types")
 	isk2 := MakeStoreKey("link-names")
 
-	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -801,12 +801,12 @@ func TestAutoLinkAddDeleteAdd(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "1"), toJson(data1), JsonStringValuesAsKeys)
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "2"), toJson(data2), JsonStringValuesAsKeys)
 
-	re, ir := ts.DeleteAutoLink(dsk, isk1)
+	re, ir := ts.RemoveAutoLinkKey(dsk, isk1)
 	if !re || !ir {
 		t.Error("not deleted")
 	}
 
-	re, ir = ts.DeleteAutoLink(dsk, isk1)
+	re, ir = ts.RemoveAutoLinkKey(dsk, isk1)
 	if !re || ir {
 		t.Error("not deleted 2")
 	}
@@ -815,7 +815,7 @@ func TestAutoLinkAddDeleteAdd(t *testing.T) {
 		t.Error("auto-link key count 1")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if !re || !ic {
 		t.Error("not created again")
 	}
@@ -852,7 +852,7 @@ func TestAutoLinkAddDeleteAdd(t *testing.T) {
 		t.Error("link verify 4")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || ic {
 		t.Error("create overwite not blocked")
 	}
@@ -867,12 +867,12 @@ func TestAutoLinkRedefineAutoLink(t *testing.T) {
 	dsk := MakeStoreKey("tree1", "source")
 	isk := MakeStoreKey("tree1-links")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("test")})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("test")})
 	if !re || ic {
 		t.Errorf("created")
 	}
@@ -889,7 +889,7 @@ func TestAutoLinkDefMissingValues(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("function")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("function")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -913,7 +913,7 @@ func TestAutoLinkDefMissingValues2(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "function")
 	usk2 := MakeStoreKey("records", "2", "user", "service")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user", "function")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user", "function")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -937,7 +937,7 @@ func TestAutoLinkTakeRecordAway(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -967,7 +967,7 @@ func TestAutoLinkTakeRecordAway2(t *testing.T) {
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -998,7 +998,7 @@ func TestAutoLinkGet(t *testing.T) {
 	isk := MakeStoreKey("tree1-links")
 	isk2 := MakeStoreKey("tree1-links2")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -1020,7 +1020,7 @@ func TestAutoLinkGet(t *testing.T) {
 		t.Error("bad auto-link response 1")
 	}
 
-	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("test"), MakeSubPath("link", "deeper")})
+	re, ic = ts.DefineAutoLinkKey(dsk, isk2, []SubPath{MakeSubPath("test"), MakeSubPath("link", "deeper")})
 	if !re || !ic {
 		t.Errorf("not created 2")
 	}
@@ -1066,7 +1066,7 @@ func TestAutoLinkJsonUpdateArray(t *testing.T) {
 	id := "ID1"
 
 	// second token is nil for the array index
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1144,7 +1144,7 @@ func TestAutoLinkJsonDelTree(t *testing.T) {
 	id := "ID1"
 
 	// second token is nil for the array index
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1213,7 +1213,7 @@ func TestAutoLinkJsonDeepReplace(t *testing.T) {
 	dsk := MakeStoreKey("source", id, "records", "names")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateAutoLink(ssk, isk, []SubPath{MakeSubPath("records", "names", `\N`)})
+	re, ic := ts.DefineAutoLinkKey(ssk, isk, []SubPath{MakeSubPath("records", "names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1298,7 +1298,7 @@ func TestAutoLinkJsonDeepReplace2(t *testing.T) {
 	dsk := MakeStoreKey("source", id, "records", "data")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateAutoLink(ssk, isk, []SubPath{MakeSubPath("records", "data", `\N`, "type"), MakeSubPath("records", "data", `\N`, "name")})
+	re, ic := ts.DefineAutoLinkKey(ssk, isk, []SubPath{MakeSubPath("records", "data", `\N`, "type"), MakeSubPath("records", "data", `\N`, "name")})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1401,7 +1401,7 @@ func TestAutoLinkJsonDeepReplace3(t *testing.T) {
 	dsk := MakeStoreKey("source", id, "records", "data")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateAutoLink(ssk, isk, []SubPath{MakeSubPath("records", "info", "service"), MakeSubPath("records", "info", "id")})
+	re, ic := ts.DefineAutoLinkKey(ssk, isk, []SubPath{MakeSubPath("records", "info", "service"), MakeSubPath("records", "info", "id")})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1490,7 +1490,7 @@ func TestAutoLinkJsonDeepReplace4(t *testing.T) {
 }`
 
 	usersSk := MakeStoreKey("users", "profiles")
-	ts.CreateAutoLink(usersSk, MakeStoreKey("users", "email-org-name"), []SubPath{MakeSubPath("email"), MakeSubPath("organization_id"), MakeSubPath("name")})
+	ts.DefineAutoLinkKey(usersSk, MakeStoreKey("users", "email-org-name"), []SubPath{MakeSubPath("email"), MakeSubPath("organization_id"), MakeSubPath("name")})
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
 
@@ -1518,7 +1518,7 @@ func TestAutoLinkExpireFieldData(t *testing.T) {
 	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -1553,7 +1553,7 @@ func TestAutoLinkExpireFieldDataDeep(t *testing.T) {
 	vsk1 := MakeStoreKey("tree1", "source", "123")
 	vsk2 := MakeStoreKey("tree1", "source", "123", "data", "abc")
 
-	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("data")})
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{MakeSubPath("data")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -1582,6 +1582,46 @@ func TestAutoLinkExpireFieldDataDeep(t *testing.T) {
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "abc"), 0)
 	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/tree1/source/123") {
 		t.Error("link verify 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkAddRemove(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-links")
+	vsk := MakeStoreKey("tree1", "source", "123")
+	linkSk := AppendStoreKeySegmentStrings(isk, "123")
+
+	re, ic := ts.DefineAutoLinkKey(dsk, isk, []SubPath{{}})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	ts.SetKey(vsk)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("auto-link key count")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(linkSk, 0)
+	if !hasLink || rv == nil || rv.Sk.Path != "/tree1/source/123" {
+		t.Error("link verify")
+	}
+
+	ts.DeleteKey(vsk)
+
+	ttl := ts.GetKeyTtl(linkSk)
+	if ttl != -1 {
+		t.Error("id should not be indexed")
+	}
+
+	ttl = ts.GetKeyTtl(isk)
+	if ttl != 0 {
+		t.Error("isk should still exist")
 	}
 
 	if !ts.DiagDump() {
