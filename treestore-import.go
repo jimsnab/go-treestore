@@ -179,14 +179,14 @@ func (ts *TreeStore) importKals(ekals []*exportedKal) (kal *keyAutoLinks) {
 
 	for _, ekal := range ekals {
 		kald := keyAutoLinkDefinition{
-			indexSk: MakeStoreKeyFromPath(TokenPath(ekal.IndexKey)),
-			fields:  make([]SubPath, 0, len(ekal.Fields)),
+			autoLinkSk: MakeStoreKeyFromPath(TokenPath(ekal.IndexKey)),
+			fields:     make([]SubPath, 0, len(ekal.Fields)),
 		}
 		for _, field := range ekal.Fields {
 			kald.fields = append(kald.fields, UnescapeSubPath(EscapedSubPath(field)))
 		}
 
-		kal.autoLinkMap[kald.indexSk.Path] = &kald
+		kal.autoLinkMap[kald.autoLinkSk.Path] = &kald
 	}
 	return
 }

@@ -792,7 +792,7 @@ func TestImportExportIndexedValue(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -844,7 +844,7 @@ func TestImportExportIndexedValue2(t *testing.T) {
 	isk := MakeStoreKey("tree1-index")
 	vsk := MakeStoreKey("tree1", "source", "123", "user", "Joe")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}

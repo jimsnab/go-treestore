@@ -197,7 +197,7 @@ func (ts *TreeStore) exportKal(kal *keyAutoLinks) []*exportedKal {
 	ekals := make([]*exportedKal, 0, len(kal.autoLinkMap))
 	for _, kald := range kal.autoLinkMap {
 		ekal := exportedKal{
-			IndexKey: string(kald.indexSk.Path),
+			IndexKey: string(kald.autoLinkSk.Path),
 			Fields:   make([]string, 0, len(kald.fields)),
 		}
 		for _, field := range kald.fields {

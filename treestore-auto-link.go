@@ -1,11 +1,11 @@
 package treestore
 
 type (
-	IndexPath TokenSet
+	AutoLinkPath TokenSet
 
 	keyAutoLinkDefinition struct {
-		indexSk StoreKey
-		fields  []SubPath
+		autoLinkSk StoreKey
+		fields     []SubPath
 	}
 
 	keyAutoLinks struct {
@@ -14,69 +14,69 @@ type (
 
 	recordDataCallback func(seg TokenSegment, affected bool)
 
-	IndexDefinition struct {
-		IndexSk StoreKey
-		Fields  []SubPath
+	AutoLinkDefinition struct {
+		autoLinkSk StoreKey
+		Fields     []SubPath
 	}
 
 	changedRecordState struct {
-		recordKn    *keyNode
-		recordSk    StoreKey
-		indexBaseSk StoreKey
-		removal     bool
-		tree        bool
-		changedSk   StoreKey
+		recordKn  *keyNode
+		recordSk  StoreKey
+		alBaseSk  StoreKey
+		removal   bool
+		tree      bool
+		changedSk StoreKey
 	}
 )
 
-// Makes an index definition.
+// Makes an auto-link definition.
 //
-// To use an index, target data must be stored in a specific way:
+// To use auto-linking, target data must be stored in a specific way:
 //
-//			A "record" to be indexed is a key, possibly with child keys. It
-//			must have a unique ID. (Key values aren't indexable.)
+//   - A "record" to be linked is a key, possibly with child keys. It must have
+//     a unique ID. (Key values aren't linkable.)
 //
-//			The path to a record must be stored as <parent>/<unique id>/<record>,
-//	     where <record> is typically a key tree of properites.
+//   - The path to a record must be stored as <parent>/<unique id>/<record>,
+//     where <record> is typically a key tree of properites.
 //
-//			The `dataParentSk` parameter specifies <parent>.
+//   - The `dataParentSk` parameter specifies <parent>.
 //
-// An index is maintained according to `fields`:
+// An auto-link key is maintained according to `fields`:
 //
-//	      A "field" is a subpath of the record; an empty subpath for the record ID.
+//   - A "field" is a subpath of the record; or an empty subpath for the record ID.
 //
-//			 The index key is constructed as <index>/<field>/<field>/...
+//   - The auto-link key is constructed as <auto-link-key>/<field-value>/<field-value>/...
 //
-//			 When the record key is created, the corresponding index key is
-//		     also created, and relationship 0 holds the address of the record.
+//   - When the record key is created, the corresponding auto-link key is
+//     also created, and relationship 0 holds the address of the record.
 //
-//			 When the record key is deleted, the corresponding index key is
-//	      also deleted.
+//   - When the record key is deleted, the corresponding auto-link key is
+//     also deleted.
 //
 // A typical pattern is to stage key creation in a staging key, and then move
-// the key under `dataParentSk`. The record becomes atomically indexed upon
+// the key under `dataParentSk`. The record becomes atomically linked upon
 // that move.
 //
-// Using the TreeStore Json APIs works very well with autoLinks.
+// Using the TreeStore Json APIs works very well with auto-links.
 //
-// Creating an index acquires an exclusive lock of the database. If the data
+// Creating an auto-link key requires an exclusive lock of the database. If the data
 // parent key does not exist, it will be created. The operation will be nearly
 // instant if the data parent key has little to no children. A large number of
-// records will take some time to index.
+// records will take some time to link.
 //
-// Index entries might point to expired keys. It is handy to use GetRelationshipValue
-// to determine if the index entry is valid, and to get the key's current value.
+// Links might point to expired keys. It is handy to use GetRelationshipValue
+// to determine if the auto-link entry is valid, and to get the key's current value.
 //
 // If one of the `fields` can contain multiple children, it is important to
-// include the record ID at the tail, to avoid overlapping index keys (which
-// result in incorrect indexing).
-func (ts *TreeStore) CreateIndex(dataParentSk, indexSk StoreKey, fields []SubPath) (recordKeyExists, indexCreated bool) {
+// include the record ID at the tail of the field subpath, to avoid overlapping
+// auto-link keys (which results in loss of links).
+func (ts *TreeStore) CreateAutoLink(dataParentSk, autoLinkSk StoreKey, fields []SubPath) (recordKeyExists, autoLinkCreated bool) {
 	ts.acquireExclusiveLock()
 	defer ts.releaseExclusiveLock()
 
-	_, tokenIndex, _, expired := ts.locateKeyNodeForLock(indexSk)
-	if tokenIndex >= len(indexSk.Tokens) && !expired {
-		// not allowed to create this index because index key already exists
+	_, tokenIndex, _, expired := ts.locateKeyNodeForLock(autoLinkSk)
+	if tokenIndex >= len(autoLinkSk.Tokens) && !expired {
+		// not allowed to create this auto-link key because it already exists
 		return
 	}
 
@@ -94,29 +94,29 @@ func (ts *TreeStore) CreateIndex(dataParentSk, indexSk StoreKey, fields []SubPat
 		}
 		kn.autoLinks = kals
 	} else {
-		_, defined := kals.autoLinkMap[indexSk.Path]
+		_, defined := kals.autoLinkMap[autoLinkSk.Path]
 		if defined {
 			return
 		}
 	}
 
 	kald := keyAutoLinkDefinition{
-		indexSk: indexSk,
-		fields:  fields,
+		autoLinkSk: autoLinkSk,
+		fields:     fields,
 	}
-	kals.autoLinkMap[indexSk.Path] = &kald
-	ts.populateIndex(dataParentSk, kn, &kald)
-	indexCreated = true
+	kals.autoLinkMap[autoLinkSk.Path] = &kald
+	ts.populateAutoLink(dataParentSk, kn, &kald)
+	autoLinkCreated = true
 	return
 }
 
-// Removes an index from a store key.
+// Removes an auto-link definition from a store key.
 //
-// See CreateIndex for details on treestore autoLinks.
+// See CreateAutoLink for details on treestore auto-links.
 //
-// An exclusive lock is held during the removal of the index. If the
-// index is large, the operation may take some time to delete.
-func (ts *TreeStore) DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExists, indexRemoved bool) {
+// An exclusive lock is held during the removal of the auto-link definition. If the
+// number of links are high, the operation may take some time to delete.
+func (ts *TreeStore) DeleteAutoLink(dataParentSk, autoLinkSk StoreKey) (recordKeyExists, autoLinkRemoved bool) {
 	ts.acquireExclusiveLock()
 	defer ts.releaseExclusiveLock()
 
@@ -126,10 +126,10 @@ func (ts *TreeStore) DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExist
 
 		ki := kn.autoLinks
 		if ki != nil {
-			_, defined := ki.autoLinkMap[indexSk.Path]
+			_, defined := ki.autoLinkMap[autoLinkSk.Path]
 			if defined {
-				delete(ki.autoLinkMap, indexSk.Path)
-				indexRemoved = ts.deleteKeyTreeLocked(indexSk)
+				delete(ki.autoLinkMap, autoLinkSk.Path)
+				autoLinkRemoved = ts.deleteKeyTreeLocked(autoLinkSk)
 			}
 		}
 	}
@@ -137,9 +137,9 @@ func (ts *TreeStore) DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExist
 	return
 }
 
-func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode, kald *keyAutoLinkDefinition) {
+func (ts *TreeStore) populateAutoLink(dataParentSk StoreKey, dataParentKn *keyNode, kald *keyAutoLinkDefinition) {
 	//
-	// Iterate all of the unique IDs under recordSk, and establish index records for each.
+	// Iterate all of the unique IDs under recordSk, and establish links for each.
 	//
 
 	if dataParentKn.nextLevel == nil {
@@ -156,7 +156,7 @@ func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode,
 	})
 }
 
-// worker - iterates key segments for an index field, filtering to only those that are
+// worker - iterates key segments for an auto-link field, filtering to only those that are
 // altered by a key add/remove/move
 //
 // Example:
@@ -172,7 +172,7 @@ func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode,
 //
 // N.B., The entire subPath array can be empty; this will incorporate the record unique ID
 //
-//	in the index path.
+//	in the auto-link path.
 //
 //	A subPath can contain nil array elements. Those will match any record key segment.
 func (ts *TreeStore) iterateRecordFieldWorker(crs *changedRecordState, subPath SubPath, callback recordDataCallback) {
@@ -201,7 +201,7 @@ func (ts *TreeStore) iterateRecordFieldWorker(crs *changedRecordState, subPath S
 		// design to remove expired keys, and rework all the code to
 		// assume if a key is present, it is not expired
 		//
-		// Because otherwise the index can refer to records where
+		// Because otherwise the auto-link can refer to records where
 		// some or all data has expired.
 		//
 		// This is a big change - will do later.
@@ -231,7 +231,7 @@ func (ts *TreeStore) iterateRecordFieldWorker(crs *changedRecordState, subPath S
 	})
 }
 
-// recursive worker - iterates the index subpath(s) impacted by a record change
+// recursive worker - iterates the auto-link subpath(s) impacted by a record change
 //
 // Example:
 //
@@ -250,36 +250,36 @@ func (ts *TreeStore) iterateRecordFieldWorker(crs *changedRecordState, subPath S
 //	Outputs:
 //	  callback(["Joe", "active"])
 //	  callback(["Mary", "active"])
-func (ts *TreeStore) iterateAffectedIndexSubpaths(crs *changedRecordState, subPaths []SubPath, parent IndexPath, parentAffected bool) {
+func (ts *TreeStore) iterateAffectedFieldSubpaths(crs *changedRecordState, subPaths []SubPath, parent AutoLinkPath, parentAffected bool) {
 	leaf := len(subPaths) == 1
 
 	ts.iterateRecordFieldWorker(crs, subPaths[0], func(seg TokenSegment, affected bool) {
 		child := append(parent, seg)
 		if leaf {
 			if affected || parentAffected {
-				indexSk := AppendStoreKeySegments(crs.indexBaseSk, child...)
+				autoLinkSk := AppendStoreKeySegments(crs.alBaseSk, child...)
 				if crs.removal {
-					ts.deleteKeyUpToLocked(crs.indexBaseSk, indexSk)
+					ts.deleteKeyUpToLocked(crs.alBaseSk, autoLinkSk)
 				} else {
-					ts.setKeyValueExLocked(indexSk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, []StoreAddress{crs.recordKn.address})
+					ts.setKeyValueExLocked(autoLinkSk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, []StoreAddress{crs.recordKn.address})
 				}
 			}
 		} else {
-			ts.iterateAffectedIndexSubpaths(crs, subPaths[1:], child, parentAffected || affected)
+			ts.iterateAffectedFieldSubpaths(crs, subPaths[1:], child, parentAffected || affected)
 		}
 	})
 }
 
-// worker - given a key of a record that has changed, iterates through every impacted index key
-func (ts *TreeStore) processIndexPaths(crs *changedRecordState, fields []SubPath) {
+// worker - given a key of a record that has changed, iterates through every impacted auto-link key
+func (ts *TreeStore) processAutoLinkPaths(crs *changedRecordState, fields []SubPath) {
 	if len(fields) > 0 {
-		ts.iterateAffectedIndexSubpaths(crs, fields, IndexPath{}, false)
+		ts.iterateAffectedFieldSubpaths(crs, fields, AutoLinkPath{}, false)
 	}
 }
 
 // worker - starting from a changed record, key segments are walked backwards to find
-// index definition(s). For each index, the index fields are processed, and if impacted
-// by the modified record key (or subkey), the index key(s) are updated to reflect
+// auto-link definition(s). For each ald, the auto-link fields are processed, and if impacted
+// by the modified record key (or subkey), the auto-link key(s) are updated to reflect
 // the change.
 func (ts *TreeStore) processKeyLinks(tokens TokenSet, recordKn *keyNode, removal, tree bool) {
 	kn := recordKn // never nil, might be a subkey of a record
@@ -298,9 +298,9 @@ func (ts *TreeStore) processKeyLinks(tokens TokenSet, recordKn *keyNode, removal
 			crs.recordSk = MakeStoreKeyFromTokenSegments(tokens[0:end]...)
 
 			for _, kald := range kn.autoLinks.autoLinkMap {
-				// process this index
-				crs.indexBaseSk = kald.indexSk
-				ts.processIndexPaths(&crs, kald.fields)
+				// process this auto-link definition
+				crs.alBaseSk = kald.autoLinkSk
+				ts.processAutoLinkPaths(&crs, kald.fields)
 			}
 		}
 	}
@@ -320,27 +320,27 @@ func (ts *TreeStore) removeAutoLinks(tokens TokenSet, kn *keyNode, tree bool) {
 func (ts *TreeStore) purgeIndicies(kn *keyNode) {
 	if kn.autoLinks != nil {
 		for _, kald := range kn.autoLinks.autoLinkMap {
-			ts.deleteKeyTreeLocked(kald.indexSk)
+			ts.deleteKeyTreeLocked(kald.autoLinkSk)
 		}
 		kn.autoLinks = nil
 	}
 }
 
-// Returns all autoLinks defined for the specified data key, or nil if none.
-func (ts *TreeStore) GetIndex(dataParentSk StoreKey) (id []IndexDefinition) {
-	level, index, kn, expired := ts.locateKeyNodeForRead(dataParentSk)
+// Returns all auto-link definitions defined for the specified data key, or nil if none.
+func (ts *TreeStore) GetAutoLinkDefinition(dataParentSk StoreKey) (id []AutoLinkDefinition) {
+	level, tokenIndex, kn, expired := ts.locateKeyNodeForRead(dataParentSk)
 	defer ts.completeKeyNodeRead(level)
 
-	if index < len(dataParentSk.Tokens) || expired {
+	if tokenIndex < len(dataParentSk.Tokens) || expired {
 		return
 	}
 
 	if kn.autoLinks != nil && len(kn.autoLinks.autoLinkMap) > 0 {
-		id = make([]IndexDefinition, 0, len(kn.autoLinks.autoLinkMap))
+		id = make([]AutoLinkDefinition, 0, len(kn.autoLinks.autoLinkMap))
 		for _, kald := range kn.autoLinks.autoLinkMap {
-			elem := IndexDefinition{
-				IndexSk: kald.indexSk,
-				Fields:  kald.fields,
+			elem := AutoLinkDefinition{
+				autoLinkSk: kald.autoLinkSk,
+				Fields:     kald.fields,
 			}
 			id = append(id, elem)
 		}

@@ -1146,7 +1146,7 @@ func (ts *TreeStore) GetRelationshipValue(sk StoreKey, relationshipIndex int) (h
 	defer ts.keyNodeMu.RUnlock()
 
 	kn, tokens := ts.getTokenSetForAddressLocked(targetAddr)
-	if kn == nil {
+	if kn == nil || kn.isExpired() {
 		return
 	}
 

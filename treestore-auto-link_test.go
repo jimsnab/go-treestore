@@ -4,17 +4,18 @@ import (
 	"context"
 	"encoding/json"
 	"testing"
+	"time"
 
 	"github.com/jimsnab/go-lane"
 )
 
-func TestIndexEmpty(t *testing.T) {
+func TestAutoLinkEmpty(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, nil)
+	re, ic := ts.CreateAutoLink(dsk, isk, nil)
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -22,7 +23,7 @@ func TestIndexEmpty(t *testing.T) {
 	ts.SetKey(vsk)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	if !ts.DiagDump() {
@@ -30,13 +31,13 @@ func TestIndexEmpty(t *testing.T) {
 	}
 }
 
-func TestIndexEmpty2(t *testing.T) {
+func TestAutoLinkEmpty2(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -44,7 +45,7 @@ func TestIndexEmpty2(t *testing.T) {
 	ts.SetKey(vsk)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	if !ts.DiagDump() {
@@ -52,13 +53,13 @@ func TestIndexEmpty2(t *testing.T) {
 	}
 }
 
-func TestIndexSimple(t *testing.T) {
+func TestAutoLinkSimple(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -66,7 +67,7 @@ func TestIndexSimple(t *testing.T) {
 	ts.SetKey(vsk)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
@@ -79,14 +80,14 @@ func TestIndexSimple(t *testing.T) {
 	}
 }
 
-func TestIndexUserNameSingle(t *testing.T) {
+func TestAutoLinkUserNameSingle(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -95,7 +96,7 @@ func TestIndexUserNameSingle(t *testing.T) {
 	ts.SetKey(usk2)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Joe"), 0)
@@ -113,14 +114,14 @@ func TestIndexUserNameSingle(t *testing.T) {
 	}
 }
 
-func TestIndexUserNameMulti(t *testing.T) {
+func TestAutoLinkUserNameMulti(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "1", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -129,7 +130,7 @@ func TestIndexUserNameMulti(t *testing.T) {
 	ts.SetKey(usk2)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Joe"), 0)
@@ -147,14 +148,14 @@ func TestIndexUserNameMulti(t *testing.T) {
 	}
 }
 
-func TestIndexUserNameDelete(t *testing.T) {
+func TestAutoLinkUserNameDelete(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -164,7 +165,7 @@ func TestIndexUserNameDelete(t *testing.T) {
 	ts.DeleteKey(usk1)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Joe"), 0)
@@ -182,16 +183,16 @@ func TestIndexUserNameDelete(t *testing.T) {
 	}
 }
 
-func TestIndexTwoValues(t *testing.T) {
+func TestAutoLinkTwoValues(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1a := MakeStoreKey("records", "1", "user", "Joe")
 	usk1b := MakeStoreKey("records", "1", "status", "active")
 	usk2a := MakeStoreKey("records", "2", "user", "Mary")
 	usk2b := MakeStoreKey("records", "2", "status", "suspended")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -202,7 +203,7 @@ func TestIndexTwoValues(t *testing.T) {
 	ts.SetKey(usk2b)
 
 	if countSubKeys(ts, isk) != 4 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Joe", "active"), 0)
@@ -220,17 +221,17 @@ func TestIndexTwoValues(t *testing.T) {
 	}
 }
 
-func TestIndexTwoValuesMove(t *testing.T) {
+func TestAutoLinkTwoValuesMove(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1a := MakeStoreKey("records", "1", "user", "Joe")
 	usk1b := MakeStoreKey("records", "1", "status", "active")
 	usk2a := MakeStoreKey("records", "2", "user", "Mary")
 	usk2b1 := MakeStoreKey("records", "2", "status", "suspended")
 	usk2b2 := MakeStoreKey("records", "2", "status", "active")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user"), MakeSubPath("status")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -242,7 +243,7 @@ func TestIndexTwoValuesMove(t *testing.T) {
 	ts.MoveKey(usk2b1, usk2b2, false)
 
 	if countSubKeys(ts, isk) != 4 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "Joe", "active"), 0)
@@ -265,22 +266,22 @@ func TestIndexTwoValuesMove(t *testing.T) {
 	}
 }
 
-func TestIndexTwoValuesTwoIndexes(t *testing.T) {
+func TestAutoLinkTwoValuesTwoAlKeys(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk1 := MakeStoreKey("user-index")
-	isk2 := MakeStoreKey("status-index")
+	isk1 := MakeStoreKey("user-links")
+	isk2 := MakeStoreKey("status-links")
 	usk1a := MakeStoreKey("records", "1", "user", "Joe")
 	usk1b := MakeStoreKey("records", "1", "status", "active")
 	usk2a := MakeStoreKey("records", "2", "user", "Mary")
 	usk2b := MakeStoreKey("records", "2", "status", "active")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("user")})
+	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created 1")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("status"), MakeSubPath()})
+	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("status"), MakeSubPath()})
 	if !re || !ic {
 		t.Errorf("created 2")
 	}
@@ -291,10 +292,10 @@ func TestIndexTwoValuesTwoIndexes(t *testing.T) {
 	ts.SetKey(usk2b)
 
 	if countSubKeys(ts, isk1) != 2 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 	if countSubKeys(ts, isk2) != 3 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "Joe"), 0)
@@ -322,13 +323,13 @@ func TestIndexTwoValuesTwoIndexes(t *testing.T) {
 	}
 }
 
-func TestIndexRepeat(t *testing.T) {
+func TestAutoLinkRepeat(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 	vsk := MakeStoreKey("tree1", "source", "123")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -337,7 +338,7 @@ func TestIndexRepeat(t *testing.T) {
 	ts.SetKey(vsk)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
@@ -359,14 +360,14 @@ func countSubKeys(ts *TreeStore, sk StoreKey) int {
 	return count
 }
 
-func TestIndexRepeat2(t *testing.T) {
+func TestAutoLinkRepeat2(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 	vsk1 := MakeStoreKey("tree1", "source", "123")
 	vsk2 := MakeStoreKey("tree1", "source", "123", "more")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -375,7 +376,7 @@ func TestIndexRepeat2(t *testing.T) {
 	ts.SetKey(vsk2)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
@@ -388,20 +389,20 @@ func TestIndexRepeat2(t *testing.T) {
 	}
 }
 
-func TestIndexRepeat3(t *testing.T) {
+func TestAutoLinkRepeat3(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk1 := MakeStoreKey("tree1-index")
-	isk2 := MakeStoreKey("tree1-index2")
+	isk1 := MakeStoreKey("tree1-links")
+	isk2 := MakeStoreKey("tree1-links2")
 	vsk1 := MakeStoreKey("tree1", "source", "123")
 	vsk2 := MakeStoreKey("tree1", "source", "123", "more")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{{}})
+	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{{}})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{{}})
+	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{{}})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -410,11 +411,11 @@ func TestIndexRepeat3(t *testing.T) {
 	ts.SetKey(vsk2)
 
 	if countSubKeys(ts, isk1) != 1 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	if countSubKeys(ts, isk2) != 1 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "123"), 0)
@@ -440,7 +441,7 @@ func toJson(obj any) []byte {
 	return bytes
 }
 
-func TestIndexJsonArray(t *testing.T) {
+func TestAutoLinkJsonArray(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	data := map[string]any{
@@ -448,10 +449,10 @@ func TestIndexJsonArray(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("source")
-	isk := MakeStoreKey("index-names")
+	isk := MakeStoreKey("link-names")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -459,7 +460,7 @@ func TestIndexJsonArray(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "1"), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -477,7 +478,7 @@ func TestIndexJsonArray(t *testing.T) {
 	}
 }
 
-func TestIndexJsonMixed(t *testing.T) {
+func TestAutoLinkJsonMixed(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	data1 := map[string]any{
@@ -494,15 +495,15 @@ func TestIndexJsonMixed(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("source")
-	isk1 := MakeStoreKey("index-pet-types")
-	isk2 := MakeStoreKey("index-names")
+	isk1 := MakeStoreKey("link-pet-types")
+	isk2 := MakeStoreKey("link-names")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -511,11 +512,11 @@ func TestIndexJsonMixed(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "2"), toJson(data2), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk1) != 2 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 
 	if countSubKeys(ts, isk2) != 2 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "cat"), 0)
@@ -543,7 +544,7 @@ func TestIndexJsonMixed(t *testing.T) {
 	}
 }
 
-func TestIndexJsonStaged(t *testing.T) {
+func TestAutoLinkJsonStaged(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	data1 := map[string]any{
@@ -562,15 +563,15 @@ func TestIndexJsonStaged(t *testing.T) {
 
 	stagingSk := MakeStoreKey("staging")
 	dataSk := MakeStoreKey("source")
-	isk1 := MakeStoreKey("index-pet-types")
-	isk2 := MakeStoreKey("index-names")
+	isk1 := MakeStoreKey("link-pet-types")
+	isk2 := MakeStoreKey("link-names")
 
-	re, ic := ts.CreateIndex(dataSk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.CreateAutoLink(dataSk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.CreateAutoLink(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -585,11 +586,11 @@ func TestIndexJsonStaged(t *testing.T) {
 	ts.MoveReferencedKey(tempSk2, dsk2, false, 0, nil, nil)
 
 	if countSubKeys(ts, isk1) != 2 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 
 	if countSubKeys(ts, isk2) != 3 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "cat"), 0)
@@ -622,7 +623,7 @@ func TestIndexJsonStaged(t *testing.T) {
 	}
 }
 
-func TestIndexJsonStagedDeep(t *testing.T) {
+func TestAutoLinkJsonStagedDeep(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	data1 := map[string]any{
@@ -641,15 +642,15 @@ func TestIndexJsonStagedDeep(t *testing.T) {
 
 	stagingSk := MakeStoreKey("staging")
 	dataSk := MakeStoreKey("v1", "data")
-	isk1 := MakeStoreKey("v1", "index-pet-types")
-	isk2 := MakeStoreKey("v1", "index-names")
+	isk1 := MakeStoreKey("v1", "link-pet-types")
+	isk2 := MakeStoreKey("v1", "link-names")
 
-	re, ic := ts.CreateIndex(dataSk, isk1, []SubPath{MakeSubPath("pet"), MakeSubPath("sound")})
+	re, ic := ts.CreateAutoLink(dataSk, isk1, []SubPath{MakeSubPath("pet"), MakeSubPath("sound")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.CreateAutoLink(dataSk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -664,11 +665,11 @@ func TestIndexJsonStagedDeep(t *testing.T) {
 	ts.MoveReferencedKey(tempSk2, dsk2, false, 0, nil, nil)
 
 	if countSubKeys(ts, isk1) != 4 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 
 	if countSubKeys(ts, isk2) != 3 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "cat", "meow"), 0)
@@ -701,7 +702,7 @@ func TestIndexJsonStagedDeep(t *testing.T) {
 	}
 }
 
-func TestIndexLate(t *testing.T) {
+func TestAutoLinkLate(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	data1 := map[string]any{
@@ -718,28 +719,28 @@ func TestIndexLate(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("source")
-	isk1 := MakeStoreKey("index-pet-types")
-	isk2 := MakeStoreKey("index-names")
+	isk1 := MakeStoreKey("link-pet-types")
+	isk2 := MakeStoreKey("link-names")
 
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "1"), toJson(data1), JsonStringValuesAsKeys)
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "2"), toJson(data2), JsonStringValuesAsKeys)
 
-	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if !re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
 
 	if countSubKeys(ts, isk1) != 2 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 
 	if countSubKeys(ts, isk2) != 2 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "cat"), 0)
@@ -767,7 +768,7 @@ func TestIndexLate(t *testing.T) {
 	}
 }
 
-func TestIndexAddDeleteAdd(t *testing.T) {
+func TestAutoLinkAddDeleteAdd(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	data1 := map[string]any{
@@ -784,15 +785,15 @@ func TestIndexAddDeleteAdd(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("source")
-	isk1 := MakeStoreKey("index-pet-types")
-	isk2 := MakeStoreKey("index-names")
+	isk1 := MakeStoreKey("link-pet-types")
+	isk2 := MakeStoreKey("link-names")
 
-	re, ic := ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic := ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || !ic {
 		t.Error("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("names", `\N`)})
 	if !re || !ic {
 		t.Error("not created 2")
 	}
@@ -800,35 +801,35 @@ func TestIndexAddDeleteAdd(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "1"), toJson(data1), JsonStringValuesAsKeys)
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, "2"), toJson(data2), JsonStringValuesAsKeys)
 
-	re, ir := ts.DeleteIndex(dsk, isk1)
+	re, ir := ts.DeleteAutoLink(dsk, isk1)
 	if !re || !ir {
 		t.Error("not deleted")
 	}
 
-	re, ir = ts.DeleteIndex(dsk, isk1)
+	re, ir = ts.DeleteAutoLink(dsk, isk1)
 	if !re || ir {
 		t.Error("not deleted 2")
 	}
 
 	if countSubKeys(ts, isk1) != 0 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic = ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if !re || !ic {
 		t.Error("not created again")
 	}
 
 	if countSubKeys(ts, isk2) != 2 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	if countSubKeys(ts, isk1) != 2 {
-		t.Error("index key count 1 again")
+		t.Error("auto-link key count 1 again")
 	}
 
 	if countSubKeys(ts, isk2) != 2 {
-		t.Error("index key count 2 again")
+		t.Error("auto-link key count 2 again")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk1, "cat"), 0)
@@ -851,7 +852,7 @@ func TestIndexAddDeleteAdd(t *testing.T) {
 		t.Error("link verify 4")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk1, []SubPath{MakeSubPath("pet")})
+	re, ic = ts.CreateAutoLink(dsk, isk1, []SubPath{MakeSubPath("pet")})
 	if re || ic {
 		t.Error("create overwite not blocked")
 	}
@@ -861,17 +862,17 @@ func TestIndexAddDeleteAdd(t *testing.T) {
 	}
 }
 
-func TestIndexRedefineIndex(t *testing.T) {
+func TestAutoLinkRedefineAutoLink(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
+	isk := MakeStoreKey("tree1-links")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("test")})
+	re, ic = ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("test")})
 	if !re || ic {
 		t.Errorf("created")
 	}
@@ -881,14 +882,14 @@ func TestIndexRedefineIndex(t *testing.T) {
 	}
 }
 
-func TestIndexIndexMissingValues(t *testing.T) {
+func TestAutoLinkDefMissingValues(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("function")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("function")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -897,7 +898,7 @@ func TestIndexIndexMissingValues(t *testing.T) {
 	ts.SetKey(usk2)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	if !ts.DiagDump() {
@@ -905,14 +906,14 @@ func TestIndexIndexMissingValues(t *testing.T) {
 	}
 }
 
-func TestIndexIndexMissingValues2(t *testing.T) {
+func TestAutoLinkDefMissingValues2(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1 := MakeStoreKey("records", "1", "user", "function")
 	usk2 := MakeStoreKey("records", "2", "user", "service")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user", "function")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user", "function")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -921,7 +922,7 @@ func TestIndexIndexMissingValues2(t *testing.T) {
 	ts.SetKey(usk2)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	if !ts.DiagDump() {
@@ -929,14 +930,14 @@ func TestIndexIndexMissingValues2(t *testing.T) {
 	}
 }
 
-func TestIndexTakeRecordAway(t *testing.T) {
+func TestAutoLinkTakeRecordAway(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -945,13 +946,13 @@ func TestIndexTakeRecordAway(t *testing.T) {
 	ts.SetKey(usk2)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	ts.DeleteKeyTree(dsk)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	if !ts.DiagDump() {
@@ -959,14 +960,14 @@ func TestIndexTakeRecordAway(t *testing.T) {
 	}
 }
 
-func TestIndexTakeRecordAway2(t *testing.T) {
+func TestAutoLinkTakeRecordAway2(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("records")
-	isk := MakeStoreKey("user-index")
+	isk := MakeStoreKey("user-links")
 	usk1 := MakeStoreKey("records", "1", "user", "Joe")
 	usk2 := MakeStoreKey("records", "2", "user", "Mary")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("user")})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("user")})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -975,7 +976,7 @@ func TestIndexTakeRecordAway2(t *testing.T) {
 	ts.SetKey(usk2)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	ts.DeleteKey(usk1)
@@ -983,7 +984,7 @@ func TestIndexTakeRecordAway2(t *testing.T) {
 	ts.DeleteKey(dsk)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	if !ts.DiagDump() {
@@ -991,13 +992,13 @@ func TestIndexTakeRecordAway2(t *testing.T) {
 	}
 }
 
-func TestIndexGet(t *testing.T) {
+func TestAutoLinkGet(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
-	isk := MakeStoreKey("tree1-index")
-	isk2 := MakeStoreKey("tree1-index2")
+	isk := MakeStoreKey("tree1-links")
+	isk2 := MakeStoreKey("tree1-links2")
 
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{{}})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
 	if re || !ic {
 		t.Errorf("not created")
 	}
@@ -1006,33 +1007,33 @@ func TestIndexGet(t *testing.T) {
 		t.Error("final dump")
 	}
 
-	id := ts.GetIndex(MakeStoreKey())
+	id := ts.GetAutoLinkDefinition(MakeStoreKey())
 	if id != nil {
-		t.Error("expected no index")
+		t.Error("expected no auto-link def")
 	}
 
-	id = ts.GetIndex(dsk)
+	id = ts.GetAutoLinkDefinition(dsk)
 	if len(id) != 1 {
-		t.Error("expected index")
+		t.Error("expected auto-link def")
 	}
-	if id[0].IndexSk.Path != isk.Path || len(id[0].Fields) != 1 {
-		t.Error("bad index response 1")
+	if id[0].autoLinkSk.Path != isk.Path || len(id[0].Fields) != 1 {
+		t.Error("bad auto-link response 1")
 	}
 
-	re, ic = ts.CreateIndex(dsk, isk2, []SubPath{MakeSubPath("test"), MakeSubPath("index", "deeper")})
+	re, ic = ts.CreateAutoLink(dsk, isk2, []SubPath{MakeSubPath("test"), MakeSubPath("link", "deeper")})
 	if !re || !ic {
 		t.Errorf("not created 2")
 	}
 
-	id = ts.GetIndex(dsk)
+	id = ts.GetAutoLinkDefinition(dsk)
 	if len(id) != 2 {
-		t.Error("expected index")
+		t.Error("expected auto-link def")
 	}
-	if id[0].IndexSk.Path != isk.Path || len(id[0].Fields) != 1 {
-		t.Error("bad index response 2a")
+	if id[0].autoLinkSk.Path != isk.Path || len(id[0].Fields) != 1 {
+		t.Error("bad auto-link response 2a")
 	}
-	if id[1].IndexSk.Path != isk2.Path || len(id[1].Fields) != 2 {
-		t.Error("bad index response 2b")
+	if id[1].autoLinkSk.Path != isk2.Path || len(id[1].Fields) != 2 {
+		t.Error("bad auto-link response 2b")
 	}
 
 	if !ts.DiagDump() {
@@ -1040,11 +1041,11 @@ func TestIndexGet(t *testing.T) {
 	}
 }
 
-func TestIndexJsonUpdateArray(t *testing.T) {
+func TestAutoLinkJsonUpdateArray(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store names under /names, and index them under /index-names
+	// Store names under /names, and link them under /link-names
 	//
 	// - add one name
 	// - verify
@@ -1061,11 +1062,11 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("source")
-	isk := MakeStoreKey("index-names")
+	isk := MakeStoreKey("link-names")
 	id := "ID1"
 
 	// second token is nil for the array index
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1073,7 +1074,7 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1086,7 +1087,7 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1104,7 +1105,7 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count 3")
+		t.Error("auto-link key count 3")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1122,11 +1123,11 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	}
 }
 
-func TestIndexJsonDelTree(t *testing.T) {
+func TestAutoLinkJsonDelTree(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store names under /names, and index them under /index-names
+	// Store names under /names, and link them under /link-names
 	//
 	// - store some data
 	// - verify
@@ -1139,11 +1140,11 @@ func TestIndexJsonDelTree(t *testing.T) {
 	}
 
 	dsk := MakeStoreKey("source")
-	isk := MakeStoreKey("index-names")
+	isk := MakeStoreKey("link-names")
 	id := "ID1"
 
 	// second token is nil for the array index
-	re, ic := ts.CreateIndex(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1151,7 +1152,7 @@ func TestIndexJsonDelTree(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1168,7 +1169,7 @@ func TestIndexJsonDelTree(t *testing.T) {
 	ts.DeleteKeyTree(AppendStoreKeySegmentStrings(dsk, id))
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1186,12 +1187,12 @@ func TestIndexJsonDelTree(t *testing.T) {
 	}
 }
 
-func TestIndexJsonDeepReplace(t *testing.T) {
+func TestAutoLinkJsonDeepReplace(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store names under /source/ID/records/names, and index them under /index-names,
-	// place index on /source
+	// Store names under /source/ID/records/names, and link them under /link-names,
+	// place auto-link on /source
 	//
 	// - store full record
 	// - verify
@@ -1207,12 +1208,12 @@ func TestIndexJsonDeepReplace(t *testing.T) {
 	}
 
 	ssk := MakeStoreKey("source")
-	isk := MakeStoreKey("index-names")
+	isk := MakeStoreKey("link-names")
 	id := "ID1"
 	dsk := MakeStoreKey("source", id, "records", "names")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateIndex(ssk, isk, []SubPath{MakeSubPath("records", "names", `\N`)})
+	re, ic := ts.CreateAutoLink(ssk, isk, []SubPath{MakeSubPath("records", "names", `\N`)})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1220,7 +1221,7 @@ func TestIndexJsonDeepReplace(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1237,7 +1238,7 @@ func TestIndexJsonDeepReplace(t *testing.T) {
 	ts.DeleteKeyTree(dsk)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	// store new data
@@ -1248,7 +1249,7 @@ func TestIndexJsonDeepReplace(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id, "records"), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count")
+		t.Error("auto-link key count")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "mittens"), 0)
@@ -1261,12 +1262,12 @@ func TestIndexJsonDeepReplace(t *testing.T) {
 	}
 }
 
-func TestIndexJsonDeepReplace2(t *testing.T) {
+func TestAutoLinkJsonDeepReplace2(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store structure under /source/ID/records/data, and index them under /index-type-name,
-	// place index on /source and pick two fields out of the data
+	// Store structure under /source/ID/records/data, and link them under /link-type-name,
+	// place auto-link on /source and pick two fields out of the data
 	//
 	// - store full record
 	// - verify
@@ -1292,12 +1293,12 @@ func TestIndexJsonDeepReplace2(t *testing.T) {
 	}
 
 	ssk := MakeStoreKey("source")
-	isk := MakeStoreKey("index-type-name")
+	isk := MakeStoreKey("link-type-name")
 	id := "ID1"
 	dsk := MakeStoreKey("source", id, "records", "data")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateIndex(ssk, isk, []SubPath{MakeSubPath("records", "data", `\N`, "type"), MakeSubPath("records", "data", `\N`, "name")})
+	re, ic := ts.CreateAutoLink(ssk, isk, []SubPath{MakeSubPath("records", "data", `\N`, "type"), MakeSubPath("records", "data", `\N`, "name")})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1305,7 +1306,7 @@ func TestIndexJsonDeepReplace2(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 6 {
-		t.Error("index key count 1")
+		t.Error("auto-link key count 1")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "dog", "fido"), 0)
@@ -1331,7 +1332,7 @@ func TestIndexJsonDeepReplace2(t *testing.T) {
 	ts.DeleteKeyTree(dsk)
 
 	if countSubKeys(ts, isk) != 0 {
-		t.Error("index key count 2")
+		t.Error("auto-link key count 2")
 	}
 
 	// store new data
@@ -1347,7 +1348,7 @@ func TestIndexJsonDeepReplace2(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id, "records"), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count 3")
+		t.Error("auto-link key count 3")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "dog", "rover"), 0)
@@ -1360,12 +1361,12 @@ func TestIndexJsonDeepReplace2(t *testing.T) {
 	}
 }
 
-func TestIndexJsonDeepReplace3(t *testing.T) {
+func TestAutoLinkJsonDeepReplace3(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store structure under /source/ID/records/data, and index them under /index-service-id,
-	// place index on /source and pick two fields out of the data that don't get deleted.
+	// Store structure under /source/ID/records/data, and link them under /link-service-id,
+	// place auto-link on /source and pick two fields out of the data that don't get deleted.
 	//
 	// - store full record
 	// - verify
@@ -1395,12 +1396,12 @@ func TestIndexJsonDeepReplace3(t *testing.T) {
 	}
 
 	ssk := MakeStoreKey("source")
-	isk := MakeStoreKey("index-service-id")
+	isk := MakeStoreKey("link-service-id")
 	id := "ID1"
 	dsk := MakeStoreKey("source", id, "records", "data")
 
 	// second token is nil for the array index
-	re, ic := ts.CreateIndex(ssk, isk, []SubPath{MakeSubPath("records", "info", "service"), MakeSubPath("records", "info", "id")})
+	re, ic := ts.CreateAutoLink(ssk, isk, []SubPath{MakeSubPath("records", "info", "service"), MakeSubPath("records", "info", "id")})
 	if re || !ic {
 		t.Error("not created")
 	}
@@ -1408,7 +1409,7 @@ func TestIndexJsonDeepReplace3(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Fatal("index key count")
+		t.Fatal("auto-link key count")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "vet", "35"), 0)
@@ -1420,7 +1421,7 @@ func TestIndexJsonDeepReplace3(t *testing.T) {
 	ts.DeleteKeyTree(dsk)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Fatal("index key count 2")
+		t.Fatal("auto-link key count 2")
 	}
 
 	// store new data
@@ -1434,7 +1435,7 @@ func TestIndexJsonDeepReplace3(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id, "records", "pets"), toJson(pets), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Fatal("index key count 3")
+		t.Fatal("auto-link key count 3")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "vet", "35"), 0)
@@ -1447,12 +1448,12 @@ func TestIndexJsonDeepReplace3(t *testing.T) {
 	}
 }
 
-func TestIndexJsonDeepReplace4(t *testing.T) {
+func TestAutoLinkJsonDeepReplace4(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store structure under /source/ID/records/data, and index them under /index-service-id,
-	// place index on /source and pick two fields out of the data that don't get deleted.
+	// Store structure under /source/ID/records/data, and link them under /link-service-id,
+	// place auto-link on /source and pick two fields out of the data that don't get deleted.
 	//
 	// - store full record
 	// - verify
@@ -1489,13 +1490,13 @@ func TestIndexJsonDeepReplace4(t *testing.T) {
 }`
 
 	usersSk := MakeStoreKey("users", "profiles")
-	ts.CreateIndex(usersSk, MakeStoreKey("users", "email-org-name"), []SubPath{MakeSubPath("email"), MakeSubPath("organization_id"), MakeSubPath("name")})
+	ts.CreateAutoLink(usersSk, MakeStoreKey("users", "email-org-name"), []SubPath{MakeSubPath("email"), MakeSubPath("organization_id"), MakeSubPath("name")})
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
 
 	count := countSubKeys(ts, MakeStoreKey("users", "email-org-name"))
 	if count != 6 {
-		t.Error("index count 1")
+		t.Error("link count 1")
 	}
 
 	dsk := AppendStoreKeySegmentStrings(usersSk, userId1, "permissions")
@@ -1503,7 +1504,84 @@ func TestIndexJsonDeepReplace4(t *testing.T) {
 
 	count = countSubKeys(ts, MakeStoreKey("users", "email-org-name"))
 	if count != 6 {
-		t.Error("index count 2")
+		t.Error("link count 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkExpireFieldData(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-links")
+	vsk := MakeStoreKey("tree1", "source", "123")
+
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{{}})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	ts.SetKey(vsk)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("auto-link key count")
+	}
+
+	ts.SetKeyTtl(vsk, 1)
+
+	// DESIGN ISSUE - really would be nice if the key expiration resulted in immediate auto-link adjustment.
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("auto-link key count 2")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "123"), 0)
+	if !hasLink || rv != nil {
+		t.Error("link verify")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkExpireFieldDataDeep(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	dsk := MakeStoreKey("tree1", "source")
+	isk := MakeStoreKey("tree1-links")
+	vsk1 := MakeStoreKey("tree1", "source", "123")
+	vsk2 := MakeStoreKey("tree1", "source", "123", "data", "abc")
+
+	re, ic := ts.CreateAutoLink(dsk, isk, []SubPath{MakeSubPath("data")})
+	if re || !ic {
+		t.Errorf("not created")
+	}
+
+	ts.SetKey(vsk1)
+	ts.SetKeyValueEx(vsk2, nil, SetExNoValueUpdate, time.Now().Add(time.Millisecond*10).UnixNano(), nil)
+
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("auto-link key count")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "abc"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/tree1/source/123") {
+		t.Error("link verify")
+	}
+
+	time.Sleep(20 * time.Millisecond)
+
+	// DESIGN ISSUE - really would be nice if the key expiration resulted in immediate auto-link adjustment.
+	if countSubKeys(ts, isk) != 1 {
+		t.Error("auto-link key count 2")
+	}
+
+	// DESIGN BUG - even though the inner data member has expired, we still find the record.
+	// This will have to be fixed another day.
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "abc"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/tree1/source/123") {
+		t.Error("link verify 2")
 	}
 
 	if !ts.DiagDump() {

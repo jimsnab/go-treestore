@@ -110,7 +110,7 @@ func kiToDiskKi(kals *keyAutoLinks) []diskKid {
 	dki := make([]diskKid, 0, len(kals.autoLinkMap))
 	for _, kald := range kals.autoLinkMap {
 		dkid := diskKid{
-			IndexKey: string(kald.indexSk.Path),
+			IndexKey: string(kald.autoLinkSk.Path),
 			Fields:   make([]string, 0, len(kald.fields)),
 		}
 		for _, field := range kald.fields {
@@ -133,14 +133,14 @@ func diskKiToKi(dki []diskKid) *keyAutoLinks {
 
 	for _, dkid := range dki {
 		kald := keyAutoLinkDefinition{
-			indexSk: MakeStoreKeyFromPath(TokenPath(dkid.IndexKey)),
-			fields:  make([]SubPath, 0, len(dkid.Fields)),
+			autoLinkSk: MakeStoreKeyFromPath(TokenPath(dkid.IndexKey)),
+			fields:     make([]SubPath, 0, len(dkid.Fields)),
 		}
 		for _, field := range dkid.Fields {
 			kald.fields = append(kald.fields, UnescapeSubPath(EscapedSubPath(field)))
 		}
 
-		kal.autoLinkMap[kald.indexSk.Path] = &kald
+		kal.autoLinkMap[kald.autoLinkSk.Path] = &kald
 	}
 
 	return &kal
