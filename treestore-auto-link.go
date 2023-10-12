@@ -15,7 +15,7 @@ type (
 	recordDataCallback func(seg TokenSegment, affected bool)
 
 	AutoLinkDefinition struct {
-		autoLinkSk StoreKey
+		AutoLinkSk StoreKey
 		Fields     []SubPath
 	}
 
@@ -339,7 +339,7 @@ func (ts *TreeStore) GetAutoLinkDefinition(dataParentSk StoreKey) (id []AutoLink
 		id = make([]AutoLinkDefinition, 0, len(kn.autoLinks.autoLinkMap))
 		for _, kald := range kn.autoLinks.autoLinkMap {
 			elem := AutoLinkDefinition{
-				autoLinkSk: kald.autoLinkSk,
+				AutoLinkSk: kald.autoLinkSk,
 				Fields:     kald.fields,
 			}
 			id = append(id, elem)
