@@ -33,24 +33,24 @@ type (
 //
 // To use auto-linking, target data must be stored in a specific way:
 //
-//   * A "record" to be linked is a key, possibly with child keys. It must have
+//   - A "record" to be linked is a key, possibly with child keys. It must have
 //     a unique ID. (Key values aren't linkable.)
 //
-//   * The path to a record must be stored as <parent>/<unique id>/<record>,
+//   - The path to a record must be stored as <parent>/<unique id>/<record>,
 //     where <record> is typically a key tree of properites.
 //
-//   * The `dataParentSk` parameter specifies <parent>.
+//   - The `dataParentSk` parameter specifies <parent>.
 //
 // An auto-link key is maintained according to `fields`:
 //
-//   * A "field" is a subpath of the record; or an empty subpath for the record ID.
+//   - A "field" is a subpath of the record; or an empty subpath for the record ID.
 //
-//   * The auto-link key is constructed as <auto-link-key>/<field-value>/<field-value>/...
+//   - The auto-link key is constructed as <auto-link-key>/<field-value>/<field-value>/...
 //
-//   * When the record key is created, the corresponding auto-link key is
+//   - When the record key is created, the corresponding auto-link key is
 //     also created, and relationship 0 holds the address of the record.
 //
-//   * When the record key is deleted, the corresponding auto-link key is
+//   - When the record key is deleted, the corresponding auto-link key is
 //     also deleted.
 //
 // A typical pattern is to stage key creation in a staging key, and then move
