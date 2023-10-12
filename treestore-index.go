@@ -3,22 +3,29 @@ package treestore
 type (
 	IndexPath TokenSet
 
-	keyIndexDefinition struct {
+	keyAutoLinkDefinition struct {
 		indexSk StoreKey
 		fields  []SubPath
 	}
 
-	keyIndicies struct {
-		indexMap map[TokenPath]*keyIndexDefinition
+	keyAutoLinks struct {
+		autoLinkMap map[TokenPath]*keyAutoLinkDefinition
 	}
 
-	recordDataCallback func(seg TokenSegment)
-	indexKeyCallback   func(ip IndexPath)
-	indexSkCallback    func(indexRootSk, indexEntrySk StoreKey, kn *keyNode)
+	recordDataCallback func(seg TokenSegment, affected bool)
 
 	IndexDefinition struct {
 		IndexSk StoreKey
 		Fields  []SubPath
+	}
+
+	changedRecordState struct {
+		recordKn    *keyNode
+		recordSk    StoreKey
+		indexBaseSk StoreKey
+		removal     bool
+		tree        bool
+		changedSk   StoreKey
 	}
 )
 
@@ -50,7 +57,7 @@ type (
 // the key under `dataParentSk`. The record becomes atomically indexed upon
 // that move.
 //
-// Using the TreeStore Json APIs works very well with indexes.
+// Using the TreeStore Json APIs works very well with autoLinks.
 //
 // Creating an index acquires an exclusive lock of the database. If the data
 // parent key does not exist, it will be created. The operation will be nearly
@@ -77,35 +84,35 @@ func (ts *TreeStore) CreateIndex(dataParentSk, indexSk StoreKey, fields []SubPat
 	if tokenIndex >= len(dataParentSk.Tokens) && !expired {
 		recordKeyExists = true
 	} else {
-		kn, _ = ts.ensureKeyExclusive(dataParentSk)
+		kn, _ = ts.ensureKeyExclusive(dataParentSk, false)
 	}
 
-	ki := kn.indicies
-	if ki == nil {
-		ki = &keyIndicies{
-			indexMap: map[TokenPath]*keyIndexDefinition{},
+	kals := kn.autoLinks
+	if kals == nil {
+		kals = &keyAutoLinks{
+			autoLinkMap: map[TokenPath]*keyAutoLinkDefinition{},
 		}
-		kn.indicies = ki
+		kn.autoLinks = kals
 	} else {
-		_, defined := ki.indexMap[indexSk.Path]
+		_, defined := kals.autoLinkMap[indexSk.Path]
 		if defined {
 			return
 		}
 	}
 
-	kid := keyIndexDefinition{
+	kald := keyAutoLinkDefinition{
 		indexSk: indexSk,
 		fields:  fields,
 	}
-	ki.indexMap[indexSk.Path] = &kid
-	ts.populateIndex(dataParentSk, kn, &kid)
+	kals.autoLinkMap[indexSk.Path] = &kald
+	ts.populateIndex(dataParentSk, kn, &kald)
 	indexCreated = true
 	return
 }
 
 // Removes an index from a store key.
 //
-// See CreateIndex for details on treestore indexes.
+// See CreateIndex for details on treestore autoLinks.
 //
 // An exclusive lock is held during the removal of the index. If the
 // index is large, the operation may take some time to delete.
@@ -117,11 +124,11 @@ func (ts *TreeStore) DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExist
 	if tokenIndex >= len(dataParentSk.Tokens) && !expired {
 		recordKeyExists = true
 
-		ki := kn.indicies
+		ki := kn.autoLinks
 		if ki != nil {
-			_, defined := ki.indexMap[indexSk.Path]
+			_, defined := ki.autoLinkMap[indexSk.Path]
 			if defined {
-				delete(ki.indexMap, indexSk.Path)
+				delete(ki.autoLinkMap, indexSk.Path)
 				indexRemoved = ts.deleteKeyTreeLocked(indexSk)
 			}
 		}
@@ -130,7 +137,7 @@ func (ts *TreeStore) DeleteIndex(dataParentSk, indexSk StoreKey) (recordKeyExist
 	return
 }
 
-func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode, kid *keyIndexDefinition) {
+func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode, kald *keyAutoLinkDefinition) {
 	//
 	// Iterate all of the unique IDs under recordSk, and establish index records for each.
 	//
@@ -143,14 +150,14 @@ func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode,
 		kn := node.value
 		if !kn.isExpired() {
 			tokens := append(dataParentSk.Tokens, kn.key)
-			ts.addToIndicies(tokens, kn)
+			ts.addAutoLinks(tokens, kn, true)
 		}
 		return true
 	})
 }
 
-// worker - iterates all of the children of the specified record key; the leaf node is
-// the "field value" used in the index path.
+// worker - iterates key segments for an index field, filtering to only those that are
+// altered by a key add/remove/move
 //
 // Example:
 //
@@ -168,20 +175,38 @@ func (ts *TreeStore) populateIndex(dataParentSk StoreKey, dataParentKn *keyNode,
 //	in the index path.
 //
 //	A subPath can contain nil array elements. Those will match any record key segment.
-func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath SubPath, includeExpired bool, callback recordDataCallback) {
+func (ts *TreeStore) iterateRecordFieldWorker(crs *changedRecordState, subPath SubPath, callback recordDataCallback) {
 	// if subPath is empty, return the record unique ID
 	if len(subPath) == 0 {
-		callback(recordSk.Tokens[len(recordSk.Tokens)-1])
+		// only affected when added; the id does not change for removal
+		callback(crs.recordKn.key, !crs.removal)
 		return
 	}
 
 	// iterate the keys within the record that match the specified subpath
-	fieldSk := JoinSubPath(recordSk, subPath)
-	ts.locateKeyNodesLocked(fieldSk, includeExpired, func(level *keyTree, recordKn *keyNode) {
-		if recordKn.nextLevel == nil {
+	containerSk := JoinSubPath(crs.recordSk, subPath)
+	affected := storeKeyHasBase(containerSk, crs.changedSk)
+	if !affected && crs.tree {
+		// when a tree of keys changes at once, the whole changedSk must
+		// be considered modified
+		affected = storeKeyHasBase(crs.changedSk, containerSk)
+	}
+
+	ts.locateKeyNodesLocked(containerSk, func(level *keyTree, fieldKn *keyNode) {
+		if fieldKn.nextLevel == nil {
 			return
 		}
-		tree := recordKn.nextLevel.tree
+
+		// DESIGN BUG: expiration design is wrong - need to change the
+		// design to remove expired keys, and rework all the code to
+		// assume if a key is present, it is not expired
+		//
+		// Because otherwise the index can refer to records where
+		// some or all data has expired.
+		//
+		// This is a big change - will do later.
+
+		tree := fieldKn.nextLevel.tree
 
 		// iterate the child segment(s) - these are the field values
 		switch tree.nodes {
@@ -190,14 +215,14 @@ func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath SubPath
 			return
 
 		case 1:
-			callback(recordKn.nextLevel.tree.root.key)
+			callback(fieldKn.nextLevel.tree.root.key, affected)
 			return
 
 		default:
 			tree.Iterate(func(node *avlNode[*keyNode]) bool {
 				kn := node.value
 				if !kn.isExpired() {
-					callback(kn.key)
+					callback(kn.key, affected)
 				}
 				return true
 			})
@@ -206,7 +231,7 @@ func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath SubPath
 	})
 }
 
-// recursive worker - adds each child field to the recordSk
+// recursive worker - iterates the index subpath(s) impacted by a record change
 //
 // Example:
 //
@@ -225,85 +250,83 @@ func (ts *TreeStore) iterateRecordFieldWorker(recordSk StoreKey, subPath SubPath
 //	Outputs:
 //	  callback(["Joe", "active"])
 //	  callback(["Mary", "active"])
-func (ts *TreeStore) iterateIndexPathWorker(recordSk StoreKey, subPaths []SubPath, parent IndexPath, includeExpired bool, callback indexKeyCallback) {
+func (ts *TreeStore) iterateAffectedIndexSubpaths(crs *changedRecordState, subPaths []SubPath, parent IndexPath, parentAffected bool) {
 	leaf := len(subPaths) == 1
 
-	ts.iterateRecordFieldWorker(recordSk, subPaths[0], includeExpired, func(seg TokenSegment) {
+	ts.iterateRecordFieldWorker(crs, subPaths[0], func(seg TokenSegment, affected bool) {
 		child := append(parent, seg)
 		if leaf {
-			callback(child)
+			if affected || parentAffected {
+				indexSk := AppendStoreKeySegments(crs.indexBaseSk, child...)
+				if crs.removal {
+					ts.deleteKeyUpToLocked(crs.indexBaseSk, indexSk)
+				} else {
+					ts.setKeyValueExLocked(indexSk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, []StoreAddress{crs.recordKn.address})
+				}
+			}
 		} else {
-			ts.iterateIndexPathWorker(recordSk, subPaths[1:], child, includeExpired, callback)
+			ts.iterateAffectedIndexSubpaths(crs, subPaths[1:], child, parentAffected || affected)
 		}
 	})
 }
 
-// worker - given a record key, iterates through every matching index key
-func (ts *TreeStore) processIndexPaths(recordSk StoreKey, recordKn *keyNode, kid *keyIndexDefinition, includeExpired bool, callback indexKeyCallback) {
-	if recordKn == nil {
-		// all records gone; invoke callback with nil
-		callback(nil)
-		return
-	}
-
-	if len(kid.fields) > 0 {
-		ts.iterateIndexPathWorker(recordSk, kid.fields, IndexPath{}, includeExpired, callback)
+// worker - given a key of a record that has changed, iterates through every impacted index key
+func (ts *TreeStore) processIndexPaths(crs *changedRecordState, fields []SubPath) {
+	if len(fields) > 0 {
+		ts.iterateAffectedIndexSubpaths(crs, fields, IndexPath{}, false)
 	}
 }
 
-// worker - for each index associated with this record key, iterates through every index key
-func (ts *TreeStore) processKeyIndex(tokens TokenSet, recordKn *keyNode, includeExpired bool, callback indexSkCallback) {
-	kn := recordKn
+// worker - starting from a changed record, key segments are walked backwards to find
+// index definition(s). For each index, the index fields are processed, and if impacted
+// by the modified record key (or subkey), the index key(s) are updated to reflect
+// the change.
+func (ts *TreeStore) processKeyLinks(tokens TokenSet, recordKn *keyNode, removal, tree bool) {
+	kn := recordKn // never nil, might be a subkey of a record
+
+	crs := changedRecordState{
+		removal:   removal,
+		tree:      tree,
+		changedSk: MakeStoreKeyFromTokenSegments(tokens...),
+	}
 
 	for end := len(tokens); end > 0; end-- {
-		idKn := kn
+		crs.recordKn = kn
 		kn = kn.getParent()
-		if kn.indicies != nil {
-			for _, kid := range kn.indicies.indexMap {
-				recordSk := MakeStoreKeyFromTokenSegments(tokens[0:end]...)
-				ts.processIndexPaths(recordSk, idKn, kid, includeExpired, func(ip IndexPath) {
-					if ip == nil {
-						callback(kid.indexSk, kid.indexSk, nil)
-					} else {
-						callback(kid.indexSk, AppendStoreKeySegments(kid.indexSk, ip...), idKn)
-					}
-				})
+		if kn.autoLinks != nil {
+			// one or more autoLinks are defined at this record container key
+			crs.recordSk = MakeStoreKeyFromTokenSegments(tokens[0:end]...)
+
+			for _, kald := range kn.autoLinks.autoLinkMap {
+				// process this index
+				crs.indexBaseSk = kald.indexSk
+				ts.processIndexPaths(&crs, kald.fields)
 			}
 		}
 	}
 }
 
 // Creation of some or all of the sk occurred. Caller must hold write lock on ts.keyNodeMu.
-func (ts *TreeStore) addToIndicies(tokens TokenSet, kn *keyNode) {
-	ts.processKeyIndex(tokens, kn, false, func(indexRootSk, indexSk StoreKey, recordKn *keyNode) {
-		if kn != nil {
-			ts.setKeyValueExLocked(indexSk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, []StoreAddress{recordKn.address})
-		}
-	})
+func (ts *TreeStore) addAutoLinks(tokens TokenSet, kn *keyNode, tree bool) {
+	ts.processKeyLinks(tokens, kn, false, tree)
 }
 
 // Removal of sk occurred. Caller must hold write lock on ts.keyNodeMu.
-func (ts *TreeStore) removeFromIndicies(tokens TokenSet, kn *keyNode) {
-	ts.processKeyIndex(tokens, kn, true, func(indexRootSk, indexSk StoreKey, recordKn *keyNode) {
-		if recordKn == nil {
-			ts.deleteKeyTreeLocked(indexSk)
-		} else {
-			ts.deleteKeyUpToLocked(indexRootSk, indexSk)
-		}
-	})
+func (ts *TreeStore) removeAutoLinks(tokens TokenSet, kn *keyNode, tree bool) {
+	ts.processKeyLinks(tokens, kn, true, tree)
 }
 
 // Record key was destroyed. Caller must hold write lock on ts.keyNodeMu.
 func (ts *TreeStore) purgeIndicies(kn *keyNode) {
-	if kn.indicies != nil {
-		for _, kid := range kn.indicies.indexMap {
-			ts.deleteKeyTreeLocked(kid.indexSk)
+	if kn.autoLinks != nil {
+		for _, kald := range kn.autoLinks.autoLinkMap {
+			ts.deleteKeyTreeLocked(kald.indexSk)
 		}
-		kn.indicies = nil
+		kn.autoLinks = nil
 	}
 }
 
-// Returns all indexes defined for the specified data key, or nil if none.
+// Returns all autoLinks defined for the specified data key, or nil if none.
 func (ts *TreeStore) GetIndex(dataParentSk StoreKey) (id []IndexDefinition) {
 	level, index, kn, expired := ts.locateKeyNodeForRead(dataParentSk)
 	defer ts.completeKeyNodeRead(level)
@@ -312,12 +335,12 @@ func (ts *TreeStore) GetIndex(dataParentSk StoreKey) (id []IndexDefinition) {
 		return
 	}
 
-	if kn.indicies != nil && len(kn.indicies.indexMap) > 0 {
-		id = make([]IndexDefinition, 0, len(kn.indicies.indexMap))
-		for _, kid := range kn.indicies.indexMap {
+	if kn.autoLinks != nil && len(kn.autoLinks.autoLinkMap) > 0 {
+		id = make([]IndexDefinition, 0, len(kn.autoLinks.autoLinkMap))
+		for _, kald := range kn.autoLinks.autoLinkMap {
 			elem := IndexDefinition{
-				IndexSk: kid.indexSk,
-				Fields:  kid.fields,
+				IndexSk: kald.indexSk,
+				Fields:  kald.fields,
 			}
 			id = append(id, elem)
 		}

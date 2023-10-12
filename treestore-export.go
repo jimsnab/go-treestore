@@ -14,7 +14,7 @@ type (
 		Metadata   map[string]string        `json:"metadata,omitempty"`
 		Expiration *int64                   `json:"expiration,omitempty"`
 		Children   map[string]*exportedNode `json:"children,omitempty"`
-		Ki         []*exportedKid           `json:"ki,omitempty"`
+		Kals       []*exportedKal           `json:"kals,omitempty"`
 	}
 
 	exportedValue struct {
@@ -24,7 +24,7 @@ type (
 		Relationships []string `json:"relationships,omitempty"`
 	}
 
-	exportedKid struct {
+	exportedKal struct {
 		IndexKey string   `json:"index_key"`
 		Fields   []string `json:"fields"`
 	}
@@ -62,7 +62,7 @@ func (ts *TreeStore) exportNode(rootSk StoreKey, kn *keyNode) (en *exportedNode,
 
 	en = &exportedNode{
 		Metadata: kn.metadata,
-		Ki:       ts.exportKi(kn.indicies),
+		Kals:     ts.exportKal(kn.autoLinks),
 	}
 
 	if kn.expiration != 0 {
@@ -189,22 +189,22 @@ func (ts *TreeStore) exportValue(rootSk StoreKey, vi *valueInstance, timestamp i
 	return ev, nil
 }
 
-func (ts *TreeStore) exportKi(ki *keyIndicies) []*exportedKid {
-	if ki == nil {
+func (ts *TreeStore) exportKal(kal *keyAutoLinks) []*exportedKal {
+	if kal == nil {
 		return nil
 	}
 
-	eki := make([]*exportedKid, 0, len(ki.indexMap))
-	for _, kid := range ki.indexMap {
-		ekid := exportedKid{
-			IndexKey: string(kid.indexSk.Path),
-			Fields:   make([]string, 0, len(kid.fields)),
+	ekals := make([]*exportedKal, 0, len(kal.autoLinkMap))
+	for _, kald := range kal.autoLinkMap {
+		ekal := exportedKal{
+			IndexKey: string(kald.indexSk.Path),
+			Fields:   make([]string, 0, len(kald.fields)),
 		}
-		for _, field := range kid.fields {
-			ekid.Fields = append(ekid.Fields, string(EscapeSubPath(field)))
+		for _, field := range kald.fields {
+			ekal.Fields = append(ekal.Fields, string(EscapeSubPath(field)))
 		}
 
-		eki = append(eki, &ekid)
+		ekals = append(ekals, &ekal)
 	}
-	return eki
+	return ekals
 }

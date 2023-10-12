@@ -18,7 +18,7 @@ const (
 
 // Retrieves the child key tree and leaf values in the form of json. If
 // metadata "array" is "true" then the child key nodes are treated as
-// array indicies. (They must be big endian uint32.)
+// array autoLinks. (They must be big endian uint32.)
 func (ts *TreeStore) GetKeyAsJson(sk StoreKey, opts JsonOptions) (jsonData []byte, err error) {
 	ts.keyNodeMu.RLock()
 	defer ts.keyNodeMu.RUnlock()
@@ -472,7 +472,7 @@ func (ts *TreeStore) assignJsonKey(sk StoreKey, baseKn *keyNode, jsonKn *keyNode
 	}
 
 	ts.assignJsonKeyIndex(sk, baseKn)
-	ts.addToIndicies(sk.Tokens, baseKn)
+	ts.addAutoLinks(sk.Tokens, baseKn, true)
 }
 
 // Worker that iterates the newly assigned nodes and ensures they are indexed

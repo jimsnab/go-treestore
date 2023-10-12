@@ -31,7 +31,7 @@ func (ts *TreeStore) deleteKeyTreeLocked(sk StoreKey) (removed bool) {
 		removed = true
 	}
 
-	ts.removeFromIndicies(sk.Tokens, kn)
+	ts.removeAutoLinks(sk.Tokens, kn, true)
 	ts.discardChildren(sk, kn)
 
 	if ts.removeKeyFromIndexLocked(sk) || expired {

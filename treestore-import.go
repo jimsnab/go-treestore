@@ -88,8 +88,8 @@ func (ts *TreeStore) restoreKey(rootPath TokenPath, sk StoreKey, kn *keyNode, en
 			}
 		}
 
-		if en.Ki != nil {
-			kn.indicies = ts.importKi(en.Ki)
+		if en.Kals != nil {
+			kn.autoLinks = ts.importKals(en.Kals)
 		}
 	}
 
@@ -168,25 +168,25 @@ func (ts *TreeStore) importValue(rootPath TokenPath, selfAddr StoreAddress, ev *
 	return
 }
 
-func (ts *TreeStore) importKi(eki []*exportedKid) (ki *keyIndicies) {
-	if eki == nil {
+func (ts *TreeStore) importKals(ekals []*exportedKal) (kal *keyAutoLinks) {
+	if ekals == nil {
 		return nil
 	}
 
-	ki = &keyIndicies{
-		indexMap: make(map[TokenPath]*keyIndexDefinition, len(eki)),
+	kal = &keyAutoLinks{
+		autoLinkMap: make(map[TokenPath]*keyAutoLinkDefinition, len(ekals)),
 	}
 
-	for _, ekid := range eki {
-		kid := keyIndexDefinition{
-			indexSk: MakeStoreKeyFromPath(TokenPath(ekid.IndexKey)),
-			fields:  make([]SubPath, 0, len(ekid.Fields)),
+	for _, ekal := range ekals {
+		kald := keyAutoLinkDefinition{
+			indexSk: MakeStoreKeyFromPath(TokenPath(ekal.IndexKey)),
+			fields:  make([]SubPath, 0, len(ekal.Fields)),
 		}
-		for _, field := range ekid.Fields {
-			kid.fields = append(kid.fields, UnescapeSubPath(EscapedSubPath(field)))
+		for _, field := range ekal.Fields {
+			kald.fields = append(kald.fields, UnescapeSubPath(EscapedSubPath(field)))
 		}
 
-		ki.indexMap[kid.indexSk.Path] = &kid
+		kal.autoLinkMap[kald.indexSk.Path] = &kald
 	}
 	return
 }

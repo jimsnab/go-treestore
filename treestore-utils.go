@@ -1,6 +1,7 @@
 package treestore
 
 import (
+	"bytes"
 	"encoding/binary"
 	"fmt"
 	"strings"
@@ -243,6 +244,25 @@ func AppendStoreKeySegmentStrings(sk StoreKey, segStrings ...string) StoreKey {
 	sk2.Path = TokenSetToTokenPath(sk2.Tokens)
 
 	return sk2
+}
+
+// Determines if the specified store key is the base key or one of its children.
+// A nil segment in baseSk matches any candidate segment at the same level.
+func storeKeyHasBase(baseSk, candidateSk StoreKey) bool {
+	if len(candidateSk.Tokens) < len(baseSk.Tokens) {
+		return false
+	}
+
+	for index, seg1 := range baseSk.Tokens {
+		if seg1 != nil {
+			seg2 := candidateSk.Tokens[index]
+			if !bytes.Equal(seg1, seg2) {
+				return false
+			}
+		}
+	}
+
+	return true
 }
 
 // Returns the Unix ns tick as a byte array

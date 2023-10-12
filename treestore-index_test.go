@@ -1073,7 +1073,7 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count")
+		t.Error("index key count 1")
 	}
 
 	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1086,7 +1086,7 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 2 {
-		t.Error("index key count")
+		t.Error("index key count 2")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1104,7 +1104,7 @@ func TestIndexJsonUpdateArray(t *testing.T) {
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(dsk, id), toJson(data), JsonStringValuesAsKeys)
 
 	if countSubKeys(ts, isk) != 1 {
-		t.Error("index key count")
+		t.Error("index key count 3")
 	}
 
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "fido"), 0)
@@ -1304,7 +1304,6 @@ func TestIndexJsonDeepReplace2(t *testing.T) {
 
 	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id), toJson(data), JsonStringValuesAsKeys)
 
-	ts.DiagDump() // BUGBUG
 	if countSubKeys(ts, isk) != 6 {
 		t.Error("index key count 1")
 	}
@@ -1441,6 +1440,70 @@ func TestIndexJsonDeepReplace3(t *testing.T) {
 	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "vet", "35"), 0)
 	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
 		t.Error("link verify 1 again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestIndexJsonDeepReplace4(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store structure under /source/ID/records/data, and index them under /index-service-id,
+	// place index on /source and pick two fields out of the data that don't get deleted.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	userId1 := "USER1"
+	userProfile1 := `{
+	"email": "cat@gmail.com",
+	"name": "Test User",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	userId2 := "USER2"
+	userProfile2 := `{
+	"email": "dog@gmail.com",
+	"name": "Testy",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	usersSk := MakeStoreKey("users", "profiles")
+	ts.CreateIndex(usersSk, MakeStoreKey("users", "email-org-name"), []SubPath{MakeSubPath("email"), MakeSubPath("organization_id"), MakeSubPath("name")})
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
+
+	count := countSubKeys(ts, MakeStoreKey("users", "email-org-name"))
+	if count != 6 {
+		t.Error("index count 1")
+	}
+
+	dsk := AppendStoreKeySegmentStrings(usersSk, userId1, "permissions")
+	ts.DeleteKeyTree(dsk)
+
+	count = countSubKeys(ts, MakeStoreKey("users", "email-org-name"))
+	if count != 6 {
+		t.Error("index count 2")
 	}
 
 	if !ts.DiagDump() {

@@ -102,18 +102,18 @@ func saveKeyValues(kn *keyNode) (values []diskValue) {
 	return
 }
 
-func kiToDiskKi(ki *keyIndicies) []diskKid {
-	if ki == nil {
+func kiToDiskKi(kals *keyAutoLinks) []diskKid {
+	if kals == nil {
 		return nil
 	}
 
-	dki := make([]diskKid, 0, len(ki.indexMap))
-	for _, kid := range ki.indexMap {
+	dki := make([]diskKid, 0, len(kals.autoLinkMap))
+	for _, kald := range kals.autoLinkMap {
 		dkid := diskKid{
-			IndexKey: string(kid.indexSk.Path),
-			Fields:   make([]string, 0, len(kid.fields)),
+			IndexKey: string(kald.indexSk.Path),
+			Fields:   make([]string, 0, len(kald.fields)),
 		}
-		for _, field := range kid.fields {
+		for _, field := range kald.fields {
 			dkid.Fields = append(dkid.Fields, string(EscapeSubPath(field)))
 		}
 		dki = append(dki, dkid)
@@ -122,28 +122,28 @@ func kiToDiskKi(ki *keyIndicies) []diskKid {
 	return dki
 }
 
-func diskKiToKi(dki []diskKid) *keyIndicies {
+func diskKiToKi(dki []diskKid) *keyAutoLinks {
 	if dki == nil {
 		return nil
 	}
 
-	ki := keyIndicies{
-		indexMap: make(map[TokenPath]*keyIndexDefinition, len(dki)),
+	kal := keyAutoLinks{
+		autoLinkMap: make(map[TokenPath]*keyAutoLinkDefinition, len(dki)),
 	}
 
 	for _, dkid := range dki {
-		kid := keyIndexDefinition{
+		kald := keyAutoLinkDefinition{
 			indexSk: MakeStoreKeyFromPath(TokenPath(dkid.IndexKey)),
 			fields:  make([]SubPath, 0, len(dkid.Fields)),
 		}
 		for _, field := range dkid.Fields {
-			kid.fields = append(kid.fields, UnescapeSubPath(EscapedSubPath(field)))
+			kald.fields = append(kald.fields, UnescapeSubPath(EscapedSubPath(field)))
 		}
 
-		ki.indexMap[kid.indexSk.Path] = &kid
+		kal.autoLinkMap[kald.indexSk.Path] = &kald
 	}
 
-	return &ki
+	return &kal
 }
 
 func saveChildren(parent *keyNode, enc *gob.Encoder) (err error) {
@@ -158,7 +158,7 @@ func saveChildren(parent *keyNode, enc *gob.Encoder) (err error) {
 				Values:        saveKeyValues(kn),
 				Expiration:    kn.expiration,
 				Metadata:      kn.metadata,
-				Indicies:      kiToDiskKi(kn.indicies),
+				Indicies:      kiToDiskKi(kn.autoLinks),
 			}
 
 			if err = enc.Encode(dkn); err != nil {
@@ -349,7 +349,7 @@ func (ts *TreeStore) Load(l lane.Lane, fileName string) (err error) {
 			ownerTree:  level,
 			expiration: dkn.Expiration,
 			metadata:   dkn.Metadata,
-			indicies:   diskKiToKi(dkn.Indicies),
+			autoLinks:  diskKiToKi(dkn.Indicies),
 		}
 
 		current, history := loadValues(dkn.Values)

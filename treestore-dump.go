@@ -127,8 +127,8 @@ func (tsd *treeStoreDump) dumpLevel(level *keyTree, indent string, expectedParen
 			tsd.used[sk.Path] = kn.address
 		}
 
-		if kn.indicies != nil {
-			keyText += " [INDEXED]"
+		if kn.autoLinks != nil {
+			keyText += " [AUTO LINKS]"
 		}
 
 		fmt.Printf("%s%04X %s\n", indent, kn.address, keyText)

@@ -581,8 +581,6 @@ func TestMergeTwoMaps(t *testing.T) {
 		t.Error("second json")
 	}
 
-	ts.DiagDump()
-
 	sk1 := MakeStoreKeyFromPath(`/test/farm/animals/horse`)
 	sk2 := MakeStoreKeyFromPath(`/test/farm/animals/cow`)
 	sk3 := MakeStoreKeyFromPath(`/test/farm/animals/pig`)

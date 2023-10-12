@@ -154,8 +154,9 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 		dkn.nextLevel.parent = dkn
 	}
 
+	ts.removeAutoLinks(destSk.Tokens, dkn, true)
 	ts.indexMovedNodesLocked(destSk, dkn, skn.address, oldDestAddress, dkn.address)
-	ts.addToIndicies(destSk.Tokens, dkn)
+	ts.addAutoLinks(destSk.Tokens, dkn, true)
 
 	for _, unrefSk := range unrefs {
 		_, tokenIndex, kn, expired := ts.locateKeyNodeForLock(unrefSk)
@@ -173,7 +174,7 @@ func (ts *TreeStore) MoveReferencedKey(srcSk, destSk StoreKey, overwrite bool, t
 	}
 
 	for _, refSk := range refs {
-		kn, created := ts.ensureKeyExclusive(refSk)
+		kn, created := ts.ensureKeyExclusive(refSk, true)
 		if created {
 			now := currentUnixTimestampBytes()
 			kn.history = newAvlTree[*valueInstance]()

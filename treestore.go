@@ -42,7 +42,7 @@ type (
 		history    *avlTree[*valueInstance]
 		expiration int64
 		metadata   map[string]string
-		indicies   *keyIndicies
+		autoLinks  *keyAutoLinks
 	}
 
 	valueInstance struct {
@@ -204,17 +204,16 @@ func (ts *TreeStore) locateKeyNodeForLock(sk StoreKey) (level *keyTree, tokenInd
 // segment in sk is nil, the level is iterated.
 //
 // The caller must have a lock on ts.keyNodeMu.
-func (ts *TreeStore) locateKeyNodesLocked(sk StoreKey, includeExpired bool, callback keyNodeCallback) {
+func (ts *TreeStore) locateKeyNodesLocked(sk StoreKey, callback keyNodeCallback) {
 	// can traverse levels freely thanks to keyNodeMu
-	ts.locateKeyNodesWorker(sk.Tokens, ts.dbNodeLevel, &ts.dbNode, includeExpired, callback)
+	ts.locateKeyNodesWorker(sk.Tokens, ts.dbNodeLevel, &ts.dbNode, callback)
 }
 
 // recursive worker
-func (ts *TreeStore) locateKeyNodesWorker(tokens TokenSet, level *keyTree, kn *keyNode, includeExpired bool, callback keyNodeCallback) {
+func (ts *TreeStore) locateKeyNodesWorker(tokens TokenSet, level *keyTree, kn *keyNode, callback keyNodeCallback) {
 	if len(tokens) == 0 {
-		if includeExpired || !kn.isExpired() {
-			callback(level, kn)
-		}
+		// expired included
+		callback(level, kn)
 		return
 	}
 	token := tokens[0]
@@ -231,10 +230,10 @@ func (ts *TreeStore) locateKeyNodesWorker(tokens TokenSet, level *keyTree, kn *k
 			return
 		}
 
-		ts.locateKeyNodesWorker(subTokens, level, avlNode.value, includeExpired, callback)
+		ts.locateKeyNodesWorker(subTokens, level, avlNode.value, callback)
 	} else {
 		level.tree.Iterate(func(node *avlNode[*keyNode]) bool {
-			ts.locateKeyNodesWorker(subTokens, level, node.value, includeExpired, callback)
+			ts.locateKeyNodesWorker(subTokens, level, node.value, callback)
 			return true
 		})
 	}
@@ -338,27 +337,29 @@ func (ts *TreeStore) createRestOfKey(sk StoreKey, parentLevel *keyTree, index in
 		kn = ts.appendKeyNode(lockedLevel, sk.Tokens[index])
 	}
 
-	ts.addToIndicies(sk.Tokens, kn)
+	ts.addAutoLinks(sk.Tokens, kn, false)
 	return
 }
 
 // worker - like createRestOfKey, but used when caller has acquired the exclusive database lock
-func (ts *TreeStore) createRestOfKeyExclusive(sk StoreKey, parentLevel *keyTree, index int, parent *keyNode) (kn *keyNode) {
+func (ts *TreeStore) createRestOfKeyExclusive(sk StoreKey, parentLevel *keyTree, tokenIndex int, parent *keyNode, updateIndexes bool) (kn *keyNode) {
 	// currently have the entire database locked
 	level := parentLevel
 	kn = parent
 
 	// add middle levels if necessary
-	for end := len(sk.Tokens); index < end; index++ {
+	for end := len(sk.Tokens); tokenIndex < end; tokenIndex++ {
 		if kn != nil {
 			kn.nextLevel = newKeyTree(kn)
 			level = kn.nextLevel
 		}
 
-		kn = ts.appendKeyNode(level, sk.Tokens[index])
+		kn = ts.appendKeyNode(level, sk.Tokens[tokenIndex])
 	}
 
-	ts.addToIndicies(sk.Tokens, kn)
+	if updateIndexes {
+		ts.addAutoLinks(sk.Tokens, kn, false)
+	}
 	return
 }
 
@@ -382,7 +383,7 @@ func (ts *TreeStore) repurposeExpiredKn(sk StoreKey, kn *keyNode) {
 	kn.history = nil
 	kn.metadata = nil
 
-	ts.addToIndicies(sk.Tokens, kn)
+	ts.addAutoLinks(sk.Tokens, kn, false)
 }
 
 // Worker to make sure a key exists, and returns the valueInstance key node and a write lock on
@@ -403,14 +404,14 @@ func (ts *TreeStore) ensureKey(sk StoreKey) (kn *keyNode, lockedLevel *keyTree, 
 }
 
 // Worker like ensureKey but used when the caller has locked the whole database
-func (ts *TreeStore) ensureKeyExclusive(sk StoreKey) (kn *keyNode, created bool) {
+func (ts *TreeStore) ensureKeyExclusive(sk StoreKey, updateIndexes bool) (kn *keyNode, created bool) {
 	level, index, kn, expired := ts.locateKeyNodeForLock(sk)
 
 	if expired {
 		ts.repurposeExpiredKn(sk, kn)
 		created = true
 	} else if index < len(sk.Tokens) {
-		kn = ts.createRestOfKeyExclusive(sk, level, index, kn)
+		kn = ts.createRestOfKeyExclusive(sk, level, index, kn, updateIndexes)
 		created = true
 	}
 
@@ -787,7 +788,7 @@ func (ts *TreeStore) deleteKeyWithValueLocked(sk StoreKey, clean bool) (removed 
 	ts.activeLocks.Add(1)
 
 	if ts.removeKeyFromIndexLocked(sk) || expired {
-		ts.removeFromIndicies(sk.Tokens, kn)
+		ts.removeAutoLinks(sk.Tokens, kn, false)
 
 		if kn.current != nil {
 			originalValue = kn.current.value
@@ -933,7 +934,7 @@ func (ts *TreeStore) deleteKeyUpToLocked(rootSk, deleteSk StoreKey) (keyRemoved,
 }
 
 func (ts *TreeStore) deleteKeyNodeLocked(sk StoreKey, level *keyTree, kn *keyNode) {
-	ts.removeFromIndicies(sk.Tokens, kn)
+	ts.removeAutoLinks(sk.Tokens, kn, false)
 
 	// permanently delete the node
 	delete(ts.addresses, kn.address)
@@ -1181,7 +1182,7 @@ func (ts *TreeStore) discardChildren(sk StoreKey, kn *keyNode) {
 // worker - removes the node's value (if any) as well as all child keys
 // the caller must hold a write lock on ts.keyNodeMu
 func (ts *TreeStore) resetNode(sk StoreKey, kn *keyNode) {
-	ts.removeFromIndicies(sk.Tokens, kn)
+	ts.removeAutoLinks(sk.Tokens, kn, true)
 
 	ts.discardChildren(sk, kn)
 	kn.current = nil
