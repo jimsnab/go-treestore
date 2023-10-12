@@ -14,7 +14,7 @@ type (
 
 	recordDataCallback func(seg TokenSegment)
 	indexKeyCallback   func(ip IndexPath)
-	indexSkCallback    func(sk StoreKey, kn *keyNode)
+	indexSkCallback    func(indexRootSk, indexEntrySk StoreKey, kn *keyNode)
 
 	IndexDefinition struct {
 		IndexSk StoreKey
@@ -263,9 +263,9 @@ func (ts *TreeStore) processKeyIndex(tokens TokenSet, recordKn *keyNode, include
 				recordSk := MakeStoreKeyFromTokenSegments(tokens[0:end]...)
 				ts.processIndexPaths(recordSk, idKn, kid, includeExpired, func(ip IndexPath) {
 					if ip == nil {
-						callback(kid.indexSk, nil)
+						callback(kid.indexSk, kid.indexSk, nil)
 					} else {
-						callback(AppendStoreKeySegments(kid.indexSk, ip...), idKn)
+						callback(kid.indexSk, AppendStoreKeySegments(kid.indexSk, ip...), idKn)
 					}
 				})
 			}
@@ -275,7 +275,7 @@ func (ts *TreeStore) processKeyIndex(tokens TokenSet, recordKn *keyNode, include
 
 // Creation of some or all of the sk occurred. Caller must hold write lock on ts.keyNodeMu.
 func (ts *TreeStore) addToIndicies(tokens TokenSet, kn *keyNode) {
-	ts.processKeyIndex(tokens, kn, false, func(indexSk StoreKey, recordKn *keyNode) {
+	ts.processKeyIndex(tokens, kn, false, func(indexRootSk, indexSk StoreKey, recordKn *keyNode) {
 		if kn != nil {
 			ts.setKeyValueExLocked(indexSk, nil, SetExNoValueUpdate|SetExMustNotExist, 0, []StoreAddress{recordKn.address})
 		}
@@ -284,11 +284,11 @@ func (ts *TreeStore) addToIndicies(tokens TokenSet, kn *keyNode) {
 
 // Removal of sk occurred. Caller must hold write lock on ts.keyNodeMu.
 func (ts *TreeStore) removeFromIndicies(tokens TokenSet, kn *keyNode) {
-	ts.processKeyIndex(tokens, kn, true, func(indexSk StoreKey, recordKn *keyNode) {
+	ts.processKeyIndex(tokens, kn, true, func(indexRootSk, indexSk StoreKey, recordKn *keyNode) {
 		if recordKn == nil {
 			ts.deleteKeyTreeLocked(indexSk)
 		} else {
-			ts.deleteKeyLocked(indexSk)
+			ts.deleteKeyUpToLocked(indexRootSk, indexSk)
 		}
 	})
 }

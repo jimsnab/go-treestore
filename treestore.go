@@ -869,10 +869,11 @@ func (ts *TreeStore) DeleteKey(sk StoreKey) (keyRemoved, valueRemoved bool, orig
 	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
-	return ts.deleteKeyLocked(sk)
+	keyRemoved, valueRemoved, originalValue, _ = ts.deleteKeyLocked(sk)
+	return
 }
 
-func (ts *TreeStore) deleteKeyLocked(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any) {
+func (ts *TreeStore) deleteKeyLocked(sk StoreKey) (keyRemoved, valueRemoved bool, originalValue any, parent *keyNode) {
 	end := len(sk.Tokens)
 	if end == 0 {
 		valueRemoved, originalValue = ts.deleteKeyWithValueLocked(sk, true)
@@ -902,8 +903,30 @@ func (ts *TreeStore) deleteKeyLocked(sk StoreKey) (keyRemoved, valueRemoved bool
 	kn.metadata = nil
 
 	if kn.nextLevel == nil {
+		if kn.ownerTree != nil {
+			parent = kn.ownerTree.parent
+		}
+
 		ts.deleteKeyNodeLocked(sk, level, kn)
 		keyRemoved = true
+	}
+
+	return
+}
+
+func (ts *TreeStore) deleteKeyUpToLocked(rootSk, deleteSk StoreKey) (keyRemoved, valueRemoved bool, originalValue any) {
+	sk := MakeStoreKeyFromTokenSegments(deleteSk.Tokens...)
+	keyRemoved, valueRemoved, originalValue, parent := ts.deleteKeyLocked(sk)
+
+	for parent != nil && len(rootSk.Tokens) < len(sk.Tokens) {
+		if parent.nextLevel != nil && parent.nextLevel.tree.nodes > 0 {
+			break
+		}
+
+		sk.Tokens = sk.Tokens[:len(sk.Tokens)-1]
+		sk.Path = TokenSetToTokenPath(sk.Tokens)
+
+		_, _, _, parent = ts.deleteKeyLocked(sk)
 	}
 
 	return

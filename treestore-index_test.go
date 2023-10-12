@@ -1260,3 +1260,190 @@ func TestIndexJsonDeepReplace(t *testing.T) {
 		t.Error("final dump")
 	}
 }
+
+func TestIndexJsonDeepReplace2(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store structure under /source/ID/records/data, and index them under /index-type-name,
+	// place index on /source and pick two fields out of the data
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	data := map[string]any{
+		"records": map[string]any{
+			"data": []any{
+				map[string]any{
+					"type": "dog",
+					"name": "fido",
+				},
+				map[string]any{
+					"type": "cat",
+					"name": "muffy",
+				},
+			},
+		},
+	}
+
+	ssk := MakeStoreKey("source")
+	isk := MakeStoreKey("index-type-name")
+	id := "ID1"
+	dsk := MakeStoreKey("source", id, "records", "data")
+
+	// second token is nil for the array index
+	re, ic := ts.CreateIndex(ssk, isk, []SubPath{MakeSubPath("records", "data", `\N`, "type"), MakeSubPath("records", "data", `\N`, "name")})
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id), toJson(data), JsonStringValuesAsKeys)
+
+	ts.DiagDump() // BUGBUG
+	if countSubKeys(ts, isk) != 6 {
+		t.Error("index key count 1")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "dog", "fido"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "cat", "muffy"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 2")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "dog", "muffy"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 3")
+	}
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "cat", "fido"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 4")
+	}
+
+	// deltree the names
+	ts.DeleteKeyTree(dsk)
+
+	if countSubKeys(ts, isk) != 0 {
+		t.Error("index key count 2")
+	}
+
+	// store new data
+	data = map[string]any{
+		"data": []any{
+			map[string]any{
+				"type": "dog",
+				"name": "rover",
+			},
+		},
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id, "records"), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 2 {
+		t.Error("index key count 3")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "dog", "rover"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1 again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestIndexJsonDeepReplace3(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store structure under /source/ID/records/data, and index them under /index-service-id,
+	// place index on /source and pick two fields out of the data that don't get deleted.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	data := map[string]any{
+		"records": map[string]any{
+			"pets": []any{
+				map[string]any{
+					"type": "dog",
+					"name": "fido",
+				},
+				map[string]any{
+					"type": "cat",
+					"name": "muffy",
+				},
+			},
+			"info": map[string]any{
+				"service": "vet",
+				"id":      "35",
+			},
+		},
+	}
+
+	ssk := MakeStoreKey("source")
+	isk := MakeStoreKey("index-service-id")
+	id := "ID1"
+	dsk := MakeStoreKey("source", id, "records", "data")
+
+	// second token is nil for the array index
+	re, ic := ts.CreateIndex(ssk, isk, []SubPath{MakeSubPath("records", "info", "service"), MakeSubPath("records", "info", "id")})
+	if re || !ic {
+		t.Error("not created")
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id), toJson(data), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 2 {
+		t.Fatal("index key count")
+	}
+
+	hasLink, rv := ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "vet", "35"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1")
+	}
+
+	// deltree the names
+	ts.DeleteKeyTree(dsk)
+
+	if countSubKeys(ts, isk) != 2 {
+		t.Fatal("index key count 2")
+	}
+
+	// store new data
+	pets := []any{
+		map[string]any{
+			"type": "dog",
+			"name": "rover",
+		},
+	}
+
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(ssk, id, "records", "pets"), toJson(pets), JsonStringValuesAsKeys)
+
+	if countSubKeys(ts, isk) != 2 {
+		t.Fatal("index key count 3")
+	}
+
+	hasLink, rv = ts.GetRelationshipValue(AppendStoreKeySegmentStrings(isk, "vet", "35"), 0)
+	if !hasLink || rv == nil || rv.Sk.Path != TokenPath("/source/"+id) {
+		t.Error("link verify 1 again")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}

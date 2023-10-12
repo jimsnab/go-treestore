@@ -173,12 +173,15 @@ func (ts *TreeStore) StageKeyJson(stagingSk StoreKey, jsonData []byte, opts Json
 	defer ts.sanityCheck()
 	defer ts.keyNodeMu.Unlock()
 
-	// temp key segment name matches the address of the key for convenience
+	// Temp key segment name gets an address to use as a convenient unique value.
+	// Addresses are atomic-locked only, and it is possible for an address to be
+	// allocated by code that is preparing its operation outside of node locking.
+
 	// ensure the base key exists
 	_, baseLevel, _ := ts.ensureKey(stagingSk)
 	ts.completeKeyNodeWrite(baseLevel)
 
-	addr := StoreAddress(ts.nextAddress.Load() + 1)
+	addr := StoreAddress(ts.nextAddress.Add(1))
 	tempSk = AppendStoreKeySegmentStrings(stagingSk, fmt.Sprintf("%d", addr))
 
 	kn, level, created := ts.ensureKey(tempSk)
@@ -191,12 +194,8 @@ func (ts *TreeStore) StageKeyJson(stagingSk StoreKey, jsonData []byte, opts Json
 
 	kn.expiration = time.Now().Add(time.Minute).UnixNano()
 
-	// the newKn's address is the temp key unique value
 	ts.assignJsonKey(tempSk, kn, newKn)
-	if addr != kn.address {
-		panic("unexpected address")
-	}
-	address = addr
+	address = kn.address
 	return
 }
 

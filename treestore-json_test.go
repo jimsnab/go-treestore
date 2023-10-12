@@ -858,7 +858,7 @@ func TestSetJsonStagedSimple(t *testing.T) {
 	jsonData := []byte(`{"pet": "cat"}`)
 
 	tempSk, addr, err := ts.StageKeyJson(stageSk, jsonData, 0)
-	expectedPath := fmt.Sprintf("%s/%d", stageSk.Path, addr)
+	expectedPath := fmt.Sprintf("%s/%d", stageSk.Path, addr-1)
 	if tempSk.Path != TokenPath(expectedPath) || err != nil {
 		t.Error("stage")
 	}
@@ -886,7 +886,7 @@ func TestSetJsonStagedSimpleStrAsKey(t *testing.T) {
 	jsonData := []byte(`{"pet": "cat"}`)
 
 	tempSk, addr, err := ts.StageKeyJson(stageSk, jsonData, JsonStringValuesAsKeys)
-	expectedPath := fmt.Sprintf("%s/%d", stageSk.Path, addr)
+	expectedPath := fmt.Sprintf("%s/%d", stageSk.Path, addr-1)
 	if tempSk.Path != TokenPath(expectedPath) || err != nil {
 		t.Error("stage")
 	}
