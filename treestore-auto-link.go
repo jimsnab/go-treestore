@@ -178,8 +178,13 @@ func (ts *TreeStore) populateAutoLink(dataParentSk StoreKey, dataParentKn *keyNo
 func (ts *TreeStore) iterateRecordFieldWorker(crs *changedRecordState, subPath SubPath, callback recordDataCallback) {
 	// if subPath is empty, return the record unique ID
 	if len(subPath) == 0 {
-		// only affected when added; the id does not change for removal
-		callback(crs.recordKn.key, true)
+		// only affected when added; the id does not change for removal,
+		// unless the operation is on the ID key itself
+		affected := !crs.removal
+		if !affected {
+			affected = (crs.changedSk.Path == crs.recordSk.Path)
+		}
+		callback(crs.recordKn.key, affected)
 		return
 	}
 

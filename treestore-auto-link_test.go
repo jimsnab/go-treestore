@@ -1512,6 +1512,71 @@ func TestAutoLinkJsonDeepReplace4(t *testing.T) {
 	}
 }
 
+func TestAutoLinkJsonDeepReplace5(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store structure under /source/ID/records/data, and link them under /link-service-id,
+	// place auto-link on /source and pick two fields out of the data that don't get deleted.
+	// One of the fields must be the record ID.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	userId1 := "USER1"
+	userProfile1 := `{
+	"email": "cat@gmail.com",
+	"name": "Test User",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	userId2 := "USER2"
+	userProfile2 := `{
+	"email": "dog@gmail.com",
+	"name": "Testy",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	usersSk := MakeStoreKey("users", "profiles")
+	ts.DefineAutoLinkKey(usersSk, MakeStoreKey("users", "orgs"), []SubPath{MakeSubPath("organization_id"), nil})
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
+
+	count := countSubKeys(ts, MakeStoreKey("users", "orgs"))
+	if count != 3 {
+		t.Error("link count 1")
+	}
+
+	dsk := AppendStoreKeySegmentStrings(usersSk, userId1, "permissions")
+	ts.DeleteKeyTree(dsk)
+
+	count = countSubKeys(ts, MakeStoreKey("users", "orgs"))
+	if count != 3 {
+		t.Error("link count 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
 func TestAutoLinkExpireFieldData(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 	dsk := MakeStoreKey("tree1", "source")
