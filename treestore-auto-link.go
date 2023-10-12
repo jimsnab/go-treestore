@@ -327,7 +327,7 @@ func (ts *TreeStore) purgeIndicies(kn *keyNode) {
 }
 
 // Returns all auto-link definitions defined for the specified data key, or nil if none.
-func (ts *TreeStore) GetAutoLinkDefinition(dataParentSk StoreKey) (id []AutoLinkDefinition) {
+func (ts *TreeStore) GetAutoLinkDefinition(dataParentSk StoreKey) (alds []AutoLinkDefinition) {
 	level, tokenIndex, kn, expired := ts.locateKeyNodeForRead(dataParentSk)
 	defer ts.completeKeyNodeRead(level)
 
@@ -336,13 +336,13 @@ func (ts *TreeStore) GetAutoLinkDefinition(dataParentSk StoreKey) (id []AutoLink
 	}
 
 	if kn.autoLinks != nil && len(kn.autoLinks.autoLinkMap) > 0 {
-		id = make([]AutoLinkDefinition, 0, len(kn.autoLinks.autoLinkMap))
+		alds = make([]AutoLinkDefinition, 0, len(kn.autoLinks.autoLinkMap))
 		for _, kald := range kn.autoLinks.autoLinkMap {
 			elem := AutoLinkDefinition{
 				AutoLinkSk: kald.autoLinkSk,
 				Fields:     kald.fields,
 			}
-			id = append(id, elem)
+			alds = append(alds, elem)
 		}
 	}
 	return
