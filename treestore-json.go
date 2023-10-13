@@ -280,7 +280,9 @@ func (ts *TreeStore) MergeKeyJson(sk StoreKey, jsonData []byte, opts JsonOptions
 	kn, ll, _ := ts.ensureKey(sk)
 	defer ts.completeKeyNodeWrite(ll)
 
+	ts.removeAutoLinks(sk.Tokens, kn, true)
 	ts.mergeJsonKey(sk, kn, data, opts)
+	ts.addAutoLinks(sk.Tokens, kn, true)
 	address = kn.address
 	return
 }
@@ -463,6 +465,8 @@ func (ts *TreeStore) nextJsonKeyValueLevel(kn *keyNode, data any, opts JsonOptio
 
 // Worker that assigns a json key node tree to its base.
 func (ts *TreeStore) assignJsonKey(sk StoreKey, baseKn *keyNode, jsonKn *keyNode) {
+	// auto-links must be removed first by the caller (possibly via resetNode)
+
 	baseKn.current = jsonKn.current
 	baseKn.history = jsonKn.history
 	baseKn.metadata = jsonKn.metadata

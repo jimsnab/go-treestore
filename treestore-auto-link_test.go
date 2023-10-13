@@ -1452,8 +1452,8 @@ func TestAutoLinkJsonDeepReplace4(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store structure under /source/ID/records/data, and link them under /link-service-id,
-	// place auto-link on /source and pick two fields out of the data that don't get deleted.
+	// Store a user structure under /users/profiles/ID, and link them under /users/email-org-name,
+	// place auto-link on /users/profiles and pick two fields out of the data that don't get deleted.
 	//
 	// - store full record
 	// - verify
@@ -1516,8 +1516,8 @@ func TestAutoLinkJsonDeepReplace5(t *testing.T) {
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
 
 	//
-	// Store structure under /source/ID/records/data, and link them under /link-service-id,
-	// place auto-link on /source and pick two fields out of the data that don't get deleted.
+	// Store a user structure under /users/profiles/ID, and link them under /users/orgs,
+	// place auto-link on /users/profiles and pick two fields out of the data that don't get deleted.
 	// One of the fields must be the record ID.
 	//
 	// - store full record
@@ -1568,6 +1568,336 @@ func TestAutoLinkJsonDeepReplace5(t *testing.T) {
 	ts.DeleteKeyTree(dsk)
 
 	count = countSubKeys(ts, MakeStoreKey("users", "orgs"))
+	if count != 3 {
+		t.Error("link count 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkJsonDeepReplace6(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store a user structure under /users/profiles/ID, and link them under /users/roles,
+	// place auto-link on /users/profiles and auto-link the role_id field within the array.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	userId1 := "USER1"
+	userProfile1 := `{
+	"email": "cat@gmail.com",
+	"name": "Test User",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	userId2 := "USER2"
+	userProfile2 := `{
+	"email": "dog@gmail.com",
+	"name": "Testy",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	usersSk := MakeStoreKey("users", "profiles")
+	kRoleLinksSk := MakeStoreKey("users", "roles")
+	ts.DefineAutoLinkKey(usersSk, kRoleLinksSk, []SubPath{MakeSubPath("permissions", `\N`, "role_id"), nil})
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
+
+	count := countSubKeys(ts, kRoleLinksSk)
+	if count != 3 {
+		t.Error("link count 1")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkJsonDeepReplace7(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store a user structure under /users/profiles/ID, and link them under /users/roles,
+	// place auto-link on /users/profiles and auto-link the role_id field within the array.
+	// Set a permission using MergeKeyJson and partial data.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	userId1 := "USER1"
+	userProfile1 := `{
+	"email": "cat@gmail.com",
+	"name": "Test User",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	userId2 := "USER2"
+	userProfile2 := `{
+	"email": "dog@gmail.com",
+	"name": "Testy",
+	"organization_id": "ORG2",
+	"permissions": []
+}`
+
+	usersSk := MakeStoreKey("users", "profiles")
+	u2Sk := MakeStoreKey("users", "profiles", "USER2")
+	kRoleLinksSk := MakeStoreKey("users", "roles")
+	ts.DefineAutoLinkKey(usersSk, kRoleLinksSk, []SubPath{MakeSubPath("permissions", `\N`, "role_id"), nil})
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
+
+	count := countSubKeys(ts, kRoleLinksSk)
+	if count != 2 {
+		t.Error("link count 1")
+	}
+
+	partialJson := `{
+	"login": "today",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+	ts.MergeKeyJson(u2Sk, []byte(partialJson), JsonStringValuesAsKeys)
+
+	count = countSubKeys(ts, kRoleLinksSk)
+	if count != 3 {
+		t.Error("link count 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkJsonDeepReplace8(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store a user structure under /users/profiles/ID, and link them under /users/roles,
+	// place auto-link on /users/profiles and auto-link the role_id field within the array.
+	// Set a permission using SetKeyJson and partial data.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	userId1 := "USER1"
+	userProfile1 := `{
+	"email": "cat@gmail.com",
+	"name": "Test User",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	userId2 := "USER2"
+	userProfile2 := `{
+	"email": "dog@gmail.com",
+	"name": "Testy",
+	"organization_id": "ORG2",
+	"permissions": []
+}`
+
+	usersSk := MakeStoreKey("users", "profiles")
+	u2Sk := MakeStoreKey("users", "profiles", "USER2")
+	kRoleLinksSk := MakeStoreKey("users", "roles")
+	ts.DefineAutoLinkKey(usersSk, kRoleLinksSk, []SubPath{MakeSubPath("permissions", `\N`, "role_id"), nil})
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
+
+	count := countSubKeys(ts, kRoleLinksSk)
+	if count != 2 {
+		t.Error("link count 1")
+	}
+
+	partialJson := `{
+	"login": "today",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+	ts.SetKeyJson(u2Sk, []byte(partialJson), JsonStringValuesAsKeys)
+
+	count = countSubKeys(ts, kRoleLinksSk)
+	if count != 3 {
+		t.Error("link count 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkJsonDeepReplace9(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store a user structure under /users/profiles/ID, and link them under /users/roles,
+	// place auto-link on /users/profiles and auto-link the role_id field within the array.
+	// Set a permission using CreateKeyJson and partial data.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	userId1 := "USER1"
+	userProfile1 := `{
+	"email": "cat@gmail.com",
+	"name": "Test User",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	userId2 := "USER2"
+	userProfile2 := `{
+"email": "dog@gmail.com",
+"name": "Testy",
+"organization_id": "ORG2"
+}`
+
+	usersSk := MakeStoreKey("users", "profiles")
+	u2Sk := MakeStoreKey("users", "profiles", "USER2", "permissions")
+	kRoleLinksSk := MakeStoreKey("users", "roles")
+	ts.DefineAutoLinkKey(usersSk, kRoleLinksSk, []SubPath{MakeSubPath("permissions", `\N`, "role_id"), nil})
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
+
+	count := countSubKeys(ts, kRoleLinksSk)
+	if count != 2 {
+		t.Error("link count 1")
+	}
+
+	partialJson := `[
+	{
+		"context": "CONTEXT1",
+		"role_id": "ROLE1"
+	}
+]`
+	ts.CreateKeyJson(u2Sk, []byte(partialJson), JsonStringValuesAsKeys)
+
+	count = countSubKeys(ts, kRoleLinksSk)
+	if count != 3 {
+		t.Error("link count 2")
+	}
+
+	if !ts.DiagDump() {
+		t.Error("final dump")
+	}
+}
+
+func TestAutoLinkJsonDeepReplace10(t *testing.T) {
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	//
+	// Store a user structure under /users/profiles/ID, and link them under /users/roles,
+	// place auto-link on /users/profiles and auto-link the role_id field within the array.
+	// Set a permission using ReplaceKeyJson and partial data.
+	//
+	// - store full record
+	// - verify
+	// - deltree the names
+	// - verify
+	// - store replacement names
+	// - verify
+	//
+
+	userId1 := "USER1"
+	userProfile1 := `{
+	"email": "cat@gmail.com",
+	"name": "Test User",
+	"organization_id": "ORG2",
+	"permissions": [
+		{
+			"context": "CONTEXT1",
+			"role_id": "ROLE1"
+		}
+	]
+}`
+
+	userId2 := "USER2"
+	userProfile2 := `{
+"email": "dog@gmail.com",
+"name": "Testy",
+"organization_id": "ORG2",
+"permissions": []
+}`
+
+	usersSk := MakeStoreKey("users", "profiles")
+	u2Sk := MakeStoreKey("users", "profiles", "USER2", "permissions")
+	kRoleLinksSk := MakeStoreKey("users", "roles")
+	ts.DefineAutoLinkKey(usersSk, kRoleLinksSk, []SubPath{MakeSubPath("permissions", `\N`, "role_id"), nil})
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId1), []byte(userProfile1), JsonStringValuesAsKeys)
+	ts.SetKeyJson(AppendStoreKeySegmentStrings(usersSk, userId2), []byte(userProfile2), JsonStringValuesAsKeys)
+
+	count := countSubKeys(ts, kRoleLinksSk)
+	if count != 2 {
+		t.Error("link count 1")
+	}
+
+	partialJson := `[
+	{
+		"context": "CONTEXT1",
+		"role_id": "ROLE1"
+	}
+]`
+	ts.ReplaceKeyJson(u2Sk, []byte(partialJson), JsonStringValuesAsKeys)
+
+	count = countSubKeys(ts, kRoleLinksSk)
 	if count != 3 {
 		t.Error("link count 2")
 	}
