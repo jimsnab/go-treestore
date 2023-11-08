@@ -23,6 +23,7 @@ type (
 		cas          map[StoreAddress]uint64
 		activeLocks  atomic.Int32
 		deferredRefs []*deferredRef
+		sanityAddr map[StoreAddress]TokenPath
 	}
 
 	StoreAddress uint64
@@ -88,6 +89,7 @@ func NewTreeStore(l lane.Lane, appVersion int) *TreeStore {
 	ts.dbNode.key = []byte{}
 	ts.dbNodeLevel.tree.Set(ts.dbNode.key, &ts.dbNode)
 	ts.addresses = map[StoreAddress]*keyNode{1: &ts.dbNode}
+	ts.sanityAddr = map[StoreAddress]TokenPath{}
 	return &ts
 }
 
@@ -1198,4 +1200,34 @@ func (ts *TreeStore) sanityCheck() {
 			panic(fmt.Sprintf("key %s refers to missing address %d", sk, addr))
 		}
 	}
+
+	// scan the entire tree store and ensure an address hasn't become a different key
+	ts.sanityCheckLevel(ts.dbNode.nextLevel)
+}
+
+func (ts *TreeStore) sanityCheckLevel(kt *keyTree) {
+	if kt == nil {
+		return
+	}
+
+	kt.tree.Iterate(func(node *avlNode[*keyNode]) bool {
+		kn := node.value
+		if kn.current != nil {
+			for _,addr := range kn.current.relationships {
+				target := ts.addresses[addr]
+				if target == nil {
+					panic(fmt.Sprintf("reference to undefined address %d", addr))
+				}
+				path := TokenSetToTokenPath(target.getTokenSet())
+
+				prior, exists := ts.sanityAddr[addr]
+				if !exists {
+					ts.sanityAddr[addr] = path
+				} else if prior != path {
+					panic(fmt.Sprintf("reference to address %d changed from %s to %s", addr, prior, path))
+				}
+			}
+		}
+		return true
+	})
 }

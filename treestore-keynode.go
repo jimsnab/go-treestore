@@ -30,3 +30,14 @@ func (kn *keyNode) getParent() (pkn *keyNode) {
 	}
 	return
 }
+
+func (kn *keyNode) getTokenSet() (set TokenSet) {
+	if kn.ownerTree != nil {
+		set = kn.ownerTree.parent.getTokenSet()
+	} else {
+		set = []TokenSegment{}
+	}
+	set = append(set, kn.key)
+
+	return
+}
