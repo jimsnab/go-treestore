@@ -32,7 +32,7 @@ func (kn *keyNode) getParent() (pkn *keyNode) {
 }
 
 func (kn *keyNode) getTokenSet() (set TokenSet) {
-	if kn.ownerTree != nil {
+	if kn.ownerTree != nil && kn.ownerTree.parent != kn {
 		set = kn.ownerTree.parent.getTokenSet()
 	} else {
 		set = []TokenSegment{}

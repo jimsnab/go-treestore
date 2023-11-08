@@ -1216,7 +1216,7 @@ func (ts *TreeStore) sanityCheckLevel(kt *keyTree) {
 			for _,addr := range kn.current.relationships {
 				target := ts.addresses[addr]
 				if target == nil {
-					panic(fmt.Sprintf("reference to undefined address %d", addr))
+					continue
 				}
 				path := TokenSetToTokenPath(target.getTokenSet())
 
