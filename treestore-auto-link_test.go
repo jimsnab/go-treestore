@@ -1030,10 +1030,10 @@ func TestAutoLinkGet(t *testing.T) {
 		t.Error("expected auto-link def")
 	}
 	if id[0].AutoLinkSk.Path != isk.Path || len(id[0].Fields) != 1 {
-		t.Error("bad auto-link response 2a")
+		t.Errorf("bad auto-link response 2a: %s %d", id[0].AutoLinkSk.Path, len(id[0].Fields))
 	}
 	if id[1].AutoLinkSk.Path != isk2.Path || len(id[1].Fields) != 2 {
-		t.Error("bad auto-link response 2b")
+		t.Errorf("bad auto-link response 2b: %s %d", id[1].AutoLinkSk.Path, len(id[1].Fields))
 	}
 
 	if !ts.DiagDump() {

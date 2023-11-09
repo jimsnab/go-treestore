@@ -23,7 +23,7 @@ type (
 		cas          map[StoreAddress]uint64
 		activeLocks  atomic.Int32
 		deferredRefs []*deferredRef
-		sanityAddr map[StoreAddress]TokenPath
+		sanityAddr   map[StoreAddress]TokenPath
 	}
 
 	StoreAddress uint64
@@ -1194,9 +1194,6 @@ func (ts *TreeStore) resetNode(sk StoreKey, kn *keyNode) {
 }
 
 func (ts *TreeStore) sanityCheck() {
-	ts.keyNodeMu.Lock()
-	defer ts.keyNodeMu.Unlock()
-	
 	for sk, addr := range ts.keys {
 		_, found := ts.addresses[addr]
 		if !found {
@@ -1216,7 +1213,7 @@ func (ts *TreeStore) sanityCheckLevel(kt *keyTree) {
 	kt.tree.Iterate(func(node *avlNode[*keyNode]) bool {
 		kn := node.value
 		if kn.current != nil {
-			for _,addr := range kn.current.relationships {
+			for _, addr := range kn.current.relationships {
 				target := ts.addresses[addr]
 				if target == nil {
 					continue

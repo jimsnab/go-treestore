@@ -191,7 +191,7 @@ func (ts *TreeStore) acquireExclusiveLock() {
 }
 
 func (ts *TreeStore) releaseExclusiveLock() {
-	defer ts.sanityCheck()
+	ts.sanityCheck()
 	ts.keyNodeMu.Unlock()
 	ts.activeLocks.Add(-1)
 }
