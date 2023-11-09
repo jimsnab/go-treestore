@@ -62,6 +62,46 @@ func TestSaveLoadOneKey(t *testing.T) {
 	}
 }
 
+func TestSaveLoadNextAddress(t *testing.T) {
+	fs = afero.NewMemMapFs()
+	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+
+	sk := MakeStoreKey("cat")
+	addr, _ := ts.SetKey(sk)
+
+	err := ts.Save(ts.l, "/test.db")
+	if err != nil {
+		t.Errorf("save error %s", err.Error())
+	}
+
+	ts2 := NewTreeStore(lane.NewTestingLane(context.Background()), 0)
+	err = ts2.Load(ts2.l, "/test.db")
+	if err != nil {
+		t.Errorf("load error %s", err.Error())
+	}
+
+	verifyAddr, exists := ts2.LocateKey(sk)
+	if verifyAddr != addr || !exists {
+		t.Error("locate key")
+	}
+
+	_, exists = ts2.IsKeyIndexed(sk)
+	if exists {
+		t.Error("value not indexed")
+	}
+
+	sk2 := MakeStoreKey("dog")
+	addr, _ = ts2.SetKey(sk2)
+
+	if addr != verifyAddr+1 {
+		t.Error("nextaddr not recovered")
+	}
+
+	if !ts2.DiagDump() {
+		t.Error("final diag dump")
+	}
+}
+
 func TestSaveLoadOneValue(t *testing.T) {
 	fs = afero.NewMemMapFs()
 	ts := NewTreeStore(lane.NewTestingLane(context.Background()), 0)

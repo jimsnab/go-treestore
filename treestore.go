@@ -1202,7 +1202,10 @@ func (ts *TreeStore) sanityCheck() {
 	}
 
 	// scan the entire tree store and ensure an address hasn't become a different key
-	ts.sanityCheckLevel(ts.dbNode.nextLevel)
+
+	// disable sanity check until another corruption is found
+	//ts.sanityCheckLevel(ts.dbNode.nextLevel)
+	ts.sanityCheckLevel(nil)
 }
 
 func (ts *TreeStore) sanityCheckLevel(kt *keyTree) {
