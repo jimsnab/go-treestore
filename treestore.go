@@ -1194,6 +1194,9 @@ func (ts *TreeStore) resetNode(sk StoreKey, kn *keyNode) {
 }
 
 func (ts *TreeStore) sanityCheck() {
+	ts.keyNodeMu.Lock()
+	defer ts.keyNodeMu.Unlock()
+	
 	for sk, addr := range ts.keys {
 		_, found := ts.addresses[addr]
 		if !found {
