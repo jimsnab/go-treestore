@@ -105,7 +105,7 @@ func (ts *TreeStore) DefineAutoLinkKey(dataParentSk, autoLinkSk StoreKey, fields
 		fields:     fields,
 	}
 	kals.autoLinkMap[autoLinkSk.Path] = &kald
-	ts.populateAutoLink(dataParentSk, kn, &kald)
+	ts.populateAutoLink(dataParentSk, kn)
 	autoLinkCreated = true
 	return
 }
@@ -137,7 +137,7 @@ func (ts *TreeStore) RemoveAutoLinkKey(dataParentSk, autoLinkSk StoreKey) (recor
 	return
 }
 
-func (ts *TreeStore) populateAutoLink(dataParentSk StoreKey, dataParentKn *keyNode, kald *keyAutoLinkDefinition) {
+func (ts *TreeStore) populateAutoLink(dataParentSk StoreKey, dataParentKn *keyNode) {
 	//
 	// Iterate all of the unique IDs under recordSk, and establish links for each.
 	//

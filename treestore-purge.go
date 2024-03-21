@@ -8,7 +8,7 @@ func (ts *TreeStore) Purge() {
 
 	ts.dbNode = ts2.dbNode
 	ts.dbNodeLevel = ts2.dbNodeLevel
-	ts.nextAddress = ts2.nextAddress
+	ts.nextAddress.Store(ts2.nextAddress.Load())
 	ts.addresses = ts2.addresses
 	ts.keys = ts2.keys
 	ts.cas = ts2.cas

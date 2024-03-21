@@ -318,3 +318,5 @@ const indexJson = `{
 	}
 }
 }`
+
+var _ = indexJson
